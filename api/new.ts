@@ -52,7 +52,7 @@ const deploy = async (files: {sha: string, file: string, path: string, size: num
   })
   const json = await req.json()
   const baseURL = json.url
-  const fileURLs = files.map(f => baseURL + '/' + f.path)
+  const fileURLs = files.map(f => 'https://' + baseURL + '/' + f.path)
 
   return { status: req.status, fileURLs }
 }
