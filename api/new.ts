@@ -5,13 +5,13 @@ import { urlParse } from 'https://deno.land/x/url_parse/mod.ts';
 // Vercel protects against env tokens starting with `VERCEL_`, so we're calling
 // it the ZEIT_TOKEN
 
-const uploadFile = async (url: string) => {
+const uploadFile = async (url: string, index: number) => {
   const req = await fetch(url)
   const data = new Uint8Array(await req.arrayBuffer())
   const sha = new Hash('sha1').digest(data).hex()
   const size = data.byteLength
   const { pathname } = urlParse(url)
-  const filename = pathname.substr(pathname.lastIndexOf('/') + 1)
+  const filename = index + pathname.substr(pathname.lastIndexOf('/') + 1)
   
   const uploadedFile = await fetch('https://api.vercel.com/v2/now/files', {
     method: 'POST',
