@@ -2,6 +2,15 @@ import { ServerRequest } from 'https://deno.land/std@0.61.0/http/server.ts'
 import { Hash } from "https://deno.land/x/checksum@1.4.0/mod.ts"
 import { urlParse } from 'https://deno.land/x/url_parse/mod.ts';
 
+const endpoint = (path: string) => {
+  // https://vercel.com/docs/api#api-basics/authentication/accessing-resources-owned-by-a-team
+  let url = 'https://api.vercel.com/' + path
+  if (Deno.env.get('ZEIT_TEAM')) {
+    url += ('?teamId=' + Deno.env.get('ZEIT_TEAM'))
+  }
+  return url
+}
+
 // Vercel protects against env tokens starting with `VERCEL_`, so we're calling
 // it the ZEIT_TOKEN
 
@@ -13,7 +22,7 @@ const uploadFile = async (url: string, index: number) => {
   const { pathname } = urlParse(url)
   const filename = index + pathname.substr(pathname.lastIndexOf('/') + 1)
   
-  const uploadedFile = await fetch('https://api.vercel.com/v2/now/files', {
+  const uploadedFile = await fetch(endpoint('v2/now/files'), {
     method: 'POST',
     headers: {
       'Content-Length': size.toString(),
@@ -32,7 +41,7 @@ const uploadFile = async (url: string, index: number) => {
 }
 
 const deploy = async (files: {sha: string, file: string, path: string, size: number}[]) => {
-  const req = await fetch('https://api.vercel.com/v12/now/deployments', {
+  const req = await fetch(endpoint('v12/now/deployments'), {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${Deno.env.get('ZEIT_TOKEN')}`,
@@ -58,7 +67,6 @@ const deploy = async (files: {sha: string, file: string, path: string, size: num
 }
 
 export default async (req: ServerRequest) => {
-  // req.respond({ body: `Hello, from Deno!` })
   if (req.method == 'OPTIONS') {
     return req.respond({status: 204, body: JSON.stringify({ status: "YIPPE YAY. YOU HAVE CLEARANCE TO PROCEED." })})
   }
