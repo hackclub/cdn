@@ -40,7 +40,7 @@ export default async (req: ServerRequest) => {
 
     const decoder = new TextDecoder()
     const buf = await Deno.readAll(req.body)
-    const singleFileURL = JSON.parse(decoder.decode(buf))
+    const singleFileURL = decoder.decode(buf)
     if (typeof singleFileURL != 'string') {
         return req.respond({ status: 422, body: JSON.stringify({ error: 'newSingle only accepts a single URL' }) })
     }
