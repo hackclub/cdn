@@ -1,4 +1,5 @@
 import { ServerRequest } from 'https://deno.land/std@0.75.0/http/server.ts'
+import { urlParse } from 'https://deno.land/x/url_parse/mod.ts';
 
 const endpoint = (path: string) => {
   // https://vercel.com/docs/api#api-basics/authentication/accessing-resources-owned-by-a-team
@@ -56,15 +57,22 @@ export default async (req: ServerRequest) => {
     return req.respond({ status: 422, body: JSON.stringify({ error: 'Empty file array' }) })
   }
 
-  let uploadedURLs = await Promise.all(fileURLs.map(async (url) => {
-    const res = await fetch("https://cdn.hackclub.com/api/newSingle", {
+  let uploadedURLs = await Promise.all(fileURLs.map(async (url, index) => {
+    const { pathname } = urlParse(url)
+    const filename = index + pathname.substr(pathname.lastIndexOf('/') + 1)
+
+    const res = JSON.parse(await (await fetch("https://cdn.hackclub.com/api/newSingle", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: url
-    })
-    return JSON.parse(await res.json())
+    })).json())
+
+    res.file = 'public/' + filename
+    res.path = filename
+
+    return res
   }))
 
   const result = await deploy(uploadedURLs)

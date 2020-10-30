@@ -2,14 +2,21 @@ import { ServerRequest } from 'https://deno.land/std@0.75.0/http/server.ts'
 import { Hash } from "https://deno.land/x/checksum@1.4.0/mod.ts"
 import { urlParse } from 'https://deno.land/x/url_parse/mod.ts';
 
+const endpoint = (path: string) => {
+    // https://vercel.com/docs/api#api-basics/authentication/accessing-resources-owned-by-a-team
+    let url = 'https://api.vercel.com/' + path
+    if (Deno.env.get('ZEIT_TEAM')) {
+        url += ('?teamId=' + Deno.env.get('ZEIT_TEAM'))
+    }
+    return url
+}
+
 const uploadFile = async (url: string) => {
     const req = await fetch(url)
     const data = new Uint8Array(await req.arrayBuffer())
     const sha = new Hash('sha1').digest(data).hex()
     const size = data.byteLength
-    const { pathname } = urlParse(url)
-    const filename = pathname.substr(pathname.lastIndexOf('/') + 1)
-    
+
     await fetch(endpoint('v2/now/files'), {
         method: 'POST',
         headers: {
@@ -22,9 +29,7 @@ const uploadFile = async (url: string) => {
 
     return {
         sha,
-        size,
-        file: 'public/' + filename,
-        path: filename
+        size
     }
 }
 
