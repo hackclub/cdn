@@ -1,6 +1,5 @@
 import { ServerRequest } from 'https://deno.land/std@0.75.0/http/server.ts'
 import { Hash } from "https://deno.land/x/checksum@1.4.0/mod.ts"
-import { urlParse } from 'https://deno.land/x/url_parse/mod.ts';
 
 const endpoint = (path: string) => {
     // https://vercel.com/docs/api#api-basics/authentication/accessing-resources-owned-by-a-team

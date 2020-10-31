@@ -61,13 +61,13 @@ export default async (req: ServerRequest) => {
     const { pathname } = urlParse(url)
     const filename = index + pathname.substr(pathname.lastIndexOf('/') + 1)
 
-    const res = JSON.parse(await (await fetch("https://cdn.hackclub.com/api/newSingle", {
+    const res = await (await fetch("https://cdn.hackclub.com/api/newSingle", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: url
-    })).json())
+    })).json()
 
     res.file = 'public/' + filename
     res.path = filename
