@@ -4,7 +4,6 @@ import { endpoint, ensurePost, parseBody } from "./utils.ts";
 
 // Other functions can import this function to call this serverless endpoint
 export const uploadEndpoint = async (url: string) => {
-  console.log("called upload endpoint on", url);
   const response = await fetch("http://localhost:3000/api/v2/upload", {
     method: "POST",
     body: url,
