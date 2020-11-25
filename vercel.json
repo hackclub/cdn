@@ -4,6 +4,7 @@
 		"api/**/*.{j,t}s": { "runtime": "vercel-deno@0.4.4" }
 	},
 	"redirects": [
-		{ "source": "/", "destination": "https://github.com/hackclub/cdn"}
+		{ "source": "/", "destination": "https://github.com/hackclub/cdn" },
+		{ "source": "/api/new", "destination": "/api/v1", "permanent": false }
 	]
 }
