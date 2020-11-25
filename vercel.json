@@ -5,6 +5,6 @@
 	},
 	"redirects": [
 		{ "source": "/", "destination": "https://github.com/hackclub/cdn" },
-		{ "source": "/api/new", "destination": "/api/v1", "permanent": false }
+		{ "source": "/api/new", "destination": "/api/v1/new", "permanent": false }
 	]
 }
