@@ -7,7 +7,7 @@
 
 CDN powers the [#cdn](https://app.slack.com/client/T0266FRGM/C016DEDUL87) channel in the [Hack Club Slack](https://hackclub.com/slack).
 
-## Version 2 <img alt="Version 2" src="https://cloud-6gklvd3ci.vercel.app/1v2.png" align="right" width="300">
+## Version 2 <img alt="Version 2" src="https://cloud-b46nncb23.vercel.app/0v2.png" align="right" width="300">
 
 Post this JSON...
 ```js
