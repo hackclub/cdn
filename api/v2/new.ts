@@ -19,7 +19,9 @@ export default async (req: ServerRequest) => {
     );
   }
 
-  const uploadArray = await Promise.all(fileURLs.map(uploadEndpoint));
+  const authorization = req.headers.get('Authorization')
+
+  const uploadArray = await Promise.all(fileURLs.map(f => uploadEndpoint(f, authorization)));
 
   const deploymentFiles = uploadArray.map(
     (file: { url: string; sha: string; size: number }, index: number) => {

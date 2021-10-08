@@ -3,18 +3,25 @@ import { Hash } from "https://deno.land/x/checksum@1.4.0/hash.ts";
 import { endpoint, ensurePost, parseBody } from "./utils.ts";
 
 // Other functions can import this function to call this serverless endpoint
-export const uploadEndpoint = async (url: string) => {
-  const response = await fetch("https://cdn.hackclub.com/api/v2/upload", {
-    method: "POST",
-    body: url,
-  });
+export const uploadEndpoint = async (url: string, authorization: string | null) => {
+  const options = { method: 'POST', body: url, headers: {} }
+  if (authorization) {
+    options.headers = { 'Authorization': authorization }
+  }
+  console.log({ options})
+  const response = await fetch("https://cdn.hackclub.com/api/v2/upload", options);
   const result = await response.json();
+  console.log({result})
 
   return result;
 };
 
-const upload = async (url: string) => {
-  const req = await fetch(url);
+const upload = async (url: string, authorization: string | null) => {
+  const options = { headers: {} }
+  if (authorization) {
+    options.headers = { 'Authorization': authorization }
+  }
+  const req = await fetch(url, options);
   const reqArrayBuffer = await req.arrayBuffer();
   const data = new Uint8Array(reqArrayBuffer);
   const sha = new Hash("sha1").digest(data).hex();
@@ -41,7 +48,7 @@ export default async (req: ServerRequest) => {
   if (!ensurePost(req)) return null;
 
   const body = await parseBody(req.body);
-  const uploadedFileUrl = await upload(body);
+  const uploadedFileUrl = await upload(body, req.headers.get("Authorization"));
 
   req.respond({ body: JSON.stringify(uploadedFileUrl) });
 };
