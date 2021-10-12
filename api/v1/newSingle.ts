@@ -10,8 +10,14 @@ const endpoint = (path: string) => {
   return url;
 };
 
-const uploadFile = async (url: string) => {
-  const req = await fetch(url);
+const uploadFile = async (url: string, authorization: string|null) => {
+  const options = {
+    method: 'GET', headers: { 'Authorization': "" }
+  }
+  if (authorization) {
+    options.headers = { 'Authorization': authorization }
+  }
+  const req = await fetch(url, options);
   const data = new Uint8Array(await req.arrayBuffer());
   const sha = new Hash("sha1").digest(data).hex();
   const size = data.byteLength;
@@ -53,7 +59,7 @@ export default async (req: ServerRequest) => {
       },
     );
   }
-  const uploadedFileURL = await uploadFile(singleFileURL);
+  const uploadedFileURL = await uploadFile(singleFileURL, req.headers.get("Authorization"));
 
   req.respond({
     body: JSON.stringify(uploadedFileURL),

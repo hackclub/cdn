@@ -87,15 +87,22 @@ export default async (req: ServerRequest) => {
     );
   }
 
+  const authorization = req.headers.get("Authorization");
+
   const uploadedURLs = await Promise.all(fileURLs.map(async (url, index) => {
     const { pathname } = urlParse(url);
     const filename = index + pathname.substr(pathname.lastIndexOf("/") + 1);
 
-    const res = await (await fetch("https://cdn.hackclub.com/api/newSingle", {
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": ""
+    }
+    if (authorization) {
+      headers['Authorization'] = authorization;
+    }
+    const res = await (await fetch("http://localhost:3000/api/newSingle", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: url,
     })).json();
 
