@@ -100,7 +100,7 @@ export default async (req: ServerRequest) => {
     if (authorization) {
       headers['Authorization'] = authorization;
     }
-    const res = await (await fetch("http://localhost:3000/api/newSingle", {
+    const res = await (await fetch("https://cdn.hackclub.com/api/newSingle", {
       method: "POST",
       headers,
       body: url,
