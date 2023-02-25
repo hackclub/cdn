@@ -1,4 +1,3 @@
-import { ServerRequest } from "https://deno.land/std@0.75.0/http/server.ts";
 import { Hash } from "https://deno.land/x/checksum@1.4.0/mod.ts";
 
 const endpoint = (path: string) => {
@@ -38,12 +37,12 @@ const uploadFile = async (url: string, authorization: string|null) => {
   };
 };
 
-export default async (req: ServerRequest) => {
+export default async (req: Request) => {
   if (req.method != "POST") {
-    return req.respond(
+    return new Response(
+      JSON.stringify({ error: "Method not allowed, use POST" }),
       {
         status: 405,
-        body: JSON.stringify({ error: "Method not allowed, use POST" }),
       },
     );
   }
@@ -52,16 +51,14 @@ export default async (req: ServerRequest) => {
   const buf = await Deno.readAll(req.body);
   const singleFileURL = decoder.decode(buf);
   if (typeof singleFileURL != "string") {
-    return req.respond(
+    return new Response(
+      JSON.stringify({ error: "newSingle only accepts a single URL" }),
       {
-        status: 422,
-        body: JSON.stringify({ error: "newSingle only accepts a single URL" }),
+        status: 422
       },
     );
   }
   const uploadedFileURL = await uploadFile(singleFileURL, req.headers.get("Authorization"));
 
-  req.respond({
-    body: JSON.stringify(uploadedFileURL),
-  });
+  return new Response(JSON.stringify(uploadedFileURL))
 };

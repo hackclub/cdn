@@ -1,7 +1,7 @@
 {
 	"version": 2,
 	"functions": {
-		"api/**/*.{j,t}s": { "runtime": "vercel-deno@0.4.4" }
+		"api/**/*.[jt]s": { "runtime": "vercel-deno@3.0.0" }
 	},
 	"redirects": [
 		{ "source": "/", "destination": "https://github.com/hackclub/cdn" },

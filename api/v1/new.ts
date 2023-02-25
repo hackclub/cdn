@@ -1,4 +1,3 @@
-import { ServerRequest } from "https://deno.land/std@0.75.0/http/server.ts";
 import { urlParse } from "https://deno.land/x/url_parse/mod.ts";
 
 const endpoint = (path: string) => {
@@ -39,42 +38,42 @@ const deploy = async (
   return { status: req.status, fileURLs };
 };
 
-export default async (req: ServerRequest) => {
+export default async (req: Request) => {
   if (req.method == "OPTIONS") {
-    return req.respond(
+    return new Response(
+      JSON.stringify(
+        { status: "YIPPE YAY. YOU HAVE CLEARANCE TO PROCEED." },
+      ),
       {
-        status: 204,
-        body: JSON.stringify(
-          { status: "YIPPE YAY. YOU HAVE CLEARANCE TO PROCEED." },
-        ),
+        status: 204
       },
     );
   }
   if (req.method == "GET") {
-    return req.respond(
+    return new Response(
+      JSON.stringify(
+        { error: "*GET outta here!* (Method not allowed, use POST)" },
+      ),
       {
-        status: 405,
-        body: JSON.stringify(
-          { error: "*GET outta here!* (Method not allowed, use POST)" },
-        ),
+        status: 405
       },
     );
   }
   if (req.method == "PUT") {
-    return req.respond(
+    return new Response(
+      JSON.stringify(
+        { error: "*PUT that request away!* (Method not allowed, use POST)" },
+      ),
       {
         status: 405,
-        body: JSON.stringify(
-          { error: "*PUT that request away!* (Method not allowed, use POST)" },
-        ),
       },
     );
   }
   if (req.method != "POST") {
-    return req.respond(
+    return new Response(
+      JSON.stringify({ error: "Method not allowed, use POST" }),
       {
         status: 405,
-        body: JSON.stringify({ error: "Method not allowed, use POST" }),
       },
     );
   }
@@ -83,8 +82,9 @@ export default async (req: ServerRequest) => {
   const buf = await Deno.readAll(req.body);
   const fileURLs = JSON.parse(decoder.decode(buf));
   if (!Array.isArray(fileURLs) || fileURLs.length < 1) {
-    return req.respond(
-      { status: 422, body: JSON.stringify({ error: "Empty file array" }) },
+    return return new Response(
+      JSON.stringify({ error: "Empty file array" }),
+      { status: 422 }
     );
   }
 
@@ -114,9 +114,9 @@ export default async (req: ServerRequest) => {
   }));
 
   const result = await deploy(uploadedURLs);
-
-  req.respond({
-    status: result.status,
-    body: JSON.stringify(result.fileURLs),
-  });
+  
+  return return new Response(
+    JSON.stringify(result.fileURLs),
+    { status: result.status }
+  );
 };

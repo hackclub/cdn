@@ -1,4 +1,3 @@
-import { ServerRequest } from "https://deno.land/std@0.75.0/http/server.ts";
 import { Hash } from "https://deno.land/x/checksum@1.4.0/hash.ts";
 import { endpoint, ensurePost, parseBody } from "./utils.ts";
 
@@ -44,11 +43,11 @@ const upload = async (url: string, authorization: string | null) => {
   };
 };
 
-export default async (req: ServerRequest) => {
+export default async (req: Request) => {
   if (!ensurePost(req)) return null;
 
   const body = await parseBody(req.body);
   const uploadedFileUrl = await upload(body, req.headers.get("Authorization"));
 
-  req.respond({ body: JSON.stringify(uploadedFileUrl) });
+  return new Response(JSON.stringify(uploadedFileUrl));
 };

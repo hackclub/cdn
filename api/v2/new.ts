@@ -1,21 +1,18 @@
-import { ServerRequest } from "https://deno.land/std@0.75.0/http/server.ts";
 import { urlParse } from "https://deno.land/x/url_parse/mod.ts";
 import { uploadEndpoint } from "./upload.ts";
 import { deployEndpoint } from "./deploy.ts";
 import { ensurePost, parseBody } from "./utils.ts";
 
-export default async (req: ServerRequest) => {
+export default async (req: Request) => {
   if (!ensurePost(req)) return null;
 
   const body = await parseBody(req.body);
   const fileURLs = JSON.parse(body);
 
   if (!Array.isArray(fileURLs) || fileURLs.length < 1) {
-    return req.respond(
-      {
-        status: 422,
-        body: JSON.stringify({ error: "Empty/invalid file array" }),
-      },
+    return new Response(
+      JSON.stringify({ error: "Empty/invalid file array" }),
+      { status: 422 }
     );
   }
 
@@ -33,10 +30,8 @@ export default async (req: ServerRequest) => {
 
   const deploymentData = await deployEndpoint(deploymentFiles);
 
-  req.respond(
-    {
-      body: JSON.stringify(deploymentData.files),
-      status: deploymentData.status,
-    },
+  return new Response(
+      JSON.stringify(deploymentData.files),
+      { status: deploymentData.status }
   );
 };
