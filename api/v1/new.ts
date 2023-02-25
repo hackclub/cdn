@@ -80,6 +80,8 @@ export default async (req: Request) => {
 
   const decoder = new TextDecoder();
   const buf = await req.arrayBuffer();
+  console.log(decoder.decode(buf))
+  console.log(buf)
   const fileURLs = JSON.parse(decoder.decode(buf));
   if (!Array.isArray(fileURLs) || fileURLs.length < 1) {
     return new Response(
