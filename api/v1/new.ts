@@ -79,6 +79,7 @@ export default async (req: Request) => {
   }
 
   const decoder = new TextDecoder();
+  console.log(req)
   const buf = await req.arrayBuffer();
   console.log(decoder.decode(buf))
   console.log(buf)
