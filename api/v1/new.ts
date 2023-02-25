@@ -83,6 +83,8 @@ export default async (req: Request) => {
   console.log(decoder.decode(buf))
   console.log(buf)
   const fileURLs = decoder.decode(buf);
+  console.log(fileURLs)
+  console.log(typeof fileURLs)
   if (!Array.isArray(fileURLs) || fileURLs.length < 1) {
     return new Response(
       JSON.stringify({ error: "Empty file array" }),
