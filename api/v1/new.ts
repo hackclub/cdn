@@ -31,8 +31,9 @@ const deploy = async (
       },
     }),
   });
-  const json = await req.json();
-  const baseURL = json.url;
+  const json = await req.text();
+  console.log(json)
+  const baseURL = JSON.parse(json).url;
   const fileURLs = files.map((f) => "https://" + baseURL + "/" + f.path);
 
   return { status: req.status, fileURLs };
