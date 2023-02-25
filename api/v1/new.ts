@@ -82,7 +82,7 @@ export default async (req: Request) => {
   const buf = await Deno.readAll(req.body);
   const fileURLs = JSON.parse(decoder.decode(buf));
   if (!Array.isArray(fileURLs) || fileURLs.length < 1) {
-    return return new Response(
+    return new Response(
       JSON.stringify({ error: "Empty file array" }),
       { status: 422 }
     );
@@ -115,7 +115,7 @@ export default async (req: Request) => {
 
   const result = await deploy(uploadedURLs);
   
-  return return new Response(
+  return new Response(
     JSON.stringify(result.fileURLs),
     { status: result.status }
   );
