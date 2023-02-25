@@ -48,7 +48,7 @@ export default async (req: Request) => {
   }
 
   const decoder = new TextDecoder();
-  const buf = await request.arrayBuffer();
+  const buf = await req.arrayBuffer();
   const singleFileURL = decoder.decode(buf);
   if (typeof singleFileURL != "string") {
     return new Response(
