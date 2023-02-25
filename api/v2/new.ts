@@ -6,7 +6,7 @@ import { ensurePost, parseBody } from "./utils.ts";
 export default async (req: Request) => {
   if (!ensurePost(req)) return null;
 
-  const body = await parseBody(req.body);
+  const body = await request.arrayBuffer();
   const fileURLs = JSON.parse(body);
 
   if (!Array.isArray(fileURLs) || fileURLs.length < 1) {
