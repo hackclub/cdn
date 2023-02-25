@@ -84,6 +84,7 @@ export default async (req: Request) => {
   console.log(buf)
   const fileURLs = decoder.decode(buf);
   console.log(fileURLs)
+  console.log(fileURLs.length)
   console.log(typeof fileURLs)
   if (!Array.isArray(fileURLs) || fileURLs.length < 1) {
     return new Response(
