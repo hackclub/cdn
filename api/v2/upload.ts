@@ -46,7 +46,7 @@ const upload = async (url: string, authorization: string | null) => {
 export default async (req: Request) => {
   if (!ensurePost(req)) return null;
 
-  const body =await req.arrayBuffer();
+  const body = new TextDecoder().decode(await req.arrayBuffer());
   const uploadedFileUrl = await upload(body, req.headers.get("Authorization"));
 
   return new Response(JSON.stringify(uploadedFileUrl));
