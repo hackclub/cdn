@@ -83,7 +83,7 @@ export default async (req: Request) => {
   const buf = await req.arrayBuffer();
   console.log(decoder.decode(buf))
   console.log(buf)
-  const fileURLs = decoder.decode(buf);
+  const fileURLs = JSON.parse(decoder.decode(buf));
   console.log(fileURLs)
   console.log(fileURLs.length)
   console.log(typeof fileURLs)
