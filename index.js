@@ -76,7 +76,7 @@ app.event('file_shared', async ({event, client}) => {
     try {
         await fileUpload.initialize();
         await app.start();
-        const port = parseInt(process.env.API_PORT || '4553', 10);
+        const port = parseInt(process.env.PORT || '4553', 10);
         expressApp.listen(port, () => {
             logger.info(`⚡️ Slack app is running in Socket Mode!`);
             logger.info(`🚀 API server is running on port ${port}`);

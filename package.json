@@ -17,6 +17,6 @@
             "p-limit": "^6.2.0",
             "winston": "^3.17.0"
       },
-      "author": "deployor",
+      "author": "",
       "license": "MIT"
 }
