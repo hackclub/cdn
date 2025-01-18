@@ -1,7 +1,7 @@
 {
       "name": "cdn-v2-hackclub",
       "version": "1.0.0",
-      "description": "Slack app to upload files to Backblaze B2 with unique URLs",
+      "description": "Slack app and API to upload files to Backblaze B2 with unique URLs",
       "main": "index.js",
       "scripts": {
             "start": "node index.js"
