@@ -23,15 +23,6 @@ expressApp.use(cors());
 expressApp.use(express.json());
 expressApp.use(express.urlencoded({ extended: true }));
 
-// Log ALL incoming requests for debugging
-expressApp.use((req, res, next) => {
-    logger.info(`Incoming request: ${req.method} ${req.path}`);
-    next();
-});
-
-// Log statement before mounting the API routes
-logger.info('Mounting API routes');
-
 // Mount API for all versions
 expressApp.use('/api', apiRoutes);
 
@@ -52,7 +43,7 @@ app.event('file_shared', async ({event, client}) => {
     logger.debug(`Received file_shared event: ${JSON.stringify(event)}`);
 
     if (parseFloat(event.event_ts) < BOT_START_TIME) {
-        logger.info(`Ignoring file event from before bot start: ${new Date(parseFloat(event.event_ts) * 1000).toISOString()}`);
+        logger.debug(`Ignoring file event from before bot start: ${new Date(parseFloat(event.event_ts) * 1000).toISOString()}`);
         return;
     }
 
@@ -60,7 +51,7 @@ app.event('file_shared', async ({event, client}) => {
     const channelId = event.channel_id;
 
     if (channelId !== targetChannelId) {
-        logger.info(`Ignoring file shared in channel: ${channelId}`);
+        logger.debug(`Ignoring file shared in channel: ${channelId}`);
         return;
     }
 
