@@ -2,4 +2,5 @@
 /splitfornpm/
 /.idea/
 /.env
+/bun.lockb
 /package-lock.json

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://assets.hackclub.com/flag-standalone.svg" width="100">
+  <img src="https://assets.hackclub.com/flag-standalone.svg" width="100" alt="flag">
   <h1>CDN</h1>
   <p>A CDN solution for Hack Club!</p>
 </div>
@@ -7,7 +7,7 @@
 <p align="center"><i>Deep under the waves and storms there lies a <a href="https://app.slack.com/client/T0266FRGM/C016DEDUL87">vault</a>...</i></p>
 
 <div align="center">
-  <img src="https://files.catbox.moe/6fpj0x.png" width="100%">
+  <img src="https://files.catbox.moe/6fpj0x.png" width="100%" alt="Banner">
   <p align="center">Banner illustration by <a href="https://gh.maxwofford.com">@maxwofford</a>.</p>
 
   <a href="https://app.slack.com/client/T0266FRGM/C016DEDUL87">
@@ -79,13 +79,45 @@ API_TOKEN=beans                       # Set a secure random string
 PORT=3000                             
 ```
 
-### 4. Installation & Running
+Here's an improved version of your README section with better clarity and formatting:
+
+---
+
+### **4. Installation & Running**
+
+#### **Install Dependencies**
+Make sure you have [Bun](https://bun.sh/) installed, then run:
 
 ```bash
-npm install
-node index.js
+bun install
 ```
-Feel free to use pm2!
+
+#### **Run the Application**
+You can start the application using any of the following methods:
+
+```bash
+# Using Node.js
+node index.js
+
+# Using Bun
+bun index.js
+
+# Using Bun with script
+bun run start
+```
+
+#### **Using PM2 (Optional)**
+For auto-starting the application, you can use PM2:
+
+```bash
+pm2 start bun --name "HC-CDN1" -- run start
+
+# Optionally, save the process list
+pm2 save
+
+# Optionally, generate startup script
+pm2 startup
+```
 
 ## 📡 API Usage
 
@@ -121,16 +153,33 @@ curl --location 'https://e2.deployor.hackclub.app/api/v3/new' \
 **Response:**
 ```json
 {
-    "files": [
-        {
-            "deployedUrl": "https://cdn.deployor.dev/s/v3/3e48b91a4599a3841c028e9a683ef5ce58cea372_flag-standalone.svg",
-            "file": "0_16361167e11b0d172a47e726b40d70e9873c792b_upload_1736985095691",
-            "sha": "16361167e11b0d172a47e726b40d70e9873c792b",
-            "size": 90173
-        }
-        // Other files
-    ],
-    "cdnBase": "https://cdn.deployor.dev"
+  "files": [
+    {
+      "deployedUrl": "https://cdn.deployor.dev/s/v3/3e48b91a4599a3841c028e9a683ef5ce58cea372_flag-standalone.svg",
+      "file": "0_16361167e11b0d172a47e726b40d70e9873c792b_upload_1736985095691",
+      "sha": "16361167e11b0d172a47e726b40d70e9873c792b",
+      "size": 90173
+    },
+    {
+      "deployedUrl": "https://cdn.deployor.dev/s/v3/4e48b91a4599a3841c028e9a683ef5ce58cea372_flag-orpheus-left.png",
+      "file": "1_16361167e11b0d172a47e726b40d70e9873c792b_upload_1736985095692",
+      "sha": "16361167e11b0d172a47e726b40d70e9873c792b",
+      "size": 80234
+    },
+    {
+      "deployedUrl": "https://cdn.deployor.dev/s/v3/5e48b91a4599a3841c028e9a683ef5ce58cea372_icon-progress-marker.svg",
+      "file": "2_16361167e11b0d172a47e726b40d70e9873c792b_upload_1736985095693",
+      "sha": "16361167e11b0d172a47e726b40d70e9873c792b",
+      "size": 70345
+    },
+    {
+      "deployedUrl": "https://cdn.deployor.dev/s/v3/6e48b91a4599a3841c028e9a683ef5ce58cea372_flag-orpheus-right.png",
+      "file": "3_16361167e11b0d172a47e726b40d70e9873c792b_upload_1736985095694",
+      "sha": "16361167e11b0d172a47e726b40d70e9873c792b",
+      "size": 60456
+    }
+  ],
+  "cdnBase": "https://cdn.deployor.dev"
 }
 ```
 
