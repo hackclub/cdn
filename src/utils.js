@@ -1,7 +1,7 @@
 // Make the CDN URL
 
 function generateFileUrl(userDir, uniqueFileName) {
-    const cdnUrl = process.env.B2_CDN_URL;
+    const cdnUrl = process.env.AWS_CDN_URL;
     return `${cdnUrl}/${userDir}/${uniqueFileName}`;
 }
 

@@ -1,6 +1,6 @@
 const logger = require('../config/logger');
 
-const getCdnUrl = () => process.env.B2_CDN_URL;
+const getCdnUrl = () => process.env.AWS_CDN_URL;
 
 const generateUrl = (version, fileName) => {
     return `${getCdnUrl()}/${version}/${fileName}`;

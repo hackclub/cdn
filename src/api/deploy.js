@@ -6,6 +6,7 @@ const deployEndpoint = async (files) => {
         const deployedFiles = files.map(file => ({
             deployedUrl: generateApiUrl('v3', file.file),
             cdnUrl: getCdnUrl(),
+            contentType: file.contentType || 'application/octet-stream',
             ...file
         }));
 
@@ -15,7 +16,7 @@ const deployEndpoint = async (files) => {
             cdnBase: getCdnUrl()
         };
     } catch (error) {
-        logger.error('Deploy error:', error);
+        logger.error('S3 deploy error:', error);
         return {
             status: 500,
             files: []

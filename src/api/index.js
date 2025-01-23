@@ -77,8 +77,8 @@ router.post('/upload', async (req, res) => {
         const result = await handleUpload(req);
         res.status(result.status).json(result.body);
     } catch (error) {
-        logger.error('Upload handler error:', error);
-        res.status(500).json({error: 'Internal server error'});
+        logger.error('S3 upload handler error:', error);
+        res.status(500).json({error: 'Storage upload failed'});
     }
 });
 

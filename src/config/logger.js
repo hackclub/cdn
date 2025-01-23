@@ -1,23 +1,19 @@
 const winston = require('winston');
 
-const consoleFormat = winston.format.combine(
-    winston.format.colorize(),
-    winston.format.timestamp(),
-    winston.format.printf(({level, message, timestamp}) => {
-        return `${timestamp} ${level}: ${message}`;
-    })
-);
-
 const logger = winston.createLogger({
-    level: process.env.LOG_LEVEL || 'info',
-    format: consoleFormat,
-    transports: [
-        new winston.transports.Console()
-    ]
-});
-
-logger.on('error', error => {
-    console.error('Logger error:', error);
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.colorize(),
+        winston.format.printf(({ level, message, timestamp, ...meta }) => {
+            let output = `${timestamp} ${level}: ${message}`;
+            if (Object.keys(meta).length > 0) {
+                output += ` ${JSON.stringify(meta)}`;
+            }
+            return output;
+        })
+    ),
+    transports: [new winston.transports.Console()]
 });
 
 module.exports = logger;

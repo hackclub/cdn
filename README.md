@@ -44,19 +44,36 @@
 4. Enable Event Subscriptions and subscribe to `file_shared` event
 5. Install the app to your workspace
 
-### 2. CDN Configuration (Cloudflare + Backblaze)
+### 2. Storage Configuration
 
-1. Create a Backblaze B2 bucket
-2. Set up Cloudflare DNS:
-   - Add a CNAME record pointing to your B2 bucket (e.g., `f003.backblazeb2.com`) you can upload a file and check in info!
-   - Enable Cloudflare proxy
-3. Configure SSL/TLS:
-   - Set SSL mode to "Full (strict)"
-   - ⚠️ **WARNING**: This setting may break other configurations on your domain! You could use another domain!
-4. Create a Transform Rule:
-   - Filter: `hostname equals "your-cdn.example.com"`
-   - Rewrite to: `concat("/file/(bucket name)", http.request.uri.path)` (make sure u get the bucket name)
-   - Preserve query string
+This CDN supports any S3-compatible storage service. Here's how to set it up using Cloudflare R2 as an example:
+
+#### Setting up Cloudflare R2 (Example)
+
+1. **Create R2 Bucket**
+   - Go to Cloudflare Dashboard > R2
+   - Click "Create Bucket"
+   - Name your bucket
+   - Enable public access
+
+2. **Generate API Credentials**
+   - Go to R2
+   - Click "Manage API tokens" in API
+   - Click "Create API Token"
+   - Permissions: "Object Read & Write"
+   - Save both Access Key ID and Secret Access Key (S3)
+   
+3. **Get Your URL**
+   - Go to R2
+   - Click "Use R2 with APIs" in API
+   - Select S3 Compatible API
+   - The URL is your Endpoint
+
+
+4. **Configure Custom Domain (Optional)**
+   - Go to R2 > Bucket Settings > Custom Domains
+   - Add your domain (e.g., cdn.beans.com)
+   - Follow DNS configuration steps
 
 ### 3. Environment Setup
 
@@ -68,20 +85,18 @@ SLACK_SIGNING_SECRET=                 # From Basic Information
 SLACK_APP_TOKEN=xapp-                 # From Basic Information (for Socket Mode)
 SLACK_CHANNEL_ID=channel-id           # Channel where bot operates
 
-# Backblaze (Public Bucket)
-B2_APP_KEY_ID=key-id                  # From B2 Application Keys
-B2_APP_KEY=app-key                    # From B2 Application Keys
-B2_BUCKET_ID=bucket-id                # From B2 Bucket Settings
-B2_CDN_URL=https://cdn.example.com
+# S3 Config CF in this example
+AWS_ACCESS_KEY_ID=1234567890abcdef
+AWS_SECRET_ACCESS_KEY=abcdef1234567890
+AWS_BUCKET_NAME=my-cdn-bucket
+AWS_REGION=auto
+AWS_ENDPOINT=https://<accountid>.r2.cloudflarestorage.com
+AWS_CDN_URL=https://cdn.beans.com
 
 # API
 API_TOKEN=beans                       # Set a secure random string
-PORT=3000                             
+PORT=3000
 ```
-
-Here's an improved version of your README section with better clarity and formatting:
-
----
 
 ### **4. Installation & Running**
 
@@ -130,7 +145,7 @@ pm2 startup
 ### V3 API (Latest)
 <img alt="Version 3" src="https://files.catbox.moe/e3ravk.png" align="right" width="300">
 
-**Endpoint:** `POST https://e2.deployor.hackclub.app/api/v3/new`
+**Endpoint:** `POST https://e2.example.hackclub.app/api/v3/new`
 
 **Headers:**
 ```
@@ -140,7 +155,7 @@ Content-Type: application/json
 
 **Request Example:**
 ```bash
-curl --location 'https://e2.deployor.hackclub.app/api/v3/new' \
+curl --location 'https://e2.example.hackclub.app/api/v3/new' \
 --header 'Authorization: Bearer beans' \
 --header 'Content-Type: application/json' \
 --data '[
@@ -155,31 +170,31 @@ curl --location 'https://e2.deployor.hackclub.app/api/v3/new' \
 {
   "files": [
     {
-      "deployedUrl": "https://cdn.deployor.dev/s/v3/3e48b91a4599a3841c028e9a683ef5ce58cea372_flag-standalone.svg",
+      "deployedUrl": "https://cdn.example.dev/s/v3/3e48b91a4599a3841c028e9a683ef5ce58cea372_flag-standalone.svg",
       "file": "0_16361167e11b0d172a47e726b40d70e9873c792b_upload_1736985095691",
       "sha": "16361167e11b0d172a47e726b40d70e9873c792b",
       "size": 90173
     },
     {
-      "deployedUrl": "https://cdn.deployor.dev/s/v3/4e48b91a4599a3841c028e9a683ef5ce58cea372_flag-orpheus-left.png",
+      "deployedUrl": "https://cdn.example.dev/s/v3/4e48b91a4599a3841c028e9a683ef5ce58cea372_flag-orpheus-left.png",
       "file": "1_16361167e11b0d172a47e726b40d70e9873c792b_upload_1736985095692",
       "sha": "16361167e11b0d172a47e726b40d70e9873c792b",
       "size": 80234
     },
     {
-      "deployedUrl": "https://cdn.deployor.dev/s/v3/5e48b91a4599a3841c028e9a683ef5ce58cea372_icon-progress-marker.svg",
+      "deployedUrl": "https://cdn.example.dev/s/v3/5e48b91a4599a3841c028e9a683ef5ce58cea372_icon-progress-marker.svg",
       "file": "2_16361167e11b0d172a47e726b40d70e9873c792b_upload_1736985095693",
       "sha": "16361167e11b0d172a47e726b40d70e9873c792b",
       "size": 70345
     },
     {
-      "deployedUrl": "https://cdn.deployor.dev/s/v3/6e48b91a4599a3841c028e9a683ef5ce58cea372_flag-orpheus-right.png",
+      "deployedUrl": "https://cdn.example.dev/s/v3/6e48b91a4599a3841c028e9a683ef5ce58cea372_flag-orpheus-right.png",
       "file": "3_16361167e11b0d172a47e726b40d70e9873c792b_upload_1736985095694",
       "sha": "16361167e11b0d172a47e726b40d70e9873c792b",
       "size": 60456
     }
   ],
-  "cdnBase": "https://cdn.deployor.dev"
+  "cdnBase": "https://cdn.example.dev"
 }
 ```
 
@@ -188,7 +203,7 @@ curl --location 'https://e2.deployor.hackclub.app/api/v3/new' \
 
 <img alt="Version 2" src="https://files.catbox.moe/uuk1vm.png" align="right" width="300">
 
-**Endpoint:** `POST https://e2.deployor.hackclub.app/api/v2/new`
+**Endpoint:** `POST https://e2.example.hackclub.app/api/v2/new`
 
 **Headers:**
 ```
@@ -208,9 +223,9 @@ Content-Type: application/json
 **Response:**
 ```json
 {
-  "flag-standalone.svg": "https://cdn.deployor.dev/s/v2/flag-standalone.svg",
-  "flag-orpheus-left.png": "https://cdn.deployor.dev/s/v2/flag-orpheus-left.png",
-  "icon-progress-marker.svg": "https://cdn.deployor.dev/s/v2/icon-progress-marker.svg"
+  "flag-standalone.svg": "https://cdn.example.dev/s/v2/flag-standalone.svg",
+  "flag-orpheus-left.png": "https://cdn.example.dev/s/v2/flag-orpheus-left.png",
+  "icon-progress-marker.svg": "https://cdn.example.dev/s/v2/icon-progress-marker.svg"
 }
 ```
 </details>
@@ -220,7 +235,7 @@ Content-Type: application/json
 
 <img alt="Version 1" src="https://files.catbox.moe/tnzdfe.png" align="right" width="300">
 
-**Endpoint:** `POST https://e2.deployor.hackclub.app/api/v1/new`
+**Endpoint:** `POST https://e2.example.hackclub.app/api/v1/new`
 
 **Headers:**
 ```
@@ -240,9 +255,9 @@ Content-Type: application/json
 **Response:**
 ```json
 [
-  "https://cdn.deployor.dev/s/v1/0_flag-standalone.svg",
-  "https://cdn.deployor.dev/s/v1/1_flag-orpheus-left.png",
-  "https://cdn.deployor.dev/s/v1/2_icon-progress-marker.svg"
+  "https://cdn.example.dev/s/v1/0_flag-standalone.svg",
+  "https://cdn.example.dev/s/v1/1_flag-orpheus-left.png",
+  "https://cdn.example.dev/s/v1/2_icon-progress-marker.svg"
 ]
 ```
 </details>
@@ -264,7 +279,7 @@ Content-Type: application/json
 
 - **Storage Structure:** `/s/v3/{HASH}_{filename}`
 - **File Naming:** `/s/{slackUserId}/{unix}_{sanitizedFilename}`
-- **Cost Efficiency:** Uses B2 storage for significant cost savings
+- **Cost Efficiency:** Uses object storage for significant cost savings
 - **Security:** Token-based authentication for API access
 
 ## 💻 Slack Bot Behavior
@@ -279,8 +294,7 @@ Content-Type: application/json
 
 ## 💰 Cost Optimization
 
-- Uses Cloudflare CDN with Backblaze B2 storage
-- Free egress thanks to Cloudflare-Backblaze Alliance
+- Uses Object storage
 - 87-98% cost reduction compared to Vercel CDN
 
 <div align="center">

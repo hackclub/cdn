@@ -2,6 +2,9 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const logger = require('./src/config/logger');
+
+logger.info('Starting CDN application 🚀');
+
 const {App} = require('@slack/bolt');
 const fileUpload = require('./src/fileUpload');
 const express = require('express');
@@ -28,7 +31,12 @@ expressApp.use('/api', apiRoutes);
 
 // Error handling middleware
 expressApp.use((err, req, res, next) => {
-    logger.error('API Error:', err);
+    logger.error('API Error:', {
+        error: err.message,
+        stack: err.stack,
+        path: req.path,
+        method: req.method
+    });
     res.status(500).json({ error: 'Internal server error' });
 });
 
@@ -40,40 +48,34 @@ expressApp.use((req, res, next) => {
 
 // Event listener for file_shared events
 app.event('file_shared', async ({event, client}) => {
-    logger.debug(`Received file_shared event: ${JSON.stringify(event)}`);
-
-    if (parseFloat(event.event_ts) < BOT_START_TIME) {
-        logger.debug(`Ignoring file event from before bot start: ${new Date(parseFloat(event.event_ts) * 1000).toISOString()}`);
-        return;
-    }
-
-    const targetChannelId = process.env.SLACK_CHANNEL_ID;
-    const channelId = event.channel_id;
-
-    if (channelId !== targetChannelId) {
-        logger.debug(`Ignoring file shared in channel: ${channelId}`);
-        return;
-    }
+    if (parseFloat(event.event_ts) < BOT_START_TIME) return;
+    if (event.channel_id !== process.env.SLACK_CHANNEL_ID) return;
 
     try {
         await fileUpload.handleFileUpload(event, client);
     } catch (error) {
-        logger.error(`Error processing file upload: ${error.message}`);
+        logger.error(`Upload failed: ${error.message}`);
     }
 });
 
-// Slack bot and API server
+// Startup LOGs
 (async () => {
     try {
         await fileUpload.initialize();
         await app.start();
         const port = parseInt(process.env.PORT || '4553', 10);
         expressApp.listen(port, () => {
-            logger.info(`⚡️ Slack app is running in Socket Mode!`);
-            logger.info(`🚀 API server is running on port ${port}`);
+            logger.info('CDN started successfully 🔥', {
+                slackMode: 'Socket Mode',
+                apiPort: port,
+                startTime: new Date().toISOString()
+            });
         });
     } catch (error) {
-        logger.error('Failed to start:', error);
+        logger.error('Failed to start application:', {
+            error: error.message,
+            stack: error.stack
+        });
         process.exit(1);
     }
 })();

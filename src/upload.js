@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const {uploadToBackblaze} = require('../backblaze');
+const {uploadToStorage} = require('../storage');
 const {generateUrl} = require('./utils');
 const logger = require('../config/logger');
 
@@ -9,16 +9,19 @@ const handleUpload = async (file) => {
     try {
         const buffer = fs.readFileSync(file.path);
         const fileName = path.basename(file.originalname);
+        // Add content type detection for S3
+        const contentType = file.mimetype || 'application/octet-stream';
         const uniqueFileName = `${Date.now()}-${fileName}`;
 
-        // Upload to B2 storage
+        // Upload to S3 storage with content type
         logger.debug(`Uploading: ${uniqueFileName}`);
-        const uploaded = await uploadToBackblaze('s/v3', uniqueFileName, buffer);
+        const uploaded = await uploadToStorage('s/v3', uniqueFileName, buffer, contentType);
         if (!uploaded) throw new Error('Storage upload failed');
 
         return {
             name: fileName,
-            url: generateUrl('s/v3', uniqueFileName)
+            url: generateUrl('s/v3', uniqueFileName),
+            contentType
         };
     } catch (error) {
         logger.error('Upload failed:', error);
