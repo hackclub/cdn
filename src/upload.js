@@ -9,11 +9,11 @@ const handleUpload = async (file) => {
     try {
         const buffer = fs.readFileSync(file.path);
         const fileName = path.basename(file.originalname);
-        // Add content type detection for S3
+        // content type detection for S3
         const contentType = file.mimetype || 'application/octet-stream';
         const uniqueFileName = `${Date.now()}-${fileName}`;
 
-        // Upload to S3 storage with content type
+        // Upload to S3
         logger.debug(`Uploading: ${uniqueFileName}`);
         const uploaded = await uploadToStorage('s/v3', uniqueFileName, buffer, contentType);
         if (!uploaded) throw new Error('Storage upload failed');

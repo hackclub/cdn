@@ -57,7 +57,7 @@ function sanitizeFileName(fileName) {
     return sanitizedFileName;
 }
 
-// Generate a unique, non-guessable file name
+// Generate a unique file name
 function generateUniqueFileName(fileName) {
     const sanitizedFileName = sanitizeFileName(fileName);
     const uniqueFileName = `${Date.now()}-${crypto.randomBytes(16).toString('hex')}-${sanitizedFileName}`;

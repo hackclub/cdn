@@ -3,8 +3,15 @@ const crypto = require('crypto');
 const logger = require('./config/logger');
 const storage = require('./storage');
 const {generateFileUrl} = require('./utils');
+const path = require('path');
+const { 
+    messages, 
+    formatSuccessMessage, 
+    formatErrorMessage,
+    getFileTypeMessage 
+} = require('./config/messages');
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024;  // 2GB in bytes
+const MAX_FILE_SIZE = 50 * 1024 * 1024;  // 50MB in bytes
 const CONCURRENT_UPLOADS = 3;                    // Max concurrent uploads (messages)
 
 const processedMessages = new Map();
@@ -43,15 +50,22 @@ function generateUniqueFileName(fileName) {
 async function processFiles(fileMessage, client) {
     const uploadedFiles = [];
     const failedFiles = [];
+    const sizeFailedFiles = [];
+    const fileTypeResponses = new Set();
 
     logger.info(`Processing ${fileMessage.files?.length || 0} files`);
 
     for (const file of fileMessage.files || []) {
         try {
             if (file.size > MAX_FILE_SIZE) {
-                failedFiles.push(file.name);
+                sizeFailedFiles.push(file.name);
                 continue;
             }
+
+            // Get file extension message if applicable
+            const ext = path.extname(file.name).slice(1);
+            const typeMessage = getFileTypeMessage(ext);
+            if (typeMessage) fileTypeResponses.add(typeMessage);
 
             const response = await fetch(file.url_private, {
                 headers: {Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`}
@@ -71,6 +85,7 @@ async function processFiles(fileMessage, client) {
 
             uploadedFiles.push({
                 name: uniqueFileName,
+                originalName: file.name,
                 url: generateFileUrl(userDir, uniqueFileName),
                 contentType: file.mimetype
             });
@@ -81,8 +96,12 @@ async function processFiles(fileMessage, client) {
         }
     }
 
-    logger.info(`Completed: ${uploadedFiles.length} ok, ${failedFiles.length} failed`);
-    return {uploadedFiles, failedFiles};
+    return {
+        uploadedFiles, 
+        failedFiles,
+        sizeFailedFiles,
+        isSizeError: sizeFailedFiles.length > 0
+    };
 }
 
 // Slack interaction
@@ -98,15 +117,26 @@ async function addProcessingReaction(client, event, fileMessage) {
     }
 }
 
-async function updateReactions(client, event, fileMessage, success) {
+async function updateReactions(client, event, fileMessage, totalFiles, failedCount) {
     try {
         await client.reactions.remove({
             name: 'beachball',
             timestamp: fileMessage.ts,
             channel: event.channel_id
         });
+
+        // Choose reaction based on how many files failed or well succeded
+        let reactionName;
+        if (failedCount === totalFiles) {
+            reactionName = 'x';  // All files failed
+        } else if (failedCount > 0) {
+            reactionName = 'warning';  // Some files failed
+        } else {
+            reactionName = 'white_check_mark';  // All files succeeded
+        }
+
         await client.reactions.add({
-            name: success ? 'white_check_mark' : 'x',
+            name: reactionName,
             timestamp: fileMessage.ts,
             channel: event.channel_id
         });
@@ -133,7 +163,7 @@ async function findFileMessage(event, client) {
             throw new Error('No share info found for this channel');
         }
 
-        // Get the exact message using the ts from share info
+        // Get the EXACT message using the ts from share info (channelShare)
         const messageTs = channelShare[0].ts;
 
         const messageInfo = await client.conversations.history({
@@ -154,21 +184,51 @@ async function findFileMessage(event, client) {
     }
 }
 
-async function sendResultsMessage(client, channelId, fileMessage, uploadedFiles, failedFiles) {
-    let message = `Hey <@${fileMessage.user}>, `;
-    if (uploadedFiles.length > 0) {
-        message += `here ${uploadedFiles.length === 1 ? 'is your link' : 'are your links'}:\n`;
-        message += uploadedFiles.map(f => `• ${f.name}: ${f.url}`).join('\n');
-    }
-    if (failedFiles.length > 0) {
-        message += `\n\nFailed to process: ${failedFiles.join(', ')}`;
-    }
+async function sendResultsMessage(client, channelId, fileMessage, uploadedFiles, failedFiles, sizeFailedFiles) {
+    try {
+        let message;
+        if (uploadedFiles.length === 0 && (failedFiles.length > 0 || sizeFailedFiles.length > 0)) {
+            // All files failed - use appropriate error type
+            message = formatErrorMessage(
+                [...failedFiles, ...sizeFailedFiles],
+                sizeFailedFiles.length > 0 && failedFiles.length === 0  // Only use size error if all failures are size-related (i hope this is how it makes most sense)
+            );
+        } else {
+            // Mixed success/failure or all success
+            message = formatSuccessMessage(
+                fileMessage.user,
+                uploadedFiles,
+                failedFiles,
+                sizeFailedFiles
+            );
+        }
 
-    await client.chat.postMessage({
-        channel: channelId,
-        thread_ts: fileMessage.ts,
-        text: message
-    });
+        const lines = message.split('\n');
+        const attachments = [];
+        let textBuffer = '';
+
+        for (const line of lines) {
+            if (line.match(/^<.*\|image>$/)) {
+                const imageUrl = line.replace(/^<|>$/g, '').replace('|image', '');
+                attachments.push({
+                    image_url: imageUrl,
+                    fallback: 'Error image'
+                });
+            } else {
+                textBuffer += line + '\n';
+            }
+        }
+
+        await client.chat.postMessage({
+            channel: channelId,
+            thread_ts: fileMessage.ts,
+            text: textBuffer.trim(),
+            attachments: attachments.length > 0 ? attachments : undefined
+        });
+    } catch (error) {
+        logger.error('Failed to send results message:', error);
+        throw error;
+    }
 }
 
 async function handleError(client, channelId, fileMessage, reactionAdded) {
@@ -210,9 +270,27 @@ async function handleFileUpload(event, client) {
         await addProcessingReaction(client, event, fileMessage);
         reactionAdded = true;
 
-        const {uploadedFiles, failedFiles} = await processFiles(fileMessage, client);
-        await sendResultsMessage(client, event.channel_id, fileMessage, uploadedFiles, failedFiles);
-        await updateReactions(client, event, fileMessage, failedFiles.length === 0);
+        const {uploadedFiles, failedFiles, sizeFailedFiles} = await processFiles(fileMessage, client);
+        
+        const totalFiles = uploadedFiles.length + failedFiles.length + sizeFailedFiles.length;
+        const failedCount = failedFiles.length + sizeFailedFiles.length;
+
+        await sendResultsMessage(
+            client,
+            event.channel_id,
+            fileMessage,
+            uploadedFiles,
+            failedFiles,
+            sizeFailedFiles
+        );
+
+        await updateReactions(
+            client, 
+            event, 
+            fileMessage, 
+            totalFiles, 
+            failedCount
+        );
 
     } catch (error) {
         logger.error(`Upload failed: ${error.message}`);

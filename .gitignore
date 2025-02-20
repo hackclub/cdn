@@ -4,3 +4,4 @@
 /.env
 /bun.lockb
 /package-lock.json
+/.history
