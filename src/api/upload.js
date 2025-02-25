@@ -14,16 +14,27 @@ function sanitizeFileName(fileName) {
 }
 
 // Handle remote file upload to S3 storage
-const uploadEndpoint = async (url, authorization = null) => {
+const uploadEndpoint = async (url, downloadAuth = null) => {
     try {
         logger.debug('Starting download', { url });
-        const response = await fetch(url, {
-            headers: authorization ? {'Authorization': authorization} : {}
-        });
+        const headers = {};
+        
+        if (downloadAuth) {
+            headers['Authorization'] = downloadAuth.startsWith('Bearer ') 
+                ? downloadAuth 
+                : `Bearer ${downloadAuth}`;
+        }
+
+        const response = await fetch(url, { headers });
 
         if (!response.ok) {
             const error = new Error(`Download failed: ${response.statusText}`);
             error.statusCode = response.status;
+            error.code = 'DOWNLOAD_FAILED';
+            if (response.status === 401 || response.status === 403) {
+                error.code = 'AUTH_FAILED';
+                error.message = 'Authentication failed for protected resource';
+            }
             throw error;
         }
 
@@ -51,17 +62,18 @@ const uploadEndpoint = async (url, authorization = null) => {
         logger.error('Upload process failed', {
             url,
             error: error.message,
+            code: error.code,
             statusCode: error.statusCode,
             stack: error.stack
         });
         
-        // Format error (pain)
         const statusCode = error.statusCode || 500;
         const errorResponse = {
             error: {
                 message: error.message,
                 code: error.code || 'INTERNAL_ERROR',
-                details: error.details || null
+                details: error.details || null,
+                url: url
             },
             success: false
         };
@@ -74,7 +86,23 @@ const uploadEndpoint = async (url, authorization = null) => {
 const handleUpload = async (req) => {
     try {
         const url = req.body || await req.text();
-        const result = await uploadEndpoint(url, req.headers?.authorization);
+        const downloadAuth = req.headers?.['x-download-authorization']?.toString();
+            
+        if (url.includes('files.slack.com') && !downloadAuth) {
+            return {
+                status: 400,
+                body: {
+                    error: {
+                        message: 'X-Download-Authorization required for Slack files',
+                        code: 'AUTH_REQUIRED',
+                        details: 'Slack files require authentication'
+                    },
+                    success: false
+                }
+            };
+        }
+        
+        const result = await uploadEndpoint(url, downloadAuth);
         return { status: 200, body: result };
     } catch (error) {
         return {

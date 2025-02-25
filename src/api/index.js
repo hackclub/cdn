@@ -52,10 +52,11 @@ const handleBulkUpload = async (req, res, version) => {
             return res.status(422).json({error: 'Empty/invalid file array'});
         }
 
+        const downloadAuth = req.headers?.['x-download-authorization'];
         // Process all URLs concurrently
         logger.debug(`Processing ${urls.length} URLs`);
         const results = await Promise.all(
-            urls.map(url => uploadEndpoint(url, req.headers?.authorization))
+            urls.map(url => uploadEndpoint(url, downloadAuth))
         );
 
         res.json(formatResponse(results, version));

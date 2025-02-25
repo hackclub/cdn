@@ -293,13 +293,16 @@ async function uploadToStorage(userDir, uniqueFileName, buffer, contentType = 'a
 
         logger.info(`Uploading: ${uniqueFileName}`);
         await s3Client.send(new PutObjectCommand(params));
-        return true;
+        return { success: true };
     } catch (error) {
         logger.error(`Upload failed: ${error.message}`, { 
             path: `${userDir}/${uniqueFileName}`,
             error: error.message
         });
-        return false;
+        return { 
+            success: false, 
+            error: error.message 
+        };
     }
 }
 
