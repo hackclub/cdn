@@ -5,7 +5,7 @@ const logger = require('./src/config/logger');
 
 logger.info('Starting CDN application 🚀');
 
-const {App} = require('@slack/bolt');
+// const {App} = require('@slack/bolt');
 const fileUpload = require('./src/fileUpload');
 const express = require('express');
 const cors = require('cors');
@@ -13,12 +13,12 @@ const apiRoutes = require('./src/api/index.js');
 
 const BOT_START_TIME = Date.now() / 1000;
 
-const app = new App({
-    token: process.env.SLACK_BOT_TOKEN,
-    signingSecret: process.env.SLACK_SIGNING_SECRET,
-    socketMode: true,
-    appToken: process.env.SLACK_APP_TOKEN
-});
+// const app = new App({
+//     token: process.env.SLACK_BOT_TOKEN,
+//     signingSecret: process.env.SLACK_SIGNING_SECRET,
+//     socketMode: false,
+//     appToken: process.env.SLACK_APP_TOKEN
+// });
 
 // API server
 const expressApp = express();
@@ -52,22 +52,22 @@ expressApp.use((req, res, next) => {
 });
 
 // Event listener for file_shared events
-app.event('file_shared', async ({event, client}) => {
-    if (parseFloat(event.event_ts) < BOT_START_TIME) return;
-    if (event.channel_id !== process.env.SLACK_CHANNEL_ID) return;
+// app.event('file_shared', async ({event, client}) => {
+//     if (parseFloat(event.event_ts) < BOT_START_TIME) return;
+//     if (event.channel_id !== process.env.SLACK_CHANNEL_ID) return;
 
-    try {
-        await fileUpload.handleFileUpload(event, client);
-    } catch (error) {
-        logger.error(`Upload failed: ${error.message}`);
-    }
-});
+//     try {
+//         await fileUpload.handleFileUpload(event, client);
+//     } catch (error) {
+//         logger.error(`Upload failed: ${error.message}`);
+//     }
+// });
 
 // Startup LOGs
 (async () => {
     try {
         await fileUpload.initialize();
-        await app.start();
+        // await app.start();
         const port = parseInt(process.env.PORT || '4553', 10);
         expressApp.listen(port, () => {
             logger.info('CDN started successfully 🔥', {
