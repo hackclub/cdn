@@ -2,7 +2,7 @@
 FROM oven/bun:1
 
 # install curl for coolify healthcheck
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y curl wget
 
 # Set working directory
 WORKDIR /app
