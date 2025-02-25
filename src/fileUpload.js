@@ -25,15 +25,28 @@ async function initialize() {
 // Basic stuff
 function isMessageTooOld(eventTs) {
     const eventTime = parseFloat(eventTs) * 1000;
-    return (Date.now() - eventTime) > 24 * 60 * 60 * 1000;
+    const MAX_AGE = 5 * 60 * 1000;
+    const age = Date.now() - eventTime;
+    const isTooOld = age > MAX_AGE;
+    
+    if (isTooOld) {
+        logger.info(`Skipping old message from ${new Date(eventTime).toISOString()} (${Math.round(age/1000)}s old)`);
+    }
+    return isTooOld;
 }
 
 function isMessageProcessed(messageTs) {
+    const now = Date.now();
+    for (const [ts, time] of processedMessages.entries()) {
+        if (now - time > 24 * 60 * 60 * 1000) {
+            processedMessages.delete(ts);
+        }
+    }
     return processedMessages.has(messageTs);
 }
 
 function markMessageAsProcessing(messageTs) {
-    processedMessages.set(messageTs, true);
+    processedMessages.set(messageTs, Date.now());
 }
 
 // File processing
@@ -147,19 +160,36 @@ async function updateReactions(client, event, fileMessage, totalFiles, failedCou
 
 async function findFileMessage(event, client) {
     try {
-        const result = await client.conversations.history({
-            channel: event.channel_id,
-            latest: event.event_ts,
-            inclusive: true,
-            limit: 1
+        const fileInfo = await client.files.info({
+            file: event.file_id,
+            include_shares: true
         });
 
-        if (!result.ok || !result.messages.length) {
+        if (!fileInfo.ok || !fileInfo.file) {
+            throw new Error('Could not get file info');
+        }
+
+        const channelShare = fileInfo.file.shares?.public?.[event.channel_id] ||
+            fileInfo.file.shares?.private?.[event.channel_id];
+
+        if (!channelShare || !channelShare.length) {
+            throw new Error('No share info found for this channel');
+        }
+
+        const messageTs = channelShare[channelShare.length - 1].ts;
+
+        const messageInfo = await client.conversations.history({
+            channel: event.channel_id,
+            latest: messageTs,
+            limit: 1,
+            inclusive: true
+        });
+
+        if (!messageInfo.ok || !messageInfo.messages.length) {
             throw new Error('Could not find original message');
         }
 
-        const message = result.messages[0];
-        // Ensure message has files
+        const message = messageInfo.messages[0];
         if (!message.files || message.files.length === 0) {
             throw new Error('No files found in message');
         }
@@ -250,19 +280,7 @@ async function handleFileUpload(event, client) {
     try {
         if (isMessageTooOld(event.event_ts)) return;
 
-        // Get the message using conversations.history
-        const messages = await client.conversations.history({
-            channel: event.channel_id,
-            latest: event.event_ts,
-            inclusive: true,
-            limit: 1
-        });
-
-        if (!messages.ok || !messages.messages.length) {
-            throw new Error('Could not find message');
-        }
-
-        fileMessage = messages.messages[0];
+        fileMessage = await findFileMessage(event, client);
         if (!fileMessage || isMessageProcessed(fileMessage.ts)) return;
 
         markMessageAsProcessing(fileMessage.ts);

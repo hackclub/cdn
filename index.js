@@ -48,12 +48,12 @@ expressApp.use((req, res, next) => {
 });
 
 // Event listener for file_shared events
-app.event('file_shared', async ({ event, context }) => {
+app.event('file_shared', async ({ event, client }) => {
     if (parseFloat(event.event_ts) < BOT_START_TIME) return;
     if (event.channel_id !== process.env.SLACK_CHANNEL_ID) return;
 
     try {
-        await fileUpload.handleFileUpload(event, context.client);
+        await fileUpload.handleFileUpload(event, client);
     } catch (error) {
         logger.error(`Upload failed: ${error.message}`);
     }
