@@ -77,26 +77,7 @@ This CDN supports any S3-compatible storage service. Here's how to set it up usi
 
 ### 3. Environment Setup
 
-Create a `.env` file with:
-```env
-# Slack
-SLACK_BOT_TOKEN=xoxb-                 # From OAuth & Permissions
-SLACK_SIGNING_SECRET=                 # From Basic Information
-SLACK_APP_TOKEN=xapp-                 # From Basic Information (for Socket Mode)
-SLACK_CHANNEL_ID=channel-id           # Channel where bot operates
-
-# S3 Config CF in this example
-AWS_ACCESS_KEY_ID=1234567890abcdef
-AWS_SECRET_ACCESS_KEY=abcdef1234567890
-AWS_BUCKET_NAME=my-cdn-bucket
-AWS_REGION=auto
-AWS_ENDPOINT=https://<accountid>.r2.cloudflarestorage.com
-AWS_CDN_URL=https://cdn.beans.com
-
-# API
-API_TOKEN=beans                       # Set a secure random string
-PORT=3000
-```
+Check out the `example.env` file for getting started!
 
 ### **4. Installation & Running**
 
@@ -145,7 +126,7 @@ pm2 startup
 ### V3 API (Latest)
 <img alt="Version 3" src="https://files.catbox.moe/e3ravk.png" align="right" width="300">
 
-**Endpoint:** `POST https://e2.example.hackclub.app/api/v3/new`
+**Endpoint:** `POST https://cdn.hackclub.com/api/v3/new`
 
 **Headers:**
 ```
@@ -155,7 +136,7 @@ Content-Type: application/json
 
 **Request Example:**
 ```bash
-curl --location 'https://e2.example.hackclub.app/api/v3/new' \
+curl --location 'https://cdn.hackclub.com/api/v3/new' \
 --header 'Authorization: Bearer beans' \
 --header 'Content-Type: application/json' \
 --data '[
@@ -203,7 +184,7 @@ curl --location 'https://e2.example.hackclub.app/api/v3/new' \
 
 <img alt="Version 2" src="https://files.catbox.moe/uuk1vm.png" align="right" width="300">
 
-**Endpoint:** `POST https://e2.example.hackclub.app/api/v2/new`
+**Endpoint:** `POST https://cdn.hackclub.com/api/v2/new`
 
 **Headers:**
 ```
@@ -235,7 +216,7 @@ Content-Type: application/json
 
 <img alt="Version 1" src="https://files.catbox.moe/tnzdfe.png" align="right" width="300">
 
-**Endpoint:** `POST https://e2.example.hackclub.app/api/v1/new`
+**Endpoint:** `POST https://cdn.hackclub.com/api/v1/new`
 
 **Headers:**
 ```
