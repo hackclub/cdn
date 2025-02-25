@@ -1,6 +1,9 @@
 # Use the official Bun image as base
 FROM oven/bun:1
 
+# install wget for coolify healthcheck
+RUN apt-get update && apt-get install -y wget
+
 # Set working directory
 WORKDIR /app
 
