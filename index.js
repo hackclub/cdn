@@ -29,6 +29,11 @@ expressApp.use(express.urlencoded({ extended: true }));
 // Mount API for all versions
 expressApp.use('/api', apiRoutes);
 
+// redirect route to "https://github.com/hackclub/cdn"
+expressApp.get('/', (req, res) => {
+    res.redirect('https://github.com/hackclub/cdn');
+});
+
 // Error handling middleware
 expressApp.use((err, req, res, next) => {
     logger.error('API Error:', {
