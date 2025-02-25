@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const {uploadToStorage} = require('../storage');
-const {generateUrl} = require('./utils');
-const logger = require('../config/logger');
+const {uploadToStorage} = require('./storage');
+const {generateFileUrl} = require('./utils');
+const logger = require('./config/logger');
 
 // Handle individual file upload
 const handleUpload = async (file) => {
@@ -15,20 +15,28 @@ const handleUpload = async (file) => {
 
         // Upload to S3
         logger.debug(`Uploading: ${uniqueFileName}`);
-        const uploaded = await uploadToStorage('s/v3', uniqueFileName, buffer, contentType);
-        if (!uploaded) throw new Error('Storage upload failed');
+        const uploadResult = await uploadToStorage('s/v3', uniqueFileName, buffer, contentType);
+        if (!uploadResult.success) {
+            throw new Error(uploadResult.error || 'Storage upload failed');
+        }
 
         return {
+            success: true,
             name: fileName,
-            url: generateUrl('s/v3', uniqueFileName),
+            url: generateFileUrl('s/v3', uniqueFileName),
             contentType
         };
     } catch (error) {
         logger.error('Upload failed:', error);
-        throw error;
+        return {
+            success: false,
+            error: error.message
+        };
     } finally {
         // Clean up the temporary file
-        fs.unlinkSync(file.path);
+        if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+        }
     }
 };
 

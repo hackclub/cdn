@@ -147,37 +147,24 @@ async function updateReactions(client, event, fileMessage, totalFiles, failedCou
 
 async function findFileMessage(event, client) {
     try {
-        const fileInfo = await client.files.info({
-            file: event.file_id,
-            include_shares: true
-        });
-
-        if (!fileInfo.ok || !fileInfo.file) {
-            throw new Error('Could not get file info');
-        }
-
-        const channelShare = fileInfo.file.shares?.public?.[event.channel_id] ||
-            fileInfo.file.shares?.private?.[event.channel_id];
-
-        if (!channelShare || !channelShare.length) {
-            throw new Error('No share info found for this channel');
-        }
-
-        // Get the EXACT message using the ts from share info (channelShare)
-        const messageTs = channelShare[0].ts;
-
-        const messageInfo = await client.conversations.history({
+        const result = await client.conversations.history({
             channel: event.channel_id,
-            latest: messageTs,
-            limit: 1,
-            inclusive: true
+            latest: event.event_ts,
+            inclusive: true,
+            limit: 1
         });
 
-        if (!messageInfo.ok || !messageInfo.messages.length) {
+        if (!result.ok || !result.messages.length) {
             throw new Error('Could not find original message');
         }
 
-        return messageInfo.messages[0];
+        const message = result.messages[0];
+        // Ensure message has files
+        if (!message.files || message.files.length === 0) {
+            throw new Error('No files found in message');
+        }
+
+        return message;
     } catch (error) {
         logger.error('Error finding file message:', error);
         return null;
@@ -263,7 +250,19 @@ async function handleFileUpload(event, client) {
     try {
         if (isMessageTooOld(event.event_ts)) return;
 
-        fileMessage = await findFileMessage(event, client);
+        // Get the message using conversations.history
+        const messages = await client.conversations.history({
+            channel: event.channel_id,
+            latest: event.event_ts,
+            inclusive: true,
+            limit: 1
+        });
+
+        if (!messages.ok || !messages.messages.length) {
+            throw new Error('Could not find message');
+        }
+
+        fileMessage = messages.messages[0];
         if (!fileMessage || isMessageProcessed(fileMessage.ts)) return;
 
         markMessageAsProcessing(fileMessage.ts);

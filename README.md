@@ -32,8 +32,7 @@
 ### 1. Slack App Configuration
 
 1. Create a new Slack App at [api.slack.com](https://api.slack.com/apps)
-2. Enable Socket Mode in the app settings
-3. Add the following Bot Token Scopes:
+2. Add the following Bot Token Scopes:
    - `channels:history`
    - `channels:read`
    - `chat:write`
@@ -41,8 +40,10 @@
    - `files:write`
    - `groups:history`
    - `reactions:write`
-4. Enable Event Subscriptions and subscribe to `file_shared` event
-5. Install the app to your workspace
+3. Enable Event Subscriptions:
+   - Set Request URL to `https://your-domain.com/slack/events`
+   - Subscribe to `file_shared` event
+4. Install the app to your workspace
 
 ### 2. Storage Configuration
 
@@ -82,7 +83,6 @@ Create a `.env` file with:
 # Slack
 SLACK_BOT_TOKEN=xoxb-                 # From OAuth & Permissions
 SLACK_SIGNING_SECRET=                 # From Basic Information
-SLACK_APP_TOKEN=xapp-                 # From Basic Information (for Socket Mode)
 SLACK_CHANNEL_ID=channel-id           # Channel where bot operates
 
 # S3 Config CF in this example

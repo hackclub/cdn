@@ -1,17 +1,42 @@
 const express = require('express');
 const multer = require('multer');
 const router = express.Router();
-const upload = multer({dest: 'uploads/'});
+const logger = require('./config/logger');
 
-router.post('/upload', upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).send('No file uploaded.');
+// Auth middleware
+const authMiddleware = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token !== process.env.API_TOKEN) {
+        return res.status(401).json({ error: 'Unauthorized' });
     }
+    next();
+};
 
-    // Handle the uploaded file
-    console.log('Uploaded file:', req.file);
+// Configure multer
+const upload = multer({
+    dest: 'uploads/',
+    limits: { fileSize: 2 * 1024 * 1024 * 1024 } // 2GB
+});
 
-    res.send('File uploaded successfully.');
+// Add auth to all routes
+router.use(authMiddleware);
+
+router.post('/upload', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const result = await handleUpload(req.file);
+        if (!result.success) {
+            return res.status(500).json({ error: result.error });
+        }
+
+        res.json(result);
+    } catch (error) {
+        logger.error('Upload error:', error);
+        res.status(500).json({ error: 'Upload failed' });
+    }
 });
 
 module.exports = router;
