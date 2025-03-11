@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 const {uploadToStorage} = require('../storage');
-const {generateUrl, getCdnUrl} = require('./utils');
+const {generateUrl} = require('./utils');
 const logger = require('../config/logger');
 
 // Sanitize file name for storage

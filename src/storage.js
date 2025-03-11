@@ -1,5 +1,4 @@
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const path = require('path');
 const crypto = require('crypto');
 const logger = require('./config/logger');
 const {generateFileUrl} = require('./utils');
