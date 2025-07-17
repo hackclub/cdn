@@ -1,21 +1,22 @@
 {
-      "name": "cdn-v2-hackclub",
-      "version": "1.0.0",
-      "description": "API to upload files to S3-compatible storage with unique URLs",
-      "main": "index.js",
-      "scripts": {
-            "start": "bun index.js",
-            "dev": "bun --watch index.js"
-      },
-      "dependencies": {
-            "@aws-sdk/client-s3": "^3.478.0",
-            "cors": "^2.8.5",
-            "express": "^4.21.2",
-            "multer": "^1.4.5-lts.1",
-            "node-fetch": "^2.6.1",
-            "p-limit": "^6.2.0",
-            "winston": "^3.17.0"
-      },
-      "author": "",
-      "license": "MIT"
+  "name": "cdn-v2-hackclub",
+  "version": "1.0.0",
+  "description": "API to upload files to S3-compatible storage with unique URLs",
+  "main": "index.js",
+  "scripts": {
+    "start": "bun index.js",
+    "dev": "bun --watch index.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.478.0",
+    "@smithy/fetch-http-handler": "^5.1.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^2.6.1",
+    "p-limit": "^6.2.0",
+    "winston": "^3.17.0"
+  },
+  "author": "",
+  "license": "MIT"
 }

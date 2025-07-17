@@ -47,7 +47,7 @@ const uploadEndpoint = async (url, downloadAuth = null) => {
 
         // Upload to S3 storage
         logger.debug(`Uploading: ${fileName}`);
-        const uploadResult = await uploadToStorage('s/v3', fileName, buffer, response.headers.get('content-type'));
+        const uploadResult = await uploadToStorage('s/v3', fileName, buffer, response.headers.get('content-type'), buffer.length);
         if (uploadResult.success === false) {
             throw new Error(`Storage upload failed: ${uploadResult.error}`);
         }
