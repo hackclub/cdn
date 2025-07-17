@@ -16,7 +16,15 @@ const handleUpload = async (file) => {
         // Upload to S3
         logger.debug(`Uploading: ${uniqueFileName}`);
         const uploaded = await uploadToStorage('s/v3', uniqueFileName, buffer, contentType);
-        if (!uploaded) throw new Error('Storage upload failed');
+        
+        if (!uploaded) {
+            logger.info('Upload failed!')
+            throw new Error('Storage upload failed')
+        };
+
+        logger.info('File uploaded successfully:', uniqueFileName);
+        const url = generateUrl('s/v3', uniqueFileName);
+        logger.info('File URL:', url);
 
         return {
             name: fileName,
