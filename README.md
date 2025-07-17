@@ -32,6 +32,9 @@ Authorization: Bearer api-token
 Content-Type: application/json
 ```
 
+**Optional Headers:**
+- `X-Download-Authorization`: Bearer token for accessing protected resources (required for Slack files)
+
 **Request Example:**
 ```bash
 curl --location 'https://cdn.hackclub.com/api/v3/new' \
