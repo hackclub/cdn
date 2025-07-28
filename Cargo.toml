@@ -1,0 +1,28 @@
+[package]
+name = "cdn"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dotenvy_macro = "0.15.7"
+sled = { version = "0.34.7", default-features = false }
+serde = { version = "1.0.219", default-features = false, features = ["derive"] }
+tracing = { version = "0.1.41", features = ["async-await"] }
+serde_json = { version = "1.0.141", default-features = false, features = ["alloc"] }
+reqwest = { version = "0.12.22", default-features = false, features = ["json", "rustls-tls"] }
+rust-s3 = { version = "0.35.1", default-features = false, features = ["tokio-rustls-tls", "with-tokio"] }
+axum = { version = "0.8.4", default-features = false, features = ["json", "tokio", "macros", "http2"] }
+tokio = { version = "1.47.0", default-features = false, features = ["net", "io-util", "rt-multi-thread", "time", "sync", "macros"] }
+
+[target.'cfg(all(target_os = "linux", target_arch = "x86_64"))'.dependencies]
+sled = { version = "0.34.7", default-features = false, features = ["io_uring"] }
+
+[profile.release]
+rpath = false
+opt-level = 3
+lto = "fat"
+strip = "symbols"
+# codegen-units = 1 (waiter 1 abysmal compile time please)
+
+[profile.dev.package."*"]
+opt-level = 3
