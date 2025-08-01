@@ -1,7 +1,6 @@
 /node_modules/
 /splitfornpm/
 /.idea/
-/.env
 /package-lock.json
 /.history
 
