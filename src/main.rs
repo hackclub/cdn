@@ -122,7 +122,7 @@ async fn main() {
         .nest("/api", api_router);
 
     axum::serve(
-        TcpListener::bind(format!("127.0.0.1:{}", dotenv!("PORT")))
+        TcpListener::bind(format!("0.0.0.0:{}", dotenv!("PORT")))
             .await
             .unwrap(),
         app,
