@@ -10,8 +10,8 @@ use tokio_util::io::StreamReader;
 use serde::{Deserialize, Serialize};
 use ring::digest::{Context, SHA1_FOR_LEGACY_USE_ONLY};
 
-use crate::BUCKET;
 use crate::CDN;
+use crate::BUCKET;
 use crate::metrics::store::store_file;
 
 use error::APIError;

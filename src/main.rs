@@ -105,8 +105,8 @@ async fn main() {
 
     let docs_router = Router::new()
         .route("/docs", get(api::docs))
-        .route("/openapi.json", get(api::openapi_axle))
-        .route("/favicon.svg", get(api::favicon));
+        .route("/favicon.svg", get(api::favicon))
+        .route("/openapi.json", get(api::openapi_axle));
 
     let api_router = docs_router.merge(legacy);
 
@@ -118,8 +118,9 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(metrics))
-        .merge(redirect_router)
-        .nest("/api", api_router);
+        .nest("/api", api_router)
+        
+        .merge(redirect_router);
 
     axum::serve(
         TcpListener::bind(format!("0.0.0.0:{}", dotenv!("PORT")))

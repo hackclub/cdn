@@ -6,7 +6,7 @@ RUN cargo build --release
 
 FROM debian:trixie-slim AS runtime
 
-RUN apt-get update && apt-get install -y 
+RUN apt-get update && apt-get install -y ca-certificates
 
 WORKDIR /app
 
