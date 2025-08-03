@@ -38,7 +38,7 @@ pub(crate) async fn multiplexed_uploader<'a>(
 
     let mut sha1 = Context::new(&SHA1_FOR_LEGACY_USE_ONLY);
     let client = Client::builder()
-        .user_agent("Hackclub/CDN")
+        .user_agent("HackclubCDN/1.0")
         .build()?;
 
     let mut request = client.get(url);

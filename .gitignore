@@ -21,4 +21,5 @@
 **/target
 .cargo/
 .rustup/
+cdn.db
 /Cargo.lock
