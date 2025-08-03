@@ -37,7 +37,11 @@ pub(crate) async fn multiplexed_uploader<'a>(
     let key = Uuid::now_v7().to_string();
 
     let mut sha1 = Context::new(&SHA1_FOR_LEGACY_USE_ONLY);
-    let mut request = Client::new().get(url);
+    let client = Client::builder()
+        .user_agent("Hackclub/CDN")
+        .build()?;
+
+    let mut request = client.get(url);
     
     if url.contains("files.slack.com") {
         match slack {

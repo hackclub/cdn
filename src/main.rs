@@ -9,6 +9,7 @@ use utoipa::OpenApi;
 use sled::{Db, open};
 use dotenvy_macro::dotenv;
 use tokio::net::TcpListener;
+use tracing_subscriber::fmt;
 use s3::{bucket::Bucket, creds::Credentials, region::Region};
 use axum::{
     Router,
@@ -81,6 +82,8 @@ pub struct ApiDoc;
 
 #[tokio::main]
 async fn main() {
+    fmt::init(); // logs pls
+    
     // preflight (ensure the metrics exist)
     if !DATABASE.contains_key("num_files").unwrap_or(false) {
         DATABASE.insert("num_files", &[0; 32]).unwrap();
