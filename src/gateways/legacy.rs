@@ -19,7 +19,7 @@ type URLVec = Json<Vec<String>>;
     tag = "Legacy Endpoints"
 )]
 pub async fn v1_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse {
-    let slack_token = headers.get("x-download-authorization").and_then(|h| h.to_str().ok());
+    let slack_token = headers.get("x-download-authorization");
     let results = try_join_all(
         body.iter()
             .map(|url| {
@@ -48,7 +48,7 @@ pub async fn v1_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse
     tag = "Legacy Endpoints"
 )]
 pub async fn v2_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse {
-    let slack_token = headers.get("x-download-authorization").and_then(|h| h.to_str().ok());
+    let slack_token = headers.get("x-download-authorization");
     let results = try_join_all(
         body.iter()
             .map(|url| {
@@ -77,7 +77,7 @@ pub async fn v2_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse
     tag = "Legacy Endpoints"
 )]
 pub async fn v3_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse {
-    let slack_token = headers.get("x-download-authorization").and_then(|h| h.to_str().ok());
+    let slack_token = headers.get("x-download-authorization");
     let results = try_join_all(
         body.iter()
             .map(|url| {
@@ -100,7 +100,7 @@ pub async fn v3_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse
     tag = "Legacy Endpoints"
 )]
 pub async fn singleton_upload(headers: HeaderMap, Json(body): Json<String>) -> impl IntoResponse {
-    let slack_token = headers.get("x-download-authorization").and_then(|h| h.to_str().ok());
+    let slack_token = headers.get("x-download-authorization");
     let result = multiplexed_uploader(&body, false, slack_token).await;
 
     match result {

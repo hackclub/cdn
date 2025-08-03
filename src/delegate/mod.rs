@@ -5,9 +5,9 @@ use hex::encode;
 use reqwest::Client;
 use utoipa::ToSchema;
 use futures::TryStreamExt;
-use axum::http::StatusCode;
 use tokio_util::io::StreamReader;
 use serde::{Deserialize, Serialize};
+use axum::http::{HeaderValue, StatusCode};
 use ring::digest::{Context, SHA1_FOR_LEGACY_USE_ONLY};
 
 use crate::CDN;
@@ -32,7 +32,7 @@ pub(crate) async fn _upload_direct() {}
 pub(crate) async fn multiplexed_uploader<'a>(
     url: &'a str,
     hash: bool,
-    slack: Option<&'a str>,
+    slack: Option<&'a HeaderValue>,
 ) -> Result<UploadResult, APIError> {
     let key = Uuid::now_v7().to_string();
 
@@ -46,7 +46,7 @@ pub(crate) async fn multiplexed_uploader<'a>(
     if url.contains("files.slack.com") {
         match slack {
             Some(token) => {
-                request = request.header("Authorization", format!("Bearer {}", token));
+                request = request.header("Authorization", format!("Bearer {}", token.to_str()?));
             }
             None => {
                 return Err(APIError {
