@@ -96,7 +96,6 @@ async fn main() {
         .route("/v1/new", post(v1_new))
         .route("/v2/new", post(v2_new))
         .route("/v3/new", post(v3_new))
-        .route("/upload", post(singleton_upload))
         .layer(middleware::from_fn(
             |req: Request<_>, next: Next| async move {
                 let mut data: Response = next.run(req).await;
@@ -122,7 +121,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(metrics))
         .nest("/api", api_router)
-        
+        .route("/upload", post(singleton_upload))
         .merge(redirect_router);
 
     axum::serve(
