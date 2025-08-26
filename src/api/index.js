@@ -43,13 +43,44 @@ const formatResponse = (results, version) => {
     }
 };
 
-// Handle bulk file uploads with version-specific responses
-const handleBulkUpload = async (req, res, version) => {
+const validateUrls = (urls) => {
+    if (!Array.isArray(urls) || !urls.length) {
+        return {
+            status: 400,
+            body: {
+                error: {
+                    message: 'Empty/invalid file array',
+                    code: 'INVALID_INPUT'
+                },
+                success: false
+            }
+        };
+    }
+
+    if (urls.some(url => typeof url !== 'string' || !url.trim())) {
+        return {
+            status: 400,
+            body: {
+                error: {
+                    message: 'Invalid URL format in the array',
+                    code: 'INVALID_INPUT'
+                },
+                success: false
+            }
+        };
+    }
+
+    return { status: 200 };
+};
+
+// API Routes
+const bulkUploadHandler = (version) => async (req, res) => {
     try {
         const urls = req.body;
-        // Basic validation
-        if (!Array.isArray(urls) || !urls.length) {
-            return res.status(422).json({error: 'Empty/invalid file array'});
+
+        const validationResult = validateUrls(urls);
+        if (validationResult.status !== 200) {
+            return res.status(validationResult.status).json(validationResult.body);
         }
 
         const downloadAuth = req.headers?.['x-download-authorization'];
@@ -62,15 +93,20 @@ const handleBulkUpload = async (req, res, version) => {
         res.json(formatResponse(results, version));
     } catch (error) {
         logger.error('Bulk upload failed:', error);
-        res.status(500).json({error: 'Internal server error'});
+        res.status(500).json({
+            error: {
+                message: 'Internal server error',
+                code: 'INTERNAL_ERROR'
+            },
+            success: false
+        });
     }
 };
 
-// API Routes
-router.post('/v1/new', (req, res) => handleBulkUpload(req, res, 1));  // Legacy support
-router.post('/v2/new', (req, res) => handleBulkUpload(req, res, 2));  // Legacy support
-router.post('/v3/new', (req, res) => handleBulkUpload(req, res, 3));  // Current version
-router.post('/new', (req, res) => handleBulkUpload(req, res, 3));     // Alias for v3 (latest)
+router.post('/v1/new', bulkUploadHandler(1));  // Legacy support
+router.post('/v2/new', bulkUploadHandler(2));  // Legacy support
+router.post('/v3/new', bulkUploadHandler(3));  // Current version
+router.post('/new', bulkUploadHandler(3));     // Alias for v3 (latest)
 
 // Single file upload endpoint
 router.post('/upload', async (req, res) => {
@@ -79,7 +115,12 @@ router.post('/upload', async (req, res) => {
         res.status(result.status).json(result.body);
     } catch (error) {
         logger.error('S3 upload handler error:', error);
-        res.status(500).json({error: 'Storage upload failed'});
+        res.status(500).json({
+            error: {
+                message: 'Storage upload failed',
+                code: 'STORAGE_FAILED'
+            }
+        });
     }
 });
 
