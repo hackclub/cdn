@@ -49,7 +49,10 @@ const uploadEndpoint = async (url, downloadAuth = null) => {
         logger.debug(`Uploading: ${fileName}`);
         const uploadResult = await uploadToStorage('s/v3', fileName, buffer, response.headers.get('content-type'), buffer.length);
         if (uploadResult.success === false) {
-            throw new Error(`Storage upload failed: ${uploadResult.error}`);
+            const storageError = new Error(`Storage upload failed: ${uploadResult.error}`);
+            storageError.statusCode = 500;
+            storageError.code = 'STORAGE_FAILED';
+            throw storageError;
         }
 
         return {
@@ -66,12 +69,33 @@ const uploadEndpoint = async (url, downloadAuth = null) => {
             statusCode: error.statusCode,
             stack: error.stack
         });
+
+        let statusCode = error.statusCode || 500;
+        let errorCode = error.code || 'INTERNAL_ERROR';
+        let errorMessage = error.message || 'Internal server error';
+
+        if (error.code === 'DOWNLOAD_FAILED') {
+            statusCode = error.statusCode;
+            errorCode = error.code;
+            errorMessage = error.message;
+        } else if (error.code === 'AUTH_FAILED') {
+            statusCode = error.statusCode;
+            errorCode = error.code;
+            errorMessage = error.message;
+        } else if (error.code === 'STORAGE_FAILED') {
+            statusCode = error.statusCode;
+            errorCode = error.code;
+            errorMessage = error.message;
+        } else {
+            statusCode = 500;
+            errorCode = 'INTERNAL_ERROR';
+            errorMessage = 'Internal server error';
+        }
         
-        const statusCode = error.statusCode || 500;
         const errorResponse = {
             error: {
-                message: error.message,
-                code: error.code || 'INTERNAL_ERROR',
+                message: errorMessage,
+                code: errorCode,
                 details: error.details || null,
                 url: url
             },
