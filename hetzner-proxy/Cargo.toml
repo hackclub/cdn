@@ -1,0 +1,18 @@
+[package]
+name = "hetzner-proxy"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+deadpool-postgres = "0.14.1"
+dotenvy = "0.15.7"
+maud = { version = "0.27.0", features = ["axum"] }
+serde = { version = "1.0.219", default-features = false, features = ["derive"] }
+tokio-postgres = { version = "0.7.13", features = ["with-uuid-1"] }
+tracing = { version = "0.1.41", features = ["async-await"] }
+tracing-subscriber = "0.3.19"
+uuid = { version = "1.17.0", features = ["v7", "serde"] }
+axum = { version = "0.8.4", default-features = false, features = ["json", "tokio", "macros", "http2"] }
+reqwest = { version = "0.12.22", default-features = false, features = ["rustls-tls", "stream"] }
+tokio = { version = "1.47.0", default-features = false, features = ["net", "io-util", "rt-multi-thread", "time", "sync", "macros"] }
+

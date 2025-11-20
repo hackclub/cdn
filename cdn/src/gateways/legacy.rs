@@ -1,8 +1,7 @@
 use std::collections::HashMap;
-
 use serde_json::json;
 use futures::future::try_join_all;
-use axum::{Json, response::IntoResponse, http::HeaderMap};
+use axum::{Json, response::IntoResponse, http::HeaderMap, extract::Extension};
 
 use crate::CDN;
 use crate::delegate::UploadResult;
@@ -18,12 +17,16 @@ type URLVec = Json<Vec<String>>;
     responses((status = 200, description = "Upload successful", body = _V1Output)),
     tag = "Legacy Endpoints"
 )]
-pub async fn v1_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse {
+pub async fn v1_new(
+    headers: HeaderMap,
+    Extension(user_id): Extension<i32>,
+    Json(body): URLVec,
+) -> impl IntoResponse {
     let slack_token = headers.get("x-download-authorization");
     let results = try_join_all(
         body.iter()
             .map(|url| {
-                async move { multiplexed_uploader(&url, false, slack_token.as_deref()).await }
+                async move { multiplexed_uploader(&url, false, slack_token.as_deref(), user_id).await }
             }),
     )
     .await;
@@ -47,12 +50,16 @@ pub async fn v1_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse
     responses((status = 200, description = "Upload successful - returns fileName: fileUrl mapping", body = _V2Output)),
     tag = "Legacy Endpoints"
 )]
-pub async fn v2_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse {
+pub async fn v2_new(
+    headers: HeaderMap,
+    Extension(user_id): Extension<i32>,
+    Json(body): URLVec,
+) -> impl IntoResponse {
     let slack_token = headers.get("x-download-authorization");
     let results = try_join_all(
         body.iter()
             .map(|url| {
-                async move { multiplexed_uploader(&url, false, slack_token).await }
+                async move { multiplexed_uploader(&url, false, slack_token, user_id).await }
             }),
     )
     .await;
@@ -76,32 +83,40 @@ pub async fn v2_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse
     responses((status = 200, description = "Upload successful", body = _V3Output)),
     tag = "Legacy Endpoints"
 )]
-pub async fn v3_new(headers: HeaderMap, Json(body): URLVec) -> impl IntoResponse {
+pub async fn v3_new(
+    headers: HeaderMap,
+    Extension(user_id): Extension<i32>,
+    Json(body): URLVec,
+) -> impl IntoResponse {
     let slack_token = headers.get("x-download-authorization");
     let results = try_join_all(
         body.iter()
             .map(|url| {
-                async move { multiplexed_uploader(&url, true, slack_token).await }
+                async move { multiplexed_uploader(&url, true, slack_token, user_id).await }
             }),
     )
     .await;
 
     match results {
-        Ok(results) => Json(json!({ "files": results, "cdnBase": CDN })).into_response(),
+        Ok(results) => Json(json!({ "files": results, "cdnBase": &*CDN })).into_response(),
         Err(error) => error.into_response(),
     }
 }
 
 #[utoipa::path(
     post,
-    path = "/api/upload",
+    path = "/upload",
     request_body = String,
     responses((status = 200, description = "Upload successful", body = UploadResult)),
     tag = "Legacy Endpoints"
 )]
-pub async fn singleton_upload(headers: HeaderMap, Json(body): Json<String>) -> impl IntoResponse {
+pub async fn singleton_upload(
+    headers: HeaderMap,
+    Extension(user_id): Extension<i32>,
+    Json(body): Json<String>,
+) -> impl IntoResponse {
     let slack_token = headers.get("x-download-authorization");
-    let result = multiplexed_uploader(&body, false, slack_token).await;
+    let result = multiplexed_uploader(&body, false, slack_token, user_id).await;
 
     match result {
         Ok(result) => Json(result).into_response(),

@@ -1,39 +1,12 @@
-[package]
-name = "cdn"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies] # everything must be in ascending order. everything.
-hex = "0.4.3"
-futures = "0.3.31"
-dotenvy_macro = "0.15.7"
-tracing-subscriber = "0.3.19"
-uuid = { version = "1.17.0", features = ["v7"] }
-maud = { version = "0.27.0", features = ["axum"] }
-tokio-util = { version = "0.7.15", features = ["io"] }
-sled = { version = "0.34.7", default-features = false }
-derive_more = { version = "2.0.1", features = ["add"] }
-ring = { version = "0.17.14", default-features = false }
-tracing = { version = "0.1.41", features = ["async-await"] }
-utoipa = { version = "5.3.1", features = ["axum_extras", "chrono"] }
-bincode = { version = "2.0.1", features = ["std", "derive", "serde"] }
-serde = { version = "1.0.219", default-features = false, features = ["derive"] }
-serde_json = { version = "1.0.141", default-features = false, features = ["alloc"] }
-axum = { version = "0.8.4", default-features = false, features = ["json", "tokio", "macros", "http2"] }
-reqwest = { version = "0.12.22", default-features = false, features = ["json", "rustls-tls", "stream"] }
-rust-s3 = { version = "0.35.1", default-features = false, features = ["tokio-rustls-tls", "with-tokio"] }
-tokio = { version = "1.47.0", default-features = false, features = ["net", "io-util", "rt-multi-thread", "time", "sync", "macros"] }
-
-
-[target.'cfg(all(target_os = "linux", target_arch = "x86_64"))'.dependencies]
-sled = { version = "0.34.7", default-features = false, features = ["io_uring"] }
+[workspace]
+members = ["cdn", "hetzner-proxy"]
+resolver = "2"
 
 [profile.release]
 lto = "fat"
 rpath = false
 opt-level = 3
 strip = "symbols"
-# codegen-units = 1 (waiter 1 abysmal compile time please)
 
 [profile.dev.package."*"]
 opt-level = 3

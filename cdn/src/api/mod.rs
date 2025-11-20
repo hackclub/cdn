@@ -33,9 +33,8 @@ pub(crate) async fn openapi_axle() -> impl IntoResponse {
     let mut openapi = ApiDoc::openapi();
 
     openapi.servers = Some(vec![
-        // dirty hack to uphold the spirit of oss
         ServerBuilder::new()
-            .url(PROD_DOMAIN)
+            .url(PROD_DOMAIN.clone())
             .description(Some("Production"))
             .build(),
     ]);

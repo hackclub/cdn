@@ -12,7 +12,7 @@ use ring::digest::{Context, SHA1_FOR_LEGACY_USE_ONLY};
 
 use crate::CDN;
 use crate::BUCKET;
-use crate::metrics::store::store_file;
+use crate::db::DB_POOL;
 
 use error::APIError;
 
@@ -25,7 +25,6 @@ pub(crate) struct UploadResult {
     pub sha: Option<String>,
 }
 
-// later
 pub(crate) async fn _upload_direct() {}
 
 #[inline(always)]
@@ -33,8 +32,10 @@ pub(crate) async fn multiplexed_uploader<'a>(
     url: &'a str,
     hash: bool,
     slack: Option<&'a HeaderValue>,
+    user_id: i32,
 ) -> Result<UploadResult, APIError> {
-    let key = Uuid::now_v7().to_string();
+    let storage_uuid = Uuid::now_v7();
+    let public_uuid = Uuid::now_v7();
 
     let mut sha1 = Context::new(&SHA1_FOR_LEGACY_USE_ONLY);
     let client = Client::builder()
@@ -42,7 +43,7 @@ pub(crate) async fn multiplexed_uploader<'a>(
         .build()?;
 
     let mut request = client.get(url);
-    
+
     if url.contains("files.slack.com") {
         match slack {
             Some(token) => {
@@ -56,7 +57,7 @@ pub(crate) async fn multiplexed_uploader<'a>(
             }
         }
     }
-    
+
     let mut reader = StreamReader::new(
         request
             .send()
@@ -71,18 +72,48 @@ pub(crate) async fn multiplexed_uploader<'a>(
             }),
     );
 
-    let info = BUCKET.put_object_stream(&mut reader, &key).await?;
+    let storage_key = storage_uuid.to_string();
+    let info = BUCKET.put_object_stream(&mut reader, &storage_key).await?;
 
     let sha = hash.then(|| encode(sha1.finish()));
 
+    let filename = url
+        .split('/')
+        .last()
+        .unwrap_or("unknown")
+        .split('?')
+        .next()
+        .unwrap_or("unknown")
+        .to_string();
+
+    let deployed_url = format!("{}/{}", &*CDN, public_uuid);
+
+    let db = DB_POOL.get().await.unwrap();
+    db.execute(
+        "INSERT INTO files (user_id, storage_uuid, public_uuid, filename, size, url, sha)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        &[
+            &user_id,
+            &storage_uuid,
+            &public_uuid,
+            &filename,
+            &(info.uploaded_bytes() as i64),
+            &deployed_url,
+            &sha,
+        ],
+    )
+    .await
+    .map_err(|_| APIError {
+        code: StatusCode::INTERNAL_SERVER_ERROR,
+        body: Some("Failed to store file metadata"),
+    })?;
+
     let result = UploadResult {
-        deployed_url: format!("{CDN}/{key}"),
+        deployed_url,
         size: info.uploaded_bytes(),
-        file: key,
+        file: public_uuid.to_string(),
         sha,
     };
-
-    store_file(&result).await;
 
     Ok(result)
 }

@@ -1,0 +1,31 @@
+[package]
+name = "cdn"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+argon2 = "0.5.3"
+base64 = "0.22.1"
+bincode = { version = "2.0.1", features = ["std", "derive", "serde"] }
+chrono = { version = "0.4.40", default-features = false, features = ["clock"] }
+deadpool-postgres = "0.14.1"
+derive_more = { version = "2.0.1", features = ["add"] }
+dotenvy = "0.15.7"
+futures = "0.3.31"
+hex = "0.4.3"
+maud = { version = "0.27.0", features = ["axum"] }
+oauth2 = "4.4.2"
+ring = { version = "0.17.14", default-features = false }
+rust-s3 = { version = "0.35.1", default-features = false, features = ["tokio-rustls-tls", "with-tokio"] }
+serde = { version = "1.0.219", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0.141", default-features = false, features = ["alloc"] }
+tokio-postgres = { version = "0.7.13", features = ["with-chrono-0_4", "with-uuid-1"] }
+tokio-util = { version = "0.7.15", features = ["io"] }
+tracing = { version = "0.1.41", features = ["async-await"] }
+tracing-subscriber = "0.3.19"
+utoipa = { version = "5.3.1", features = ["axum_extras", "chrono"] }
+uuid = { version = "1.17.0", features = ["v7", "serde"] }
+axum = { version = "0.8.4", default-features = false, features = ["json", "tokio", "macros", "http2", "query"] }
+reqwest = { version = "0.12.22", default-features = false, features = ["json", "rustls-tls", "stream"] }
+tokio = { version = "1.47.0", default-features = false, features = ["net", "io-util", "rt-multi-thread", "time", "sync", "macros"] }
+

@@ -1,13 +1,14 @@
 mod api;
-mod metrics;
+mod auth;
+mod dashboard;
+mod db;
 mod delegate;
 mod gateways;
+mod metrics;
 
 use std::sync::LazyLock;
-
+use std::env;
 use utoipa::OpenApi;
-use sled::{Db, open};
-use dotenvy_macro::dotenv;
 use tokio::net::TcpListener;
 use tracing_subscriber::fmt;
 use s3::{bucket::Bucket, creds::Credentials, region::Region};
@@ -16,32 +17,34 @@ use axum::{
     http::{HeaderValue, Request},
     middleware::{self, Next},
     response::{Response, Redirect},
-    routing::{get, post},
+    routing::{get, post, delete},
 };
 
 use crate::metrics::metrics;
+use crate::auth::middleware::require_api_key;
+use crate::gateways::legacy::{singleton_upload, v1_new, v2_new, v3_new};
+use crate::gateways::files::delete_file;
+use crate::auth::{login, callback, logout};
+use crate::dashboard::{dashboard, regenerate_api_key};
 
-use gateways::legacy::{singleton_upload, v1_new, v2_new, v3_new};
+fn get_env(key: &str) -> String {
+    env::var(key).unwrap_or_else(|_| panic!("{} must be set", key))
+}
 
-pub(self) const DATABASE_PATH: &'static str = dotenv!("SLED_PATH");
-
-pub(crate) const ENDPOINT: &'static str = dotenv!("AWS_ENDPOINT");
-pub(crate) const CDN: &'static str = dotenv!("AWS_CDN_URL");
-pub(crate) const PROD_DOMAIN: &'static str = dotenv!("PROD_DOMAIN");
-
-pub(crate) static DATABASE: LazyLock<Db> =
-    LazyLock::new(|| open(DATABASE_PATH).expect("Couldn't open the database"));
+pub(crate) static ENDPOINT: LazyLock<String> = LazyLock::new(|| get_env("AWS_ENDPOINT"));
+pub(crate) static CDN: LazyLock<String> = LazyLock::new(|| get_env("AWS_CDN_URL"));
+pub(crate) static PROD_DOMAIN: LazyLock<String> = LazyLock::new(|| get_env("PROD_DOMAIN"));
 
 pub(crate) static BUCKET: LazyLock<Box<Bucket>> = LazyLock::new(|| {
     Bucket::new(
-        dotenv!("AWS_BUCKET_NAME"),
+        &get_env("AWS_BUCKET_NAME"),
         Region::Custom {
-            region: dotenv!("AWS_REGION").to_string(),
-            endpoint: ENDPOINT.to_string(),
+            region: get_env("AWS_REGION"),
+            endpoint: get_env("AWS_ENDPOINT"),
         },
         Credentials::new(
-            Some(dotenv!("AWS_ACCESS_KEY_ID")),
-            Some(dotenv!("AWS_SECRET_ACCESS_KEY")),
+            Some(&get_env("AWS_ACCESS_KEY_ID")),
+            Some(&get_env("AWS_SECRET_ACCESS_KEY")),
             None,
             None,
             None,
@@ -82,15 +85,10 @@ pub struct ApiDoc;
 
 #[tokio::main]
 async fn main() {
-    fmt::init(); // logs pls
-    
-    // preflight (ensure the metrics exist)
-    if !DATABASE.contains_key("num_files").unwrap_or(false) {
-        DATABASE.insert("num_files", &[0; 32]).unwrap();
-    }
-    if !DATABASE.contains_key("size_files").unwrap_or(false) {
-        DATABASE.insert("size_files", &[0; 32]).unwrap();
-    }
+    dotenvy::dotenv().ok();
+    fmt::init();
+
+    db::init_schema().await;
 
     let legacy = Router::new()
         .route("/v1/new", post(v1_new))
@@ -103,14 +101,30 @@ async fn main() {
                     .insert("Deprecated", HeaderValue::from_static("true"));
                 data
             },
-        ));
+        ))
+        .layer(middleware::from_fn(require_api_key));
 
     let docs_router = Router::new()
         .route("/docs", get(api::docs))
         .route("/favicon.svg", get(api::favicon))
         .route("/openapi.json", get(api::openapi_axle));
 
-    let api_router = docs_router.merge(legacy);
+    let protected_api = Router::new()
+        .route("/files/{uuid}", delete(delete_file))
+        .layer(middleware::from_fn(require_api_key));
+
+    let api_router = docs_router
+        .merge(legacy)
+        .merge(protected_api);
+
+    let auth_router = Router::new()
+        .route("/login", get(login))
+        .route("/callback", get(callback))
+        .route("/logout", get(logout));
+
+    let dashboard_router = Router::new()
+        .route("/", get(dashboard))
+        .route("/regenerate-key", post(regenerate_api_key));
 
     let redirect_router = Router::new()
         .route("/docs", get(|| async { Redirect::permanent("/api/docs") }))
@@ -118,14 +132,21 @@ async fn main() {
         .route("/v2/docs", get(|| async { Redirect::permanent("/api/docs") }))
         .route("/v3/docs", get(|| async { Redirect::permanent("/api/docs") }));
 
+    let upload_router = Router::new()
+        .route("/upload", post(singleton_upload))
+        .layer(middleware::from_fn(require_api_key));
+
     let app = Router::new()
         .route("/", get(metrics))
         .nest("/api", api_router)
-        .route("/upload", post(singleton_upload))
+        .nest("/auth", auth_router)
+        .nest("/dashboard", dashboard_router)
+        .merge(upload_router)
         .merge(redirect_router);
 
+    let port = get_env("PORT");
     axum::serve(
-        TcpListener::bind(format!("0.0.0.0:{}", dotenv!("PORT")))
+        TcpListener::bind(format!("0.0.0.0:{}", port))
             .await
             .unwrap(),
         app,

@@ -15,32 +15,91 @@
 </div>
 
 
-## 📡 API Usage
+## 📡 API Reference
 
-- All API endpoints require authentication via `Authorization: Bearer api-token` header
-- Use the API_TOKEN from your environment configuration
-- Failure to include a valid token will result in 401 Unauthorized responses
+All endpoints require authentication via the `Authorization: Bearer <api-token>` header. Get your API token from the [dashboard](https://cdn.hackclub.com/dashboard).
 
-### V3 API (Latest)
+### Upload File
+
+**Endpoint:** `POST https://cdn.hackclub.com/upload`
+
+**Headers:**
+```
+Authorization: Bearer <api-token>
+Content-Type: application/json
+```
+
+**Request:**
+```bash
+curl -X POST https://cdn.hackclub.com/upload \
+  -H "Authorization: Bearer <api-token>" \
+  -H "Content-Type: application/json" \
+  -d '"https://assets.hackclub.com/flag-standalone.svg"'
+```
+
+**Response:**
+```json
+{
+  "deployedUrl": "https://hc-cdn.hel1.your-objectstorage.com/s/64a9472006c4472d7ac75f2d4d9455025d9838d6_flag-standalone.svg",
+  "file": "64a9472006c4472d7ac75f2d4d9455025d9838d6_flag-standalone.svg",
+  "sha": "64a9472006c4472d7ac75f2d4d9455025d9838d6",
+  "size": 4365
+}
+```
+
+### Delete File
+
+**Endpoint:** `DELETE https://cdn.hackclub.com/api/files/{uuid}`
+
+**Headers:**
+```
+Authorization: Bearer <api-token>
+```
+
+**Request:**
+```bash
+curl -X DELETE https://cdn.hackclub.com/api/files/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer <api-token>"
+```
+
+**Response:**
+```
+200 OK - File deleted
+403 Forbidden - You don't own this file
+404 Not Found - File not found
+```
+
+**Notes:**
+- Replace `{uuid}` with the file's public UUID
+- You can only delete files you uploaded
+- Deletes from both storage and database
+
+---
+
+### Legacy Endpoints
+
+<details>
+<summary>V3 API</summary>
+
 <img alt="Version 3" src="https://files.catbox.moe/e3ravk.png" align="right" width="300">
 
 **Endpoint:** `POST https://cdn.hackclub.com/api/v3/new`
 
 **Headers:**
 ```
-Authorization: Bearer api-token
+Authorization: Bearer <api-token>
 Content-Type: application/json
 ```
 
-**Request Example:**
+**Request:**
 ```bash
-curl --location 'https://cdn.hackclub.com/api/v3/new' \
---header 'Authorization: Bearer beans' \
---header 'Content-Type: application/json' \
---data '[
-  "https://assets.hackclub.com/flag-standalone.svg",
-  "https://assets.hackclub.com/flag-orpheus-left.png"
-]'
+curl -X POST https://cdn.hackclub.com/api/v3/new \
+  -H "Authorization: Bearer <api-token>" \
+  -H "Content-Type: application/json" \
+  -d '[
+    "https://assets.hackclub.com/flag-standalone.svg",
+    "https://assets.hackclub.com/flag-orpheus-left.png"
+  ]'
 ```
 
 **Response:**
@@ -63,6 +122,7 @@ curl --location 'https://cdn.hackclub.com/api/v3/new' \
   "cdnBase": "https://hc-cdn.hel1.your-objectstorage.com"
 }
 ```
+</details>
 
 <details>
 <summary>V2 API</summary>
@@ -73,11 +133,11 @@ curl --location 'https://cdn.hackclub.com/api/v3/new' \
 
 **Headers:**
 ```
-Authorization: Bearer api-token
+Authorization: Bearer <api-token>
 Content-Type: application/json
 ```
 
-**Request Example:**
+**Request:**
 ```json
 [
   "https://assets.hackclub.com/flag-standalone.svg",
@@ -103,11 +163,11 @@ Content-Type: application/json
 
 **Headers:**
 ```
-Authorization: Bearer api-token
+Authorization: Bearer <api-token>
 Content-Type: application/json
 ```
 
-**Request Example:**
+**Request:**
 ```json
 [
   "https://assets.hackclub.com/flag-standalone.svg",
@@ -123,11 +183,6 @@ Content-Type: application/json
 ]
 ```
 </details>
-
-# Technical Details
-
-- **Storage Structure:** `/s/v3/{HASH}_{filename}`
-- **File Naming:** `/s/{slackUserId}/{unix}_{sanitizedFilename}`
 
 <div align="center">
   <br>
