@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: cdn
+      POSTGRES_PASSWORD: cdn_password
+      POSTGRES_DB: cdn
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  cdn:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://cdn:cdn_password@postgres/cdn
+
+  hetzner-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.hetzner-proxy
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://cdn:cdn_password@postgres/cdn
+
+volumes:
+  postgres_data:

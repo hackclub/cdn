@@ -1,0 +1,12 @@
+[workspace]
+members = ["cdn", "hetzner-proxy"]
+resolver = "2"
+
+[profile.release]
+lto = "fat"
+rpath = false
+opt-level = 3
+strip = "symbols"
+
+[profile.dev.package."*"]
+opt-level = 3
