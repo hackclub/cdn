@@ -15,6 +15,7 @@ pub(crate) struct User {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct File {
     pub id: i32,
+    pub user_id: i32,
     pub storage_uuid: Uuid,
     pub public_uuid: Uuid,
     pub filename: String,
