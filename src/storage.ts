@@ -23,23 +23,6 @@ export function generateFileUrl(userDir: string, fileName: string): string {
   return `${env.CDN_URL}/${userDir}/${fileName}`;
 }
 
-export async function uploadToStorage(
-  userDir: string,
-  uniqueFileName: string,
-  bodyData: Buffer,
-  contentType = 'application/octet-stream'
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    await s3.write(`${userDir}/${uniqueFileName}`, bodyData, {
-      type: contentType,
-    });
-    return { success: true };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return { success: false, error: message };
-  }
-}
-
 export async function uploadStream(
   key: string,
   stream: ReadableStream,

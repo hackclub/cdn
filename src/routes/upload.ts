@@ -4,7 +4,6 @@ import { type } from 'arktype';
 import { env } from '../env';
 import { logger } from '../logger';
 import {
-  uploadToStorage,
   uploadStream,
   sanitizeFileName,
   generateUniqueFileName,
@@ -33,7 +32,7 @@ const singleUrlSchema = type('string').narrow((url, ctx) => {
 
 interface UploadResult {
   url: string;
-  sha: string;
+  id: string;
   size: number;
   type: string | null;
 }
@@ -69,24 +68,18 @@ async function uploadFromUrl(url: string, downloadAuth?: string): Promise<Upload
     throw error;
   }
 
-  const buffer = Buffer.from(await response.arrayBuffer());
-  const sha = crypto.createHash('sha1').update(buffer).digest('hex');
+  const id = crypto.randomBytes(8).toString('hex');
   const originalName = url.split('/').pop() || 'file';
-  const sanitized = sanitizeFileName(originalName);
-  const fileName = `${sha}_${sanitized}`;
+  const fileName = `${id}_${sanitizeFileName(originalName)}`;
   const contentType = response.headers.get('content-type') || 'application/octet-stream';
+  const size = Number(response.headers.get('content-length')) || 0;
 
-  const uploadResult = await uploadToStorage('s/v3', fileName, buffer, contentType);
+  const uploadResult = await uploadStream(`s/v3/${fileName}`, response.body!, contentType);
   if (!uploadResult.success) {
     throw new Error(`Storage upload failed: ${uploadResult.error}`);
   }
 
-  return {
-    url: generateFileUrl('s/v3', fileName),
-    sha,
-    size: buffer.length,
-    type: contentType
-  };
+  return { url: generateFileUrl('s/v3', fileName), id, size, type: contentType };
 }
 
 function formatResponse(results: UploadResult[], version: number) {
@@ -104,7 +97,7 @@ function formatResponse(results: UploadResult[], version: number) {
         files: results.map((r, i) => ({
           deployedUrl: r.url,
           file: `${i}_${r.url.split('/').pop()}`,
-          sha: r.sha,
+          id: r.id,
           size: r.size
         })),
         cdnBase: env.CDN_URL
