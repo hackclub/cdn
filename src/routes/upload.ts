@@ -116,7 +116,25 @@ async function handleBulkUpload(c: any, version: number) {
   const downloadAuth = c.req.header('x-download-authorization');
   logger.debug(`Processing ${parsed.length} URLs`);
 
-  const results = await Promise.all(parsed.map((url) => uploadFromUrl(url, downloadAuth)));
+  const settled = await Promise.allSettled(parsed.map((url) => uploadFromUrl(url, downloadAuth)));
+
+  const results: UploadResult[] = [];
+  const errors: { url: string; error: string }[] = [];
+
+  settled.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      results.push(result.value);
+    } else {
+      const errorMessage = result.reason?.error?.message || result.reason?.message || 'Unknown error';
+      errors.push({ url: parsed[index], error: errorMessage });
+      logger.warn(`Failed to upload URL: ${parsed[index]} - ${errorMessage}`);
+    }
+  });
+
+  if (errors.length > 0) {
+    return c.json({ error: 'One or more uploads failed', code: 'UPLOAD_FAILED', failed: errors }, 400);
+  }
+
   return c.json(formatResponse(results, version));
 }
 
