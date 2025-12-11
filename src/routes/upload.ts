@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import crypto from 'crypto';
 import { type } from 'arktype';
-import { Readable } from 'stream';
 import { env } from '../env';
 import { logger } from '../logger';
 import {
@@ -31,10 +30,6 @@ const singleUrlSchema = type('string').narrow((url, ctx) => {
   }
   return true;
 });
-
-const uploadBodySchema = type({
-  url: 'string'
-}).or('string');
 
 interface UploadResult {
   url: string;
@@ -81,7 +76,7 @@ async function uploadFromUrl(url: string, downloadAuth?: string): Promise<Upload
   const fileName = `${sha}_${sanitized}`;
   const contentType = response.headers.get('content-type') || 'application/octet-stream';
 
-  const uploadResult = await uploadToStorage('s/v3', fileName, buffer, contentType, buffer.length);
+  const uploadResult = await uploadToStorage('s/v3', fileName, buffer, contentType);
   if (!uploadResult.success) {
     throw new Error(`Storage upload failed: ${uploadResult.error}`);
   }
@@ -112,7 +107,7 @@ function formatResponse(results: UploadResult[], version: number) {
           sha: r.sha,
           size: r.size
         })),
-        cdnBase: env.AWS_CDN_URL
+        cdnBase: env.CDN_URL
       };
   }
 }
@@ -149,15 +144,14 @@ upload.post('/upload', async (c) => {
       rawUrl = body;
     }
 
-    const urlResult = singleUrlSchema(rawUrl);
-    if (urlResult instanceof type.errors) {
+    const url = singleUrlSchema(rawUrl);
+    if (url instanceof type.errors) {
       return c.json(
-        { error: { message: urlResult.summary, code: 'VALIDATION_ERROR' }, success: false },
+        { error: { message: url.summary, code: 'VALIDATION_ERROR' }, success: false },
         400
       );
     }
 
-    const url = urlResult;
     const downloadAuth = c.req.header('x-download-authorization');
 
     if (url.includes('files.slack.com') && !downloadAuth) {
@@ -187,8 +181,7 @@ upload.post('/upload', async (c) => {
 
 upload.post('/file', async (c) => {
   try {
-    const formData = await c.req.formData();
-    const file = formData.get('file');
+    const file = (await c.req.formData()).get('file');
 
     if (!file || !(file instanceof File)) {
       return c.json({ error: 'No file uploaded' }, 400);
@@ -200,21 +193,13 @@ upload.post('/file', async (c) => {
 
     const uniqueName = generateUniqueFileName(file.name);
     const contentType = file.type || 'application/octet-stream';
-    const key = `s/v3/${uniqueName}`;
 
-    const webStream = file.stream();
-    const nodeStream = Readable.fromWeb(webStream as any);
-
-    const result = await uploadStream(key, nodeStream, contentType, file.size);
+    const result = await uploadStream(`s/v3/${uniqueName}`, file.stream(), contentType);
     if (!result.success) {
       throw new Error(result.error);
     }
 
-    return c.json({
-      url: generateFileUrl('s/v3', uniqueName),
-      size: file.size,
-      type: contentType
-    });
+    return c.json({ url: generateFileUrl('s/v3', uniqueName), size: file.size, type: contentType });
   } catch (error) {
     logger.error('Direct upload error:', error);
     return c.json({ error: 'Upload failed' }, 500);
@@ -246,25 +231,17 @@ upload.post('/files', async (c) => {
 
         const uniqueName = generateUniqueFileName(file.name);
         const contentType = file.type || 'application/octet-stream';
-        const key = `s/v3/${uniqueName}`;
 
-        const webStream = file.stream();
-        const nodeStream = Readable.fromWeb(webStream as any);
-
-        const result = await uploadStream(key, nodeStream, contentType, file.size);
+        const result = await uploadStream(`s/v3/${uniqueName}`, file.stream(), contentType);
         if (!result.success) {
           throw new Error(result.error);
         }
 
-        return {
-          url: generateFileUrl('s/v3', uniqueName),
-          size: file.size,
-          type: contentType
-        };
+        return { url: generateFileUrl('s/v3', uniqueName), size: file.size, type: contentType };
       })
     );
 
-    return c.json({ files: results, cdnBase: env.AWS_CDN_URL });
+    return c.json({ files: results, cdnBase: env.CDN_URL });
   } catch (error) {
     logger.error('Bulk direct upload error:', error);
     return c.json({ error: 'Upload failed' }, 500);

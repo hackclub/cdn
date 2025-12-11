@@ -23,9 +23,7 @@ app.notFound((c) => {
   return c.json({ error: 'Not found' }, 404);
 });
 
-const port = env.PORT;
-
 export default {
-  port,
+  port: env.PORT,
   fetch: app.fetch
 };
