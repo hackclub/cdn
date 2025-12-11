@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
 import crypto from 'crypto';
 import { type } from 'arktype';
+import { Readable } from 'stream';
+import { env } from '../env';
+import { logger } from '../logger';
 import {
   uploadToStorage,
   uploadStream,
@@ -9,12 +12,29 @@ import {
   generateFileUrl,
   MAX_FILE_SIZE
 } from '../storage';
-import { Readable } from 'stream';
-import { logger } from '../logger';
 
 const upload = new Hono();
 
-const urlArraySchema = type('string[]');
+const urlArraySchema = type('string[]').narrow((urls, ctx) => {
+  if (urls.length === 0) {
+    return ctx.mustBe('a non-empty array');
+  }
+  if (urls.length > 100) {
+    return ctx.mustBe('an array with at most 100 URLs');
+  }
+  return true;
+});
+
+const singleUrlSchema = type('string').narrow((url, ctx) => {
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return ctx.mustBe('a valid HTTP(S) URL');
+  }
+  return true;
+});
+
+const uploadBodySchema = type({
+  url: 'string'
+}).or('string');
 
 interface UploadResult {
   url: string;
@@ -92,7 +112,7 @@ function formatResponse(results: UploadResult[], version: number) {
           sha: r.sha,
           size: r.size
         })),
-        cdnBase: process.env.AWS_CDN_URL
+        cdnBase: env.AWS_CDN_URL
       };
   }
 }
@@ -102,18 +122,13 @@ async function handleBulkUpload(c: any, version: number) {
   const parsed = urlArraySchema(body);
 
   if (parsed instanceof type.errors) {
-    return c.json({ error: 'Empty/invalid file array' }, 422);
-  }
-
-  const urls = parsed;
-  if (!urls.length) {
-    return c.json({ error: 'Empty/invalid file array' }, 422);
+    return c.json({ error: parsed.summary, code: 'VALIDATION_ERROR' }, 422);
   }
 
   const downloadAuth = c.req.header('x-download-authorization');
-  logger.debug(`Processing ${urls.length} URLs`);
+  logger.debug(`Processing ${parsed.length} URLs`);
 
-  const results = await Promise.all(urls.map((url) => uploadFromUrl(url, downloadAuth)));
+  const results = await Promise.all(parsed.map((url) => uploadFromUrl(url, downloadAuth)));
   return c.json(formatResponse(results, version));
 }
 
@@ -125,22 +140,24 @@ upload.post('/new', (c) => handleBulkUpload(c, 3));
 upload.post('/upload', async (c) => {
   try {
     const body = await c.req.text();
-    let url: string;
+    let rawUrl: string;
 
     try {
       const parsed = JSON.parse(body);
-      url = typeof parsed === 'string' ? parsed : parsed.url;
+      rawUrl = typeof parsed === 'string' ? parsed : parsed.url;
     } catch {
-      url = body;
+      rawUrl = body;
     }
 
-    if (!url || typeof url !== 'string') {
+    const urlResult = singleUrlSchema(rawUrl);
+    if (urlResult instanceof type.errors) {
       return c.json(
-        { error: { message: 'Missing URL in request body', code: 'INVALID_REQUEST' }, success: false },
+        { error: { message: urlResult.summary, code: 'VALIDATION_ERROR' }, success: false },
         400
       );
     }
 
+    const url = urlResult;
     const downloadAuth = c.req.header('x-download-authorization');
 
     if (url.includes('files.slack.com') && !downloadAuth) {
@@ -247,7 +264,7 @@ upload.post('/files', async (c) => {
       })
     );
 
-    return c.json({ files: results, cdnBase: process.env.AWS_CDN_URL });
+    return c.json({ files: results, cdnBase: env.AWS_CDN_URL });
   } catch (error) {
     logger.error('Bulk direct upload error:', error);
     return c.json({ error: 'Upload failed' }, 500);

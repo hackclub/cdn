@@ -1,10 +1,9 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { env } from './env';
 import { logger } from './logger';
 import { authMiddleware, errorHandler } from './middleware';
 import uploadRoutes from './routes/upload';
-
-logger.info('Starting CDN application 🚀');
 
 const app = new Hono();
 
@@ -24,14 +23,9 @@ app.notFound((c) => {
   return c.json({ error: 'Not found' }, 404);
 });
 
-const port = parseInt(process.env.PORT || '4553', 10);
+const port = env.PORT;
 
 export default {
   port,
   fetch: app.fetch
 };
-
-logger.info('CDN started successfully 🔥', {
-  apiPort: port,
-  startTime: new Date().toISOString()
-});

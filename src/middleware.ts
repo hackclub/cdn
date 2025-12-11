@@ -1,11 +1,12 @@
 import type { Context, Next } from 'hono';
+import { env } from './env';
 import { logger } from './logger';
 
 export async function authMiddleware(c: Context, next: Next) {
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.split('Bearer ')[1];
 
-  if (!token || token !== process.env.API_TOKEN) {
+  if (!token || token !== env.API_TOKEN) {
     return c.json({ error: 'Unauthorized - Invalid or missing API token' }, 401);
   }
 

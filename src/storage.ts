@@ -9,6 +9,7 @@ import {
 import { Upload } from '@aws-sdk/lib-storage';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import crypto from 'crypto';
+import { env } from './env';
 import { logger } from './logger';
 
 export const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024;
@@ -20,15 +21,15 @@ let s3Client: S3Client | null = null;
 export function getS3Client(): S3Client {
   if (!s3Client) {
     s3Client = new S3Client({
-      region: process.env.AWS_REGION!,
-      endpoint: process.env.AWS_ENDPOINT!,
+      region: env.AWS_REGION,
+      endpoint: env.AWS_ENDPOINT,
       requestHandler: new NodeHttpHandler({
         connectionTimeout: 5000,
         socketTimeout: 300000
       }),
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+        accessKeyId: env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: env.AWS_SECRET_ACCESS_KEY
       },
       forcePathStyle: true,
       maxAttempts: 3
@@ -48,7 +49,7 @@ export function generateUniqueFileName(fileName: string): string {
 }
 
 export function generateFileUrl(userDir: string, fileName: string): string {
-  return `${process.env.AWS_CDN_URL}/${userDir}/${fileName}`;
+  return `${env.AWS_CDN_URL}/${userDir}/${fileName}`;
 }
 
 function calculatePartSize(fileSize: number): number {
@@ -91,7 +92,7 @@ export async function uploadToStorage(
 
     await client.send(
       new PutObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME!,
+        Bucket: env.AWS_BUCKET_NAME,
         Key: key,
         Body: bodyData,
         ContentType: contentType,
@@ -120,7 +121,7 @@ export async function uploadStream(
     const upload = new Upload({
       client,
       params: {
-        Bucket: process.env.AWS_BUCKET_NAME!,
+        Bucket: env.AWS_BUCKET_NAME,
         Key: key,
         Body: stream,
         ContentType: contentType,
@@ -151,7 +152,7 @@ async function uploadMultipart(
   try {
     const createResult = await client.send(
       new CreateMultipartUploadCommand({
-        Bucket: process.env.AWS_BUCKET_NAME!,
+        Bucket: env.AWS_BUCKET_NAME,
         Key: key,
         ContentType: contentType,
         CacheControl: 'public, immutable, max-age=31536000'
@@ -173,7 +174,7 @@ async function uploadMultipart(
         client
           .send(
             new UploadPartCommand({
-              Bucket: process.env.AWS_BUCKET_NAME!,
+              Bucket: env.AWS_BUCKET_NAME,
               Key: key,
               PartNumber: partNumber,
               UploadId: uploadId,
@@ -192,7 +193,7 @@ async function uploadMultipart(
 
     await client.send(
       new CompleteMultipartUploadCommand({
-        Bucket: process.env.AWS_BUCKET_NAME!,
+        Bucket: env.AWS_BUCKET_NAME,
         Key: key,
         UploadId: uploadId,
         MultipartUpload: { Parts: parts }
@@ -205,7 +206,7 @@ async function uploadMultipart(
       try {
         await client.send(
           new AbortMultipartUploadCommand({
-            Bucket: process.env.AWS_BUCKET_NAME!,
+            Bucket: env.AWS_BUCKET_NAME,
             Key: key,
             UploadId: uploadId
           })
