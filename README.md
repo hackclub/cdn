@@ -129,6 +129,120 @@ Content-Type: application/json
 - **Storage Structure:** `/s/v3/{HASH}_{filename}`
 - **File Naming:** `/s/{slackUserId}/{unix}_{sanitizedFilename}`
 
+---
+
+### Additional Endpoints
+
+#### Health Check
+
+**Endpoint:** `GET https://cdn.hackclub.com/api/health`
+
+Returns `{ "status": "ok" }` if the service is running.
+
+---
+
+#### Single URL Upload
+
+**Endpoint:** `POST https://cdn.hackclub.com/api/upload`
+
+Upload a single file from a URL. Supports both raw URL text and JSON body.
+
+**Headers:**
+```
+Authorization: Bearer api-token
+Content-Type: application/json (or text/plain)
+X-Download-Authorization: Bearer slack-token (optional, required for Slack files)
+```
+
+**Request Example:**
+```bash
+curl --location 'https://cdn.hackclub.com/api/upload' \
+--header 'Authorization: Bearer api-token' \
+--header 'Content-Type: application/json' \
+--data '"https://example.com/image.png"'
+```
+
+**Response:**
+```json
+{
+  "url": "https://hc-cdn.hel1.your-objectstorage.com/s/v3/abc123_image.png",
+  "id": "abc123",
+  "size": 12345,
+  "type": "image/png"
+}
+```
+
+---
+
+#### Direct File Upload (Single)
+
+**Endpoint:** `POST https://cdn.hackclub.com/api/file`
+
+Upload a file directly via `multipart/form-data`.
+
+**Headers:**
+```
+Authorization: Bearer api-token
+Content-Type: multipart/form-data
+```
+
+**Request Example:**
+```bash
+curl --location 'https://cdn.hackclub.com/api/file' \
+--header 'Authorization: Bearer api-token' \
+--form 'file=@"/path/to/image.png"'
+```
+
+**Response:**
+```json
+{
+  "url": "https://hc-cdn.hel1.your-objectstorage.com/s/v3/abc123_image.png",
+  "size": 12345,
+  "type": "image/png"
+}
+```
+
+---
+
+#### Direct File Upload (Bulk)
+
+**Endpoint:** `POST https://cdn.hackclub.com/api/files`
+
+Upload up to 10 files directly via `multipart/form-data`.
+
+**Headers:**
+```
+Authorization: Bearer api-token
+Content-Type: multipart/form-data
+```
+
+**Request Example:**
+```bash
+curl --location 'https://cdn.hackclub.com/api/files' \
+--header 'Authorization: Bearer api-token' \
+--form 'files=@"/path/to/image1.png"' \
+--form 'files=@"/path/to/image2.png"'
+```
+
+**Response:**
+```json
+{
+  "files": [
+    { "url": "https://hc-cdn.hel1.your-objectstorage.com/s/v3/abc123_image1.png", "size": 12345, "type": "image/png" },
+    { "url": "https://hc-cdn.hel1.your-objectstorage.com/s/v3/def456_image2.png", "size": 67890, "type": "image/png" }
+  ],
+  "cdnBase": "https://hc-cdn.hel1.your-objectstorage.com"
+}
+```
+
+---
+
+#### Default Upload (V3 Alias)
+
+**Endpoint:** `POST https://cdn.hackclub.com/api/new`
+
+Alias for `/api/v3/new`. Accepts an array of URLs and returns V3 format response.
+
 <div align="center">
   <br>
   <p>Made with 💜 for Hack Club</p>
