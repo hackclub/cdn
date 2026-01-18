@@ -30,7 +30,12 @@ export async function uploadStream(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const file = s3.file(key);
-    const writer = file.writer({ type: contentType });
+    const writer = file.writer({ 
+      type: contentType,
+      metadata: {
+        'cache-control': 'public, max-age=31536000, immutable'
+      }
+    });
     
     for await (const chunk of stream) {
       writer.write(chunk);
