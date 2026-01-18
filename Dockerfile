@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y curl wget
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and bun.lockb (if exists)
-COPY package*.json bun.lockb* ./
+# Copy package.json and bun.lock (if exists)
+COPY package*.json bun.lock* ./
 
 # Install dependencies
 RUN bun install
