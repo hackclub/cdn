@@ -1,45 +1,51 @@
-# SQLite. Versions 3.8.0 and up are supported.
-#   gem install sqlite3
+# PostgreSQL. Versions 9.3 and up are supported.
+#   gem install pg
 #
-#   Ensure the SQLite 3 gem is defined in your Gemfile
-#   gem "sqlite3"
+#   Ensure the pg gem is defined in your Gemfile
+#   gem "pg"
 #
 default: &default
-  adapter: sqlite3
+  adapter: postgresql
+  encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
 
 development:
   <<: *default
-  database: storage/development.sqlite3
+  database: cdn_development
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
   <<: *default
-  database: storage/test.sqlite3
+  database: cdn_test
 
-
-# SQLite3 write its data on the local filesystem, as such it requires
-# persistent disks. If you are deploying to a managed service, you should
-# make sure it provides disk persistence, as many don't.
-#
-# Similarly, if you deploy your application as a Docker container, you must
-# ensure the database is located in a persisted volume.
 production:
   primary:
     <<: *default
-    # database: path/to/persistent/storage/production.sqlite3
+    database: <%= ENV["DATABASE_NAME"] || "cdn_production" %>
+    host: <%= ENV["DATABASE_HOST"] %>
+    user: <%= ENV["DATABASE_USER"] %>
+    password: <%= ENV["DATABASE_PASSWORD"] %>
   cache:
     <<: *default
-    # database: path/to/persistent/storage/production_cache.sqlite3
+    database: <%= ENV["CACHE_DATABASE_NAME"] || "cdn_cache" %>
+    host: <%= ENV["CACHE_DATABASE_HOST"] %>
+    user: <%= ENV["CACHE_DATABASE_USER"] %>
+    password: <%= ENV["CACHE_DATABASE_PASSWORD"] %>
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
-    # database: path/to/persistent/storage/production_queue.sqlite3
+    database: <%= ENV["QUEUE_DATABASE_NAME"] || "cdn_queue" %>
+    host: <%= ENV["QUEUE_DATABASE_HOST"] %>
+    user: <%= ENV["QUEUE_DATABASE_USER"] %>
+    password: <%= ENV["QUEUE_DATABASE_PASSWORD"] %>
     migrations_paths: db/queue_migrate
   cable:
     <<: *default
-    # database: path/to/persistent/storage/production_cable.sqlite3
+    database: <%= ENV["CABLE_DATABASE_NAME"] || "cdn_cable" %>
+    host: <%= ENV["CABLE_DATABASE_HOST"] %>
+    user: <%= ENV["CABLE_DATABASE_USER"] %>
+    password: <%= ENV["CABLE_DATABASE_PASSWORD"] %>
     migrations_paths: db/cable_migrate
