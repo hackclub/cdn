@@ -1,0 +1,2 @@
+<h1>Home</h1>
+<%= button_to "Logout", logout_path, method: :delete, data: { turbo: false } if signed_in? %>
