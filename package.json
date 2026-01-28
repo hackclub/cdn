@@ -3,7 +3,7 @@
   "type": "module",
   "devDependencies": {
     "sass-embedded": "^1.97.3",
-    "vite": "^5.4.21",
-    "vite-plugin-ruby": "^5.1.2"
+    "vite": "^6.0.0",
+    "vite-plugin-ruby": "5.1.1"
   }
 }
