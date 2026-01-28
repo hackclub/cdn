@@ -8,6 +8,11 @@ Bundler.require(*Rails.groups)
 
 module CDN
   class Application < Rails::Application
+
+    require "view_component"
+    require "primer/view_components"
+
+
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
 

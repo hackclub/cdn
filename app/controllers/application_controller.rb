@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::Base
   before_action :require_authentication!
 
-  helper_method :current_user, :signed_in?
+  helper_method :current_user, :signed_in?, :impersonating?
 
   private
 
@@ -14,6 +14,8 @@ class ApplicationController < ActionController::Base
   def require_authentication!
     redirect_to login_path, alert: "Please sign in to continue." unless signed_in?
   end
+
+  def impersonating? = false
 
   include Pundit::Authorization
 
