@@ -34,7 +34,7 @@
   </head>
 
   <body>
-    <%= render(Components::HeaderBar.new) %>
+    <%= render(Components::HeaderBar.new) if signed_in? %>
     <%= yield %>
   </body>
 </html>

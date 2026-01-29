@@ -10,6 +10,14 @@ export default defineConfig({
         minify: false
     },
 
+    resolve: {
+        dedupe: ['@primer/view-components', '@github/catalyst']
+    },
+
+    optimizeDeps: {
+        include: ['@primer/view-components']
+    },
+
     server: {
         hmr: {
             overlay: true

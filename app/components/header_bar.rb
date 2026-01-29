@@ -22,7 +22,7 @@ class Components::HeaderBar < Components::Base
             plain current_user.name
           end
 
-          menu.with_item(label: "Log out", href: logout_path, data: { method: :delete }) do |item|
+          menu.with_item(label: "Log out", href: logout_path, form_arguments: { method: :delete }) do |item|
             item.with_leading_visual_icon(icon: :"sign-out")
           end
         end

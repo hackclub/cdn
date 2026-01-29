@@ -9,6 +9,8 @@ class User < ApplicationRecord
   validates :hca_id, presence: true, uniqueness: true
   encrypts :hca_access_token
 
+  has_many :uploads, dependent: :destroy
+
   def self.find_or_create_from_omniauth(auth)
     hca_id = auth.uid
     slack_id = auth.extra.raw_info.slack_id
@@ -38,4 +40,16 @@ class User < ApplicationRecord
   end
 
   def hca_profile(access_token) = HCAService.new(access_token).me
+
+  def total_files
+    uploads.count
+  end
+
+  def total_storage_bytes
+    uploads.joins(:blob).sum('active_storage_blobs.byte_size')
+  end
+
+  def total_storage_gb
+    (total_storage_bytes / 1.gigabyte.to_f).round(2)
+  end
 end

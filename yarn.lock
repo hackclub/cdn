@@ -201,6 +201,11 @@
   resolved "https://registry.yarnpkg.com/@github/tab-container-element/-/tab-container-element-3.4.0.tgz#0a167ed81c9f4a1c1c79f0d0a6a8c012c49a6147"
   integrity sha512-Yx70pO8A0p7Stnm9knKkUNX8i4bjuwDYZarRkM8JH0Z+ffhpe++oNAPbzGI9GEcGugRHvKuSC6p4YOdoHtTniQ==
 
+"@hotwired/turbo@^8.0.22":
+  version "8.0.22"
+  resolved "https://registry.yarnpkg.com/@hotwired/turbo/-/turbo-8.0.22.tgz#f6f8c0756f48ce83c31675998d55c37fdf1a6828"
+  integrity sha512-A7M8vBgsmZ8W55IOEhTN7o0++zaJTavyGa1DW1rt+/b4VTr8QUWC/zu8wxMmwqvczaOe1nI/MkMq4lm2NmiHPg==
+
 "@lit-labs/ssr-dom-shim@^1.2.1":
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/@lit-labs/ssr-dom-shim/-/ssr-dom-shim-1.5.1.tgz#3166900c0d481f03d6d4133686e0febf760d521d"
@@ -361,6 +366,11 @@
     "@oddbird/popover-polyfill" "^0.5.2"
     "@primer/behaviors" "^1.3.4"
     "@primer/live-region-element" "^0.8.0"
+
+"@rails/ujs@^7.1.3-4":
+  version "7.1.3-4"
+  resolved "https://registry.yarnpkg.com/@rails/ujs/-/ujs-7.1.3-4.tgz#1dddea99d5c042e8513973ea709b2cb7e840dc2d"
+  integrity sha512-z0ckI5jrAJfImcObjMT1RBz2IxH6I5q6ZTMFex6AfxSQKZuuL8JxAXvg2CvBuodGCxKvybFVolDyMHXlBLeYAA==
 
 "@rollup/rollup-android-arm-eabi@4.57.0":
   version "4.57.0"

@@ -1,5 +1,5 @@
 <% if signed_in? %>
-
+  <%= render Components::StaticPages::Home.new(stats: @user_stats, user: current_user) %>
 <% else %>
-  <%= button_to "Sign in with Hack Club", "/auth/hack_club", method: :post, class: "btn btn-primary btn-large", data: { turbo: false } %>
+  <%= render Components::StaticPages::LoggedOut.new(stats: @global_stats) %>
 <% end %>
