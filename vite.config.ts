@@ -15,7 +15,10 @@ export default defineConfig({
     },
 
     optimizeDeps: {
-        include: ['@primer/view-components']
+        include: ['@primer/view-components'],
+        esbuildOptions: {
+            keepNames: true
+        }
     },
 
     server: {

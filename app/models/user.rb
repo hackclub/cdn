@@ -52,4 +52,8 @@ class User < ApplicationRecord
   def total_storage_gb
     (total_storage_bytes / 1.gigabyte.to_f).round(2)
   end
+
+  def total_storage_formatted
+    ActiveSupport::NumberHelper.number_to_human_size(total_storage_bytes)
+  end
 end

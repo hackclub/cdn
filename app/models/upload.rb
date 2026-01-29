@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Upload < ApplicationRecord
+  include PgSearch::Model
+
   # UUID v7 primary key (automatic via migration)
 
   belongs_to :user
@@ -8,6 +10,15 @@ class Upload < ApplicationRecord
 
   # Delegate file metadata to blob (no duplication!)
   delegate :filename, :byte_size, :content_type, :checksum, to: :blob
+
+  # Search configuration
+  pg_search_scope :search_by_filename,
+    associated_against: {
+      blob: :filename
+    },
+    using: {
+      tsearch: { prefix: true }
+    }
 
   # Aliases for consistency
   alias_method :file_size, :byte_size

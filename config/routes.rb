@@ -5,6 +5,11 @@ Rails.application.routes.draw do
   post "/auth/hack_club", as: :hack_club_auth
   get "/auth/hack_club/callback", to: "sessions#create"
   get "/auth/failure", to: "sessions#failure"
+
+  resources :uploads, only: [:index, :new, :create, :destroy]
+
+  get "/docs", to: redirect("/docs/getting-started")
+  get "/docs/:id", to: "docs#show", as: :doc
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

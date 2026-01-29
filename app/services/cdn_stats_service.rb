@@ -21,8 +21,8 @@ class CDNStatsService
   def self.user_stats(user)
     {
       total_files: user.total_files,
-      total_storage: user.total_storage_gb,
-      storage_formatted: "#{user.total_storage_gb} GB",
+      total_storage: user.total_storage_bytes,
+      storage_formatted: user.total_storage_formatted,
       files_today: user.uploads.today.count,
       files_this_week: user.uploads.this_week.count,
       recent_uploads: user.uploads.includes(:blob).recent.limit(5)
@@ -34,13 +34,12 @@ class CDNStatsService
   def self.calculate_global_stats
     total_files = Upload.count
     total_storage_bytes = Upload.joins(:blob).sum('active_storage_blobs.byte_size')
-    total_storage_gb = (total_storage_bytes / 1.gigabyte.to_f).round(2)
     total_users = User.joins(:uploads).distinct.count
 
     {
       total_files: total_files,
-      total_storage_gb: total_storage_gb,
-      storage_formatted: "#{total_storage_gb} GB",
+      total_storage_bytes: total_storage_bytes,
+      storage_formatted: ActiveSupport::NumberHelper.number_to_human_size(total_storage_bytes),
       total_users: total_users,
       files_today: Upload.today.count,
       files_this_week: Upload.this_week.count

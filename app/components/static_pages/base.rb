@@ -40,7 +40,8 @@ class Components::StaticPages::Base < Components::Base
 
   def resources_panel
     links = [
-      { label: "API Docs", href: "https://github.com/hackclub/cdn#-api-usage", icon: :book },
+      { label: "Documentation", href: doc_path("getting-started"), icon: :book },
+      { label: "API Docs", href: "https://github.com/hackclub/cdn#-api-usage", icon: :code },
       { label: "GitHub Repo", href: "https://github.com/hackclub/cdn", icon: :"mark-github" },
       { label: "Use via Slack", href: "https://hackclub.enterprise.slack.com/archives/C016DEDUL87", icon: :"comment-discussion" },
       { label: "Help with development?", href: "https://hackclub.enterprise.slack.com/archives/C0ACGUA6XTJ", icon: :heart },

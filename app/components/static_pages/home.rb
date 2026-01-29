@@ -63,22 +63,7 @@ class Components::StaticPages::Home < Components::StaticPages::Base
   def recent_uploads_list
     div(style: "background: var(--bgColor-default, #fff); border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 6px; overflow: hidden;") do
       stats[:recent_uploads].each_with_index do |upload, index|
-        div(style: "padding: 12px 16px; #{index > 0 ? 'border-top: 1px solid var(--borderColor-default, #d0d7de);' : ''}") do
-          div(style: "display: flex; justify-content: space-between; align-items: center; gap: 16px;") do
-            div(style: "flex: 1; min-width: 0;") do
-              div(style: "font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;") do
-                render Primer::Beta::Octicon.new(icon: :file, size: :small, mr: 1)
-                plain upload.filename.to_s
-              end
-              div(style: "font-size: 12px; color: var(--fgColor-muted, #656d76); margin-top: 4px;") do
-                plain "#{upload.human_file_size} • #{time_ago_in_words(upload.created_at)} ago"
-              end
-            end
-            a(href: upload.cdn_url, target: "_blank", rel: "noopener", class: "btn btn-sm") do
-              plain "View"
-            end
-          end
-        end
+        render Components::Uploads::Row.new(upload: upload, index: index, compact: true)
       end
     end
   end

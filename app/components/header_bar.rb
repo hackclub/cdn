@@ -7,9 +7,15 @@ class Components::HeaderBar < Components::Base
   def view_template
     header(class: "app-header", style: "display: flex; align-items: center; justify-content: space-between;") do
       div(style: "display: flex; align-items: center; gap: 1rem;") do
-        span(class: "app-header-brand") do
+        a(href: root_path, class: "app-header-brand", style: "text-decoration: none; color: inherit;") do
           plain "Hack Club CDN"
           sup(class: "app-header-env-badge") { "(dev)" } if Rails.env.development?
+        end
+        nav(style: "display: flex; gap: 1rem; margin-left: 1rem;") do
+          if signed_in?
+            a(href: uploads_path, style: "color: var(--fgColor-default); text-decoration: none; font-size: 14px;") { "Uploads" }
+          end
+          a(href: doc_path("getting-started"), style: "color: var(--fgColor-default); text-decoration: none; font-size: 14px;") { "Docs" }
         end
       end
 
