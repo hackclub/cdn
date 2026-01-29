@@ -74,12 +74,17 @@ GEM
       uri (>= 0.13.1)
     addressable (2.8.8)
       public_suffix (>= 2.0.2, < 8.0)
+    argon2-kdf (0.3.1)
+      fiddle
     ast (2.4.3)
     awesome_print (1.9.2)
     base64 (0.3.0)
     benchmark (0.5.0)
     bigdecimal (4.0.1)
     bindex (0.8.1)
+    blind_index (2.7.0)
+      activesupport (>= 7.1)
+      argon2-kdf (>= 0.2)
     bootsnap (1.21.1)
       msgpack (~> 1.2)
     brakeman (7.1.2)
@@ -118,6 +123,7 @@ GEM
       logger
     faraday-net_http (3.4.2)
       net-http (~> 0.5)
+    fiddle (1.1.8)
     fugit (1.12.1)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
@@ -155,6 +161,7 @@ GEM
     kaminari-core (1.2.2)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
+    lockbox (2.1.0)
     logger (1.7.0)
     loofah (2.25.0)
       crass (~> 1.0.2)
@@ -444,6 +451,7 @@ PLATFORMS
 
 DEPENDENCIES
   awesome_print
+  blind_index
   bootsnap
   brakeman
   capybara
@@ -454,6 +462,7 @@ DEPENDENCIES
   high_voltage
   jb
   kaminari
+  lockbox
   omniauth
   omniauth-hack_club
   pg (~> 1.3)

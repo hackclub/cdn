@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_29_051531) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_29_201832) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_29_051531) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "api_keys", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.text "token_ciphertext", null: false
+    t.string "token_bidx", null: false
+    t.boolean "revoked", default: false, null: false
+    t.datetime "revoked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token_bidx"], name: "index_api_keys_on_token_bidx", unique: true
+    t.index ["user_id", "revoked"], name: "index_api_keys_on_user_id_and_revoked"
+    t.index ["user_id"], name: "index_api_keys_on_user_id"
+  end
+
   create_table "uploads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "blob_id", null: false
@@ -71,6 +85,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_29_051531) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "api_keys", "users"
   add_foreign_key "uploads", "active_storage_blobs", column: "blob_id"
   add_foreign_key "uploads", "users"
 end
