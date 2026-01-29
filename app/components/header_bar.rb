@@ -14,6 +14,7 @@ class Components::HeaderBar < Components::Base
         nav(style: "display: flex; align-items: center; gap: 1rem; margin-left: 1rem;") do
           if signed_in?
             a(href: uploads_path, style: "color: var(--fgColor-default); text-decoration: none; font-size: 14px;") { "Uploads" }
+            a(href: api_keys_path, style: "color: var(--fgColor-default); text-decoration: none; font-size: 14px;") { "API Keys" }
           end
           a(href: doc_path("getting-started"), style: "color: var(--fgColor-default); text-decoration: none; font-size: 14px;") { "Docs" }
           admin_tool(element: "span") do

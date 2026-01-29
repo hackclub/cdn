@@ -1,0 +1,4 @@
+<%= render Components::APIKeys::Index.new(
+  api_keys: @api_keys,
+  new_token: flash[:api_key_token]
+) %>

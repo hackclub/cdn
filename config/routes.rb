@@ -3,6 +3,7 @@ Rails.application.routes.draw do
     get "search", to: "search#index"
     resources :users, only: [:show, :destroy]
     resources :uploads, only: [:destroy]
+    resources :api_keys, only: [:destroy]
   end
 
   delete "/logout", to: "sessions#destroy", as: :logout
@@ -13,6 +14,16 @@ Rails.application.routes.draw do
   get "/auth/failure", to: "sessions#failure"
 
   resources :uploads, only: [:index, :new, :create, :destroy]
+
+  resources :api_keys, only: [:index, :create, :destroy]
+
+  namespace :api do
+    namespace :v4 do
+      get "me", to: "users#show"
+      post "upload", to: "uploads#create"
+      post "upload_from_url", to: "uploads#create_from_url"
+    end
+  end
 
   get "/docs", to: redirect("/docs/getting-started")
   get "/docs/:id", to: "docs#show", as: :doc

@@ -16,6 +16,7 @@ class User < ApplicationRecord
   encrypts :hca_access_token
 
   has_many :uploads, dependent: :destroy
+  has_many :api_keys, dependent: :destroy, class_name: 'APIKey'
 
   def self.find_or_create_from_omniauth(auth)
     hca_id = auth.uid
