@@ -12,6 +12,7 @@ class Components::Uploads::Index < Components::Base
   end
 
   def view_template
+    dropzone_form
     div(style: "max-width: 1200px; margin: 0 auto; padding: 24px;") do
       header_section
       search_section
@@ -34,7 +35,7 @@ class Components::Uploads::Index < Components::Base
         end
       end
 
-      link_to new_upload_path, class: "btn btn-primary" do
+      label(for: "dropzone-file-input", class: "btn btn-primary", style: "cursor: pointer;") do
         render Primer::Beta::Octicon.new(icon: :upload, mr: 1)
         plain "Upload File"
       end
@@ -43,18 +44,20 @@ class Components::Uploads::Index < Components::Base
 
   def search_section
     div(style: "margin-bottom: 24px;") do
-      form_with url: uploads_path, method: :get, style: "display: flex; gap: 8px;" do
-        input(
-          type: "search",
-          name: "query",
-          placeholder: "Search files...",
-          value: query,
-          class: "form-control",
-          style: "flex: 1; max-width: 400px;"
-        )
-        button(type: "submit", class: "btn") do
-          render Primer::Beta::Octicon.new(icon: :search, mr: 1)
-          plain "Search"
+      form_with url: uploads_path, method: :get do
+        div(style: "display: flex; gap: 12px;") do
+          input(
+            type: "search",
+            name: "query",
+            placeholder: "Search files...",
+            value: query,
+            class: "form-control",
+            style: "flex: 1; max-width: 400px;"
+          )
+          button(type: "submit", class: "btn") do
+            render Primer::Beta::Octicon.new(icon: :search, mr: 1)
+            plain "Search"
+          end
         end
       end
     end
@@ -76,17 +79,15 @@ class Components::Uploads::Index < Components::Base
 
   def empty_state
     render Primer::Beta::Blankslate.new(border: true) do |component|
-      component.with_visual_icon(icon: :inbox)
+      component.with_visual_icon(icon: query.present? ? :search : :upload, size: :medium)
       component.with_heading(tag: :h2) do
-        query.present? ? "No files found" : "No uploads yet"
+        query.present? ? "No files found" : "Drop files here"
       end
       component.with_description do
-        query.present? ? "Try a different search query" : "Upload your first file to get started"
-      end
-      unless query.present?
-        component.with_primary_action(href: new_upload_path) do
-          render Primer::Beta::Octicon.new(icon: :upload, mr: 1)
-          plain "Upload File"
+        if query.present?
+          "Try a different search query"
+        else
+          "Drag and drop files anywhere on this page, or use the Upload button"
         end
       end
     end
@@ -95,6 +96,12 @@ class Components::Uploads::Index < Components::Base
   def pagination_section
     div(style: "margin-top: 24px; text-align: center;") do
       paginate uploads
+    end
+  end
+
+  def dropzone_form
+    form_with url: uploads_path, method: :post, multipart: true, data: { dropzone_form: true } do
+      input(type: "file", name: "file", id: "dropzone-file-input", data: { dropzone_input: true }, style: "display: none;")
     end
   end
 end

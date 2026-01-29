@@ -6,38 +6,39 @@ order: 1
 
 # Getting Started
 
-Welcome to Hack Club CDN. This guide will help you get started with file hosting.
+Hack Club CDN is image hosting for your HTML pages. Upload files, get permanent URLs, embed them anywhere.
 
 ## Sign In
 
-Click the **Sign in with Hack Club** button on the homepage to authenticate with your Hack Club account.
+Click **Sign in with Hack Club** on the homepage to authenticate.
 
-## Uploading Files
+## Upload an Image
 
-Once you're logged in:
+1. Go to **My Files**
+2. Drag and drop images or click **Upload**
+3. Copy the URL
 
-1. Navigate to **My Files**
-2. Click **Upload** or drag and drop files
-3. Your file receives a permanent URL
+## Use in HTML
 
-## Sharing Files
-
-Every uploaded file gets a unique URL you can share anywhere:
-
-```
-https://cdn.hackclub.com/your-file-id
+```html
+<img src="https://cdn.hackclub.com/019505e2-c85b-7f80-9c31-4b2e5a8d9f12/photo.jpg" alt="My image">
 ```
 
-## File Limits
+## Use in Markdown
 
-- Maximum file size: varies by account
-- Supported formats: images, documents, archives, and more
+```markdown
+![](https://cdn.hackclub.com/019505e2-c85b-7f80-9c31-4b2e5a8d9f12/photo.jpg)
+```
 
-## API Usage
+## Hotlinking
 
-For programmatic uploads, check out the [API documentation](/docs/api).
+URLs work everywhere—GitHub READMEs, Notion, Discord, Slack, personal websites, etc.
+
+## Programmatic Uploads
+
+Need to upload from code? See the [API documentation](/docs/api).
 
 ## Need Help?
 
-- Join the [#cdn-dev channel on Slack](https://hackclub.slack.com/archives/C08RYDPS36V)
-- Open an issue on [GitHub](https://github.com/hackclub/cdn/issues)
+- [#cdn-dev on Slack](https://hackclub.slack.com/archives/C08RYDPS36V)
+- [GitHub Issues](https://github.com/hackclub/cdn/issues)

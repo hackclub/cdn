@@ -13,14 +13,11 @@ class UploadsController < ApplicationController
     @uploads = @uploads.page(params[:page]).per(50)
   end
 
-  def new
-  end
-
   def create
     uploaded_file = params[:file]
 
     if uploaded_file.blank?
-      redirect_to new_upload_path, alert: "Please select a file to upload."
+      redirect_to uploads_path, alert: "Please select a file to upload."
       return
     end
 
@@ -37,7 +34,7 @@ class UploadsController < ApplicationController
 
     redirect_to uploads_path, notice: "File uploaded successfully!"
   rescue StandardError => e
-    redirect_to new_upload_path, alert: "Upload failed: #{e.message}"
+    redirect_to uploads_path, alert: "Upload failed: #{e.message}"
   end
 
   def destroy

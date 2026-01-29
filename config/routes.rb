@@ -13,7 +13,7 @@ Rails.application.routes.draw do
   get "/auth/hack_club/callback", to: "sessions#create"
   get "/auth/failure", to: "sessions#failure"
 
-  resources :uploads, only: [:index, :new, :create, :destroy]
+  resources :uploads, only: [:index, :create, :destroy]
 
   resources :api_keys, only: [:index, :create, :destroy]
 

@@ -36,6 +36,8 @@ class Components::Uploads::Row < Components::Base
     end
 
     div(style: "display: flex; gap: 8px; align-items: center;") do
+      render(Primer::Beta::ClipboardCopyButton.new(value: upload.cdn_url, size: :small, "aria-label": "Copy link")) { "Copy link" }
+
       a(href: upload.cdn_url, target: "_blank", rel: "noopener", class: "btn btn-sm") do
         plain "View"
       end
@@ -51,7 +53,7 @@ class Components::Uploads::Row < Components::Base
         div(style: "font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;") do
           plain upload.filename.to_s
         end
-        render(Primer::Beta::Label.new(scheme: :secondary, size: :small)) { plain upload.provenance.titleize }
+        render(Primer::Beta::Label.new(scheme: :secondary)) { plain upload.provenance.titleize }
       end
       div(style: "font-size: 12px; color: var(--fgColor-muted, #656d76);") do
         plain "#{upload.human_file_size} • #{upload.content_type} • #{time_ago_in_words(upload.created_at)} ago"
@@ -59,6 +61,8 @@ class Components::Uploads::Row < Components::Base
     end
 
     div(style: "display: flex; gap: 8px; align-items: center;") do
+      render(Primer::Beta::ClipboardCopyButton.new(value: upload.cdn_url, size: :small, "aria-label": "Copy link")) { "Copy link" }
+
       a(href: upload.cdn_url, target: "_blank", rel: "noopener", class: "btn btn-sm") do
         render Primer::Beta::Octicon.new(icon: :link, mr: 1)
         plain "View"

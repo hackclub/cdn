@@ -2,26 +2,31 @@
   let dropzone;
   let counter = 0;
   let fileInput, form;
+  let initialized = false;
 
   function init() {
     const formElement = document.querySelector("[data-dropzone-form]");
     if (!formElement) {
       fileInput = null;
       form = null;
+      initialized = false;
       return;
     }
+
+    if (initialized && form === formElement) return;
 
     form = formElement;
     fileInput = form.querySelector("[data-dropzone-input]");
 
     if (!fileInput) return;
 
+    initialized = true;
+
     // Handle file input change
     fileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
-        // Auto-submit on file selection
-        form.submit();
+        form.requestSubmit();
       }
     });
   }
@@ -61,8 +66,7 @@
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       fileInput.files = files;
-      // Auto-submit on drop
-      form.submit();
+      form.requestSubmit();
     }
   });
 
@@ -96,10 +100,13 @@
     }
   }
 
-  // Initialize
+  // Initialize on first load
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
+
+  // Re-initialize on Turbo navigations
+  document.addEventListener("turbo:load", init);
 })();
