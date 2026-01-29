@@ -12,7 +12,7 @@ class Components::Uploads::Index < Components::Base
   end
 
   def view_template
-    div(style: "max-width: 1200px; margin: 0 auto; padding: 24px;") do
+    div(class: "container-lg p-4") do
       header_section
       search_section
       uploads_list
@@ -25,35 +25,35 @@ class Components::Uploads::Index < Components::Base
   attr_reader :uploads, :query
 
   def header_section
-    header(style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;") do
+    div(class: "d-flex flex-justify-between flex-items-center mb-4") do
       div do
-        h1(style: "font-size: 2rem; font-weight: 600; margin: 0;") { "Your Uploads" }
-        p(style: "color: var(--fgColor-muted, #656d76); margin: 8px 0 0; font-size: 14px;") do
+        h1(class: "h2 mb-1") { "Your Uploads" }
+        p(class: "color-fg-muted f5 mb-0") do
           count = uploads.respond_to?(:total_count) ? uploads.total_count : uploads.size
           plain "#{count} file#{count == 1 ? '' : 's'}"
         end
       end
 
-      link_to new_upload_path, class: "btn btn-primary" do
-        render Primer::Beta::Octicon.new(icon: :upload, mr: 1)
+      render Primer::Beta::Button.new(href: new_upload_path, tag: :a, scheme: :primary) do |button|
+        button.with_leading_visual_icon(icon: :upload)
         plain "Upload File"
       end
     end
   end
 
   def search_section
-    div(style: "margin-bottom: 24px;") do
-      form_with url: uploads_path, method: :get, style: "display: flex; gap: 8px;" do
+    div(class: "mb-4") do
+      form_with url: uploads_path, method: :get, class: "d-flex gap-2" do
         input(
           type: "search",
           name: "query",
           placeholder: "Search files...",
           value: query,
-          class: "form-control",
-          style: "flex: 1; max-width: 400px;"
+          class: "form-control flex-1",
+          style: "max-width: 400px;"
         )
-        button(type: "submit", class: "btn") do
-          render Primer::Beta::Octicon.new(icon: :search, mr: 1)
+        render Primer::Beta::Button.new(type: :submit) do |button|
+          button.with_leading_visual_icon(icon: :search)
           plain "Search"
         end
       end
@@ -62,9 +62,11 @@ class Components::Uploads::Index < Components::Base
 
   def uploads_list
     if uploads.any?
-      div(style: "background: var(--bgColor-default, #fff); border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 6px; overflow: hidden;") do
-        uploads.each_with_index do |upload, index|
-          render Components::Uploads::Row.new(upload: upload, index: index, compact: false)
+      render Primer::Beta::BorderBox.new do |box|
+        uploads.each do |upload|
+          box.with_row do
+            render Components::Uploads::Row.new(upload: upload, compact: false)
+          end
         end
       end
     else
@@ -73,16 +75,16 @@ class Components::Uploads::Index < Components::Base
   end
 
   def empty_state
-    div(style: "text-align: center; padding: 64px 24px; color: var(--fgColor-muted, #656d76);") do
-      render Primer::Beta::Octicon.new(icon: :inbox, size: :medium)
-      h2(style: "font-size: 20px; font-weight: 600; margin: 16px 0 8px;") do
+    render Primer::Beta::Blankslate.new(border: true) do |component|
+      component.with_visual_icon(icon: :inbox)
+      component.with_heading(tag: :h2) do
         query.present? ? "No files found" : "No uploads yet"
       end
-      p(style: "margin: 0 0 24px;") do
+      component.with_description do
         query.present? ? "Try a different search query" : "Upload your first file to get started"
       end
       unless query.present?
-        link_to new_upload_path, class: "btn btn-primary" do
+        component.with_primary_action(href: new_upload_path) do
           render Primer::Beta::Octicon.new(icon: :upload, mr: 1)
           plain "Upload File"
         end
@@ -91,7 +93,7 @@ class Components::Uploads::Index < Components::Base
   end
 
   def pagination_section
-    div(style: "margin-top: 24px; text-align: center;") do
+    div(class: "mt-4 text-center") do
       paginate uploads
     end
   end

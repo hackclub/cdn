@@ -9,7 +9,7 @@ class Components::Admin::Users::Show < Components::Base
   end
 
   def view_template
-    div(style: "max-width: 800px; margin: 0 auto; padding: 24px;") do
+    div(class: "container-md p-4") do
       header_section
       stats_section
       api_keys_section
@@ -20,36 +20,37 @@ class Components::Admin::Users::Show < Components::Base
   private
 
   def header_section
-    header(style: "margin-bottom: 24px;") do
-      div(style: "display: flex; justify-content: space-between; align-items: flex-start;") do
+    div(class: "mb-4") do
+      div(class: "d-flex flex-justify-between flex-items-start") do
         div do
-          h1(style: "font-size: 2rem; font-weight: 600; margin: 0;") { @user.name || "Unnamed User" }
-          p(style: "color: var(--fgColor-muted, #656d76); margin: 8px 0 0; font-size: 14px;") do
+          div(class: "d-flex flex-items-center gap-2 mb-1") do
+            h1(class: "h2 mb-0") { @user.name || "Unnamed User" }
+            if @user.is_admin?
+              render Primer::Beta::Label.new(scheme: :accent) { "ADMIN" }
+            end
+          end
+          div(class: "color-fg-muted f5") do
             plain @user.email
             plain " · "
-            code(style: "font-size: 12px;") { @user.public_id }
+            code(class: "f6") { @user.public_id }
           end
           if @user.slack_id.present?
-            p(style: "color: var(--fgColor-muted); margin: 4px 0 0; font-size: 12px;") do
+            div(class: "color-fg-muted f6 mt-1") do
               plain "Slack: "
               code { @user.slack_id }
             end
           end
         end
-        div(style: "display: flex; gap: 8px;") do
-          if @user.is_admin?
-            span(style: "background: #8250df; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;") { "ADMIN" }
-          end
-          link_to admin_search_path, class: "btn" do
-            plain "Back to Search"
-          end
+        render Primer::Beta::Button.new(href: admin_search_path, tag: :a) do |button|
+          button.with_leading_visual_icon(icon: :"arrow-left")
+          plain "Back to Search"
         end
       end
     end
   end
 
   def stats_section
-    div(style: "display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;") do
+    div(class: "d-grid gap-3 mb-4", style: "grid-template-columns: repeat(3, 1fr);") do
       stat_card("Total Files", @user.total_files.to_s)
       stat_card("Total Storage", @user.total_storage_formatted)
       stat_card("Member Since", @user.created_at.strftime("%b %d, %Y"))
@@ -57,9 +58,11 @@ class Components::Admin::Users::Show < Components::Base
   end
 
   def stat_card(label, value)
-    div(style: "background: var(--bgColor-default, #fff); border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 6px; padding: 16px;") do
-      div(style: "font-size: 12px; color: var(--fgColor-muted);") { label }
-      div(style: "font-size: 24px; font-weight: 600; margin-top: 4px;") { value }
+    render Primer::Beta::BorderBox.new do |box|
+      box.with_body(padding: :normal) do
+        div(class: "f6 color-fg-muted") { label }
+        div(class: "h3 mt-1") { value }
+      end
     end
   end
 
@@ -67,30 +70,34 @@ class Components::Admin::Users::Show < Components::Base
     api_keys = @user.api_keys.recent
     return if api_keys.empty?
 
-    div(style: "margin-bottom: 24px;") do
-      h2(style: "font-size: 1.25rem; font-weight: 600; margin-bottom: 12px;") { "API Keys" }
-      div(style: "background: var(--bgColor-default, #fff); border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 6px; overflow: hidden;") do
+    div(class: "mb-4") do
+      h2(class: "h4 mb-3") { "API Keys" }
+      render Primer::Beta::BorderBox.new do |box|
         api_keys.each do |api_key|
-          api_key_row(api_key)
+          box.with_row do
+            api_key_row(api_key)
+          end
         end
       end
     end
   end
 
   def api_key_row(api_key)
-    div(style: "display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--borderColor-default, #d0d7de);") do
+    div(class: "d-flex flex-justify-between flex-items-center") do
       div do
-        div(style: "font-weight: 500;") { api_key.name }
-        code(style: "font-size: 12px; color: var(--fgColor-muted);") { api_key.masked_token }
+        div(class: "text-bold") { api_key.name }
+        code(class: "f6 color-fg-muted") { api_key.masked_token }
       end
-      div(style: "display: flex; align-items: center; gap: 12px;") do
+      div(class: "d-flex flex-items-center gap-3") do
         if api_key.revoked?
-          span(style: "background: #cf222e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;") { "REVOKED" }
+          render Primer::Beta::Label.new(scheme: :danger) { "REVOKED" }
         else
-          span(style: "background: #1a7f37; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;") { "ACTIVE" }
-          button_to "Revoke", helpers.admin_api_key_path(api_key), method: :delete, class: "btn btn-sm btn-danger", data: { confirm: "Revoke this API key?" }
+          render Primer::Beta::Label.new(scheme: :success) { "ACTIVE" }
+          button_to helpers.admin_api_key_path(api_key), method: :delete, class: "d-inline", data: { confirm: "Revoke this API key?" } do
+            render Primer::Beta::Button.new(scheme: :danger, size: :small, tag: :span) { "Revoke" }
+          end
         end
-        span(style: "font-size: 12px; color: var(--fgColor-muted);") { api_key.created_at.strftime("%b %d, %Y") }
+        span(class: "f6 color-fg-muted") { api_key.created_at.strftime("%b %d, %Y") }
       end
     end
   end
@@ -100,16 +107,14 @@ class Components::Admin::Users::Show < Components::Base
     return if uploads.empty?
 
     div do
-      h2(style: "font-size: 1.25rem; font-weight: 600; margin-bottom: 12px;") { "Recent Uploads" }
-      div(style: "background: var(--bgColor-default, #fff); border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 6px; overflow: hidden;") do
+      h2(class: "h4 mb-3") { "Recent Uploads" }
+      render Primer::Beta::BorderBox.new do |box|
         uploads.each do |upload|
-          upload_row(upload)
+          box.with_row do
+            render Components::Uploads::Row.new(upload: upload, compact: true, admin: true)
+          end
         end
       end
     end
-  end
-
-  def upload_row(upload)
-    render Components::Uploads::Row.new(upload: upload, compact: true, admin: true)
   end
 end

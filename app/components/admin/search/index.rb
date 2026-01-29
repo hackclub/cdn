@@ -12,7 +12,7 @@ class Components::Admin::Search::Index < Components::Base
   end
 
   def view_template
-    div(style: "max-width: 1200px; margin: 0 auto; padding: 24px;") do
+    div(class: "container-lg p-4") do
       header_section
       tabs_section
       search_form
@@ -23,47 +23,37 @@ class Components::Admin::Search::Index < Components::Base
   private
 
   def header_section
-    header(style: "margin-bottom: 24px;") do
-      h1(style: "font-size: 2rem; font-weight: 600; margin: 0;") { "Admin Search" }
-      p(style: "color: var(--fgColor-muted, #656d76); margin: 8px 0 0; font-size: 14px;") do
+    div(class: "mb-4") do
+      h1(class: "h2 mb-1") { "Admin Search" }
+      p(class: "color-fg-muted f5") do
         "Search users and uploads by ID, email, filename, URL, etc."
       end
     end
   end
 
   def tabs_section
-    div(style: "display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--borderColor-default, #d0d7de);") do
-      tab_link("All", "all")
-      tab_link("Users", "users")
-      tab_link("Uploads", "uploads")
-    end
-  end
-
-  def tab_link(label, type)
-    active = @type == type
-    base_style = "padding: 8px 16px; text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px;"
-    active_style = active ? "border-color: #0969da; color: #0969da; font-weight: 500;" : "color: var(--fgColor-muted);"
-
-    link_to admin_search_path(type: type, q: @query), style: "#{base_style} #{active_style}" do
-      plain label
+    render Primer::Alpha::UnderlineNav.new(label: "Search type") do |nav|
+      nav.with_tab(selected: @type == "all", href: admin_search_path(type: "all", q: @query)) { "All" }
+      nav.with_tab(selected: @type == "users", href: admin_search_path(type: "users", q: @query)) { "Users" }
+      nav.with_tab(selected: @type == "uploads", href: admin_search_path(type: "uploads", q: @query)) { "Uploads" }
     end
   end
 
   def search_form
-    div(style: "margin-bottom: 24px;") do
-      form_with url: admin_search_path, method: :get, style: "display: flex; gap: 8px;" do
+    div(class: "mb-4 mt-3") do
+      form_with url: admin_search_path, method: :get, class: "d-flex gap-2" do
         input(type: "hidden", name: "type", value: @type)
         input(
           type: "search",
           name: "q",
           placeholder: search_placeholder,
           value: @query,
-          class: "form-control",
-          style: "flex: 1; max-width: 600px;",
+          class: "form-control flex-1",
+          style: "max-width: 600px;",
           autofocus: true
         )
-        button(type: "submit", class: "btn btn-primary") do
-          render Primer::Beta::Octicon.new(icon: :search, mr: 1)
+        render Primer::Beta::Button.new(type: :submit, scheme: :primary) do |button|
+          button.with_leading_visual_icon(icon: :search)
           plain "Search"
         end
       end
@@ -88,43 +78,55 @@ class Components::Admin::Search::Index < Components::Base
   end
 
   def users_section
-    div(style: "margin-bottom: 32px;") do
-      h2(style: "font-size: 1.25rem; font-weight: 600; margin-bottom: 12px;") do
+    div(class: "mb-5") do
+      h2(class: "h4 mb-3") do
         plain "Users "
-        span(style: "color: var(--fgColor-muted); font-weight: normal;") { "(#{@users.size})" }
+        render Primer::Beta::Label.new(scheme: :secondary) { @users.size.to_s }
       end
-      div(style: "background: var(--bgColor-default, #fff); border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 6px; overflow: hidden;") do
+      render Primer::Beta::BorderBox.new do |box|
         @users.each do |user|
-          user_row(user)
+          box.with_row do
+            user_row(user)
+          end
         end
       end
     end
   end
 
   def user_row(user)
-    div(style: "padding: 12px 16px; border-bottom: 1px solid var(--borderColor-default, #d0d7de); display: flex; justify-content: space-between; align-items: center;") do
+    div(class: "d-flex flex-justify-between flex-items-center") do
       div do
-        div(style: "font-weight: 500;") { user.name || "Unnamed" }
-        div(style: "font-size: 12px; color: var(--fgColor-muted);") do
+        div(class: "text-bold") { user.name || "Unnamed" }
+        div(class: "f6 color-fg-muted") do
           plain user.email
           plain " · "
-          code(style: "font-size: 11px;") { user.public_id }
+          code(class: "f6") { user.public_id }
         end
       end
-      div(style: "display: flex; align-items: center; gap: 16px;") do
-        div(style: "text-align: right; font-size: 12px; color: var(--fgColor-muted);") do
+      div(class: "d-flex flex-items-center gap-3") do
+        div(class: "text-right f6 color-fg-muted") do
           div { "#{user.total_files} files" }
           div { user.total_storage_formatted }
-          if user.is_admin?
-            span(style: "background: #8250df; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px;") { "ADMIN" }
-          end
         end
-        div(style: "display: flex; gap: 8px;") do
-          link_to admin_user_path(user), class: "btn btn-sm" do
-            render Primer::Beta::Octicon.new(icon: :eye, size: :small)
-          end
-          button_to admin_user_path(user), method: :delete, class: "btn btn-sm btn-danger", data: { turbo_confirm: "Delete user #{user.name || user.email} and all their uploads?" } do
-            render Primer::Beta::Octicon.new(icon: :trash, size: :small)
+        if user.is_admin?
+          render Primer::Beta::Label.new(scheme: :accent) { "ADMIN" }
+        end
+        div(class: "d-flex gap-2") do
+          render Primer::Beta::IconButton.new(
+            icon: :eye,
+            "aria-label": "View user",
+            href: admin_user_path(user),
+            tag: :a,
+            size: :small
+          )
+          button_to admin_user_path(user), method: :delete, class: "d-inline", data: { turbo_confirm: "Delete user #{user.name || user.email} and all their uploads?" } do
+            render Primer::Beta::IconButton.new(
+              icon: :trash,
+              "aria-label": "Delete user",
+              scheme: :danger,
+              size: :small,
+              tag: :span
+            )
           end
         end
       end
@@ -133,27 +135,25 @@ class Components::Admin::Search::Index < Components::Base
 
   def uploads_section
     div do
-      h2(style: "font-size: 1.25rem; font-weight: 600; margin-bottom: 12px;") do
+      h2(class: "h4 mb-3") do
         plain "Uploads "
-        span(style: "color: var(--fgColor-muted); font-weight: normal;") { "(#{@uploads.size})" }
+        render Primer::Beta::Label.new(scheme: :secondary) { @uploads.size.to_s }
       end
-      div(style: "background: var(--bgColor-default, #fff); border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 6px; overflow: hidden;") do
+      render Primer::Beta::BorderBox.new do |box|
         @uploads.each do |upload|
-          upload_row(upload)
+          box.with_row do
+            render Components::Uploads::Row.new(upload: upload, compact: true, admin: true)
+          end
         end
       end
     end
   end
 
-  def upload_row(upload)
-    render Components::Uploads::Row.new(upload: upload, compact: true, admin: true)
-  end
-
   def empty_state
-    div(style: "text-align: center; padding: 64px 24px; color: var(--fgColor-muted, #656d76);") do
-      render Primer::Beta::Octicon.new(icon: :search, size: :medium)
-      h2(style: "font-size: 20px; font-weight: 600; margin: 16px 0 8px;") { "No results found" }
-      p(style: "margin: 0;") { "Try a different search query" }
+    render Primer::Beta::Blankslate.new(border: true) do |component|
+      component.with_visual_icon(icon: :search)
+      component.with_heading(tag: :h2) { "No results found" }
+      component.with_description { "Try a different search query" }
     end
   end
 end
