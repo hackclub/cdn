@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 class Components::StaticPages::Home < Components::StaticPages::Base
-  def initialize(stats:, user:)
+  def initialize(stats:, user:, flavor_text:)
     @stats = stats
     @user = user
+    @flavor_text = flavor_text
   end
 
   def view_template
@@ -16,7 +17,7 @@ class Components::StaticPages::Home < Components::StaticPages::Base
 
   private
 
-  attr_reader :stats, :user
+  attr_reader :stats, :user, :flavor_text
 
   def header_section
     header(style: "display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--borderColor-default, #d0d7de);") do
@@ -25,7 +26,10 @@ class Components::StaticPages::Home < Components::StaticPages::Base
           plain "Welcome back, "
           strong { user&.name || "friend" }
         end
-        h1(style: "font-size: 2rem; font-weight: 300; margin: 0;") { "Your CDN Stash" }
+        h1(style: "font-size: 2rem; font-weight: 300; margin: 0;") { "Hack Club CDN" }
+        div(style: "margin-top: 8px;") do
+          render(Primer::Beta::Label.new(scheme: :secondary)) { flavor_text }
+        end
       end
 
       div(style: "display: flex; gap: 8px; flex-wrap: wrap;") do

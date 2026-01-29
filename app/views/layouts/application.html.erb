@@ -35,6 +35,16 @@
 
   <body>
     <%= render(Components::HeaderBar.new) if signed_in? %>
+    <% if flash[:notice] || flash[:alert] %>
+      <div style="max-width: 768px; margin: 16px auto; padding: 0 16px;">
+        <% if flash[:notice] %>
+          <%= render(Primer::Beta::Flash.new(scheme: :success, icon: :check)) { flash[:notice] } %>
+        <% end %>
+        <% if flash[:alert] %>
+          <%= render(Primer::Beta::Flash.new(scheme: :danger, icon: :alert)) { flash[:alert] } %>
+        <% end %>
+      </div>
+    <% end %>
     <%= yield %>
   </body>
 </html>

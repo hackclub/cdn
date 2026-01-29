@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 class Components::StaticPages::LoggedOut < Components::StaticPages::Base
-  def initialize(stats:)
+  def initialize(stats:, flavor_text:)
     @stats = stats
+    @flavor_text = flavor_text
   end
 
   def view_template
@@ -15,7 +16,7 @@ class Components::StaticPages::LoggedOut < Components::StaticPages::Base
 
   private
 
-  attr_reader :stats
+  attr_reader :stats, :flavor_text
 
   def header_section
     header(style: "display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--borderColor-default, #d0d7de);") do
@@ -24,9 +25,10 @@ class Components::StaticPages::LoggedOut < Components::StaticPages::Base
           plain "Hack Club CDN"
           sup(style: "font-size: 0.5em; margin-left: 4px;") { "v4" }
         end
-        p(style: "color: var(--fgColor-muted, #656d76); margin: 0; max-width: 600px;") do
+        p(style: "color: var(--fgColor-muted, #656d76); margin: 0 0 8px; max-width: 600px;") do
           plain "File hosting for Hack Clubbers."
         end
+        render(Primer::Beta::Label.new(scheme: :secondary)) { flavor_text }
       end
 
       div(style: "display: flex; gap: 8px; flex-wrap: wrap;") do
