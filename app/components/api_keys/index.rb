@@ -9,7 +9,7 @@ class Components::APIKeys::Index < Components::Base
   end
 
   def view_template
-    div(class: "container-lg p-4") do
+    div(style: "max-width: 1200px; margin: 0 auto; padding: 24px;") do
       header_section
       new_token_alert if new_token
       create_form
@@ -22,11 +22,11 @@ class Components::APIKeys::Index < Components::Base
   attr_reader :api_keys, :new_token
 
   def header_section
-    div(class: "mb-4") do
-      h1(class: "h2 mb-1") { "API Keys" }
-      p(class: "color-fg-muted f5") do
+    header(style: "margin-bottom: 24px;") do
+      h1(style: "font-size: 2rem; font-weight: 600; margin: 0;") { "API Keys" }
+      p(style: "color: var(--fgColor-muted, #656d76); margin: 8px 0 0; font-size: 14px;") do
         plain "Manage your API keys for programmatic access. "
-        a(href: "/docs/api", class: "Link") { "View API documentation" }
+        a(href: "/docs/api", style: "color: var(--fgColor-accent, #0969da);") { "View API documentation" }
       end
     end
   end
@@ -35,9 +35,11 @@ class Components::APIKeys::Index < Components::Base
     render Primer::Beta::Flash.new(scheme: :success, mb: 4) do |component|
       component.with_icon(icon: :check)
       div do
-        p(class: "text-bold mb-1") { "API key created successfully!" }
-        p(class: "mb-2") { "Copy your API key now. You won't be able to see it again!" }
-        code(class: "d-block p-2 color-bg-subtle rounded-2 f5 text-mono") { new_token }
+        p(style: "margin: 0 0 8px; font-weight: 600;") { "API key created successfully!" }
+        p(style: "margin: 0 0 8px;") { "Copy your API key now. You won't be able to see it again!" }
+        code(style: "display: block; padding: 12px; background: var(--bgColor-default, #fff); border: 1px solid var(--borderColor-default); border-radius: 6px; font-size: 14px; word-break: break-all;") do
+          plain new_token
+        end
       end
     end
   end
@@ -45,23 +47,25 @@ class Components::APIKeys::Index < Components::Base
   def create_form
     render Primer::Beta::BorderBox.new(mb: 4) do |box|
       box.with_header do
-        h2(class: "f5 text-bold") { "Create new API key" }
+        h2(style: "font-size: 14px; font-weight: 600; margin: 0;") { "Create new API key" }
       end
       box.with_body do
         form_with url: api_keys_path, method: :post do
-          div(class: "mb-3", style: "max-width: 400px;") do
-            label(for: "api_key_name", class: "f5 text-bold d-block mb-2") { "Key name" }
+          div(style: "margin-bottom: 12px; max-width: 400px;") do
+            label(for: "api_key_name", style: "display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px;") do
+              plain "Key name"
+            end
             input(
               type: "text",
               name: "api_key[name]",
               id: "api_key_name",
-              placeholder: "e.g., The Coolest App That's Ever Lived",
+              placeholder: "e.g., My App",
               required: true,
-              class: "form-control width-full"
+              class: "form-control"
             )
           end
-          render Primer::Beta::Button.new(type: :submit, scheme: :primary) do |button|
-            button.with_leading_visual_icon(icon: :key)
+          button(type: "submit", class: "btn btn-primary") do
+            render Primer::Beta::Octicon.new(icon: :key, mr: 1)
             plain "Create key"
           end
         end
@@ -71,7 +75,7 @@ class Components::APIKeys::Index < Components::Base
 
   def api_keys_list
     div do
-      h2(class: "h4 mb-3") { "Your API keys" }
+      h2(style: "font-size: 1.25rem; font-weight: 600; margin: 0 0 16px;") { "Your API keys" }
 
       if api_keys.any?
         render Primer::Beta::BorderBox.new do |box|

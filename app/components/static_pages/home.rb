@@ -61,9 +61,11 @@ class Components::StaticPages::Home < Components::StaticPages::Base
   end
 
   def recent_uploads_list
-    div(style: "background: var(--bgColor-default, #fff); border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 6px; overflow: hidden;") do
-      stats[:recent_uploads].each_with_index do |upload, index|
-        render Components::Uploads::Row.new(upload: upload, index: index, compact: true)
+    render Primer::Beta::BorderBox.new do |box|
+      stats[:recent_uploads].each do |upload|
+        box.with_row do
+          render Components::Uploads::Row.new(upload: upload, compact: true)
+        end
       end
     end
   end

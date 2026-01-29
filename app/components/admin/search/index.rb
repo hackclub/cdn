@@ -12,7 +12,7 @@ class Components::Admin::Search::Index < Components::Base
   end
 
   def view_template
-    div(class: "container-lg p-4") do
+    div(style: "max-width: 1200px; margin: 0 auto; padding: 24px;") do
       header_section
       tabs_section
       search_form
@@ -23,9 +23,9 @@ class Components::Admin::Search::Index < Components::Base
   private
 
   def header_section
-    div(class: "mb-4") do
-      h1(class: "h2 mb-1") { "Admin Search" }
-      p(class: "color-fg-muted f5") do
+    header(style: "margin-bottom: 24px;") do
+      h1(style: "font-size: 2rem; font-weight: 600; margin: 0;") { "Admin Search" }
+      p(style: "color: var(--fgColor-muted, #656d76); margin: 8px 0 0; font-size: 14px;") do
         "Search users and uploads by ID, email, filename, URL, etc."
       end
     end
@@ -40,20 +40,20 @@ class Components::Admin::Search::Index < Components::Base
   end
 
   def search_form
-    div(class: "mb-4 mt-3") do
-      form_with url: admin_search_path, method: :get, class: "d-flex gap-2" do
+    div(style: "margin-bottom: 24px; margin-top: 16px;") do
+      form_with url: admin_search_path, method: :get, style: "display: flex; gap: 8px;" do
         input(type: "hidden", name: "type", value: @type)
         input(
           type: "search",
           name: "q",
           placeholder: search_placeholder,
           value: @query,
-          class: "form-control flex-1",
-          style: "max-width: 600px;",
+          class: "form-control",
+          style: "flex: 1; max-width: 600px;",
           autofocus: true
         )
-        render Primer::Beta::Button.new(type: :submit, scheme: :primary) do |button|
-          button.with_leading_visual_icon(icon: :search)
+        button(type: "submit", class: "btn btn-primary") do
+          render Primer::Beta::Octicon.new(icon: :search, mr: 1)
           plain "Search"
         end
       end
@@ -78,10 +78,10 @@ class Components::Admin::Search::Index < Components::Base
   end
 
   def users_section
-    div(class: "mb-5") do
-      h2(class: "h4 mb-3") do
+    div(style: "margin-bottom: 32px;") do
+      h2(style: "font-size: 1.25rem; font-weight: 600; margin-bottom: 12px;") do
         plain "Users "
-        render Primer::Beta::Label.new(scheme: :secondary) { @users.size.to_s }
+        render(Primer::Beta::Label.new(scheme: :secondary)) { plain @users.size.to_s }
       end
       render Primer::Beta::BorderBox.new do |box|
         @users.each do |user|
@@ -94,40 +94,25 @@ class Components::Admin::Search::Index < Components::Base
   end
 
   def user_row(user)
-    div(class: "d-flex flex-justify-between flex-items-center") do
+    div(style: "display: flex; justify-content: space-between; align-items: center;") do
       div do
-        div(class: "text-bold") { user.name || "Unnamed" }
-        div(class: "f6 color-fg-muted") do
+        div(style: "font-weight: 500;") { user.name || "Unnamed" }
+        div(style: "font-size: 12px; color: var(--fgColor-muted);") do
           plain user.email
           plain " · "
-          code(class: "f6") { user.public_id }
+          code(style: "font-size: 11px;") { user.public_id }
         end
       end
-      div(class: "d-flex flex-items-center gap-3") do
-        div(class: "text-right f6 color-fg-muted") do
+      div(style: "display: flex; align-items: center; gap: 16px;") do
+        div(style: "text-align: right; font-size: 12px; color: var(--fgColor-muted);") do
           div { "#{user.total_files} files" }
           div { user.total_storage_formatted }
         end
         if user.is_admin?
-          render Primer::Beta::Label.new(scheme: :accent) { "ADMIN" }
+          render(Primer::Beta::Label.new(scheme: :accent)) { plain "ADMIN" }
         end
-        div(class: "d-flex gap-2") do
-          render Primer::Beta::IconButton.new(
-            icon: :eye,
-            "aria-label": "View user",
-            href: admin_user_path(user),
-            tag: :a,
-            size: :small
-          )
-          button_to admin_user_path(user), method: :delete, class: "d-inline", data: { turbo_confirm: "Delete user #{user.name || user.email} and all their uploads?" } do
-            render Primer::Beta::IconButton.new(
-              icon: :trash,
-              "aria-label": "Delete user",
-              scheme: :danger,
-              size: :small,
-              tag: :span
-            )
-          end
+        link_to admin_user_path(user), class: "btn btn-sm", title: "View user" do
+          render Primer::Beta::Octicon.new(icon: :eye, size: :small)
         end
       end
     end
@@ -135,9 +120,9 @@ class Components::Admin::Search::Index < Components::Base
 
   def uploads_section
     div do
-      h2(class: "h4 mb-3") do
+      h2(style: "font-size: 1.25rem; font-weight: 600; margin-bottom: 12px;") do
         plain "Uploads "
-        render Primer::Beta::Label.new(scheme: :secondary) { @uploads.size.to_s }
+        render(Primer::Beta::Label.new(scheme: :secondary)) { plain @uploads.size.to_s }
       end
       render Primer::Beta::BorderBox.new do |box|
         @uploads.each do |upload|
