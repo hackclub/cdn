@@ -2,7 +2,13 @@
 
 class User < ApplicationRecord
   include PublicIdentifiable
+  include PgSearch::Model
   set_public_id_prefix :usr
+  def to_param = public_id
+
+  pg_search_scope :search,
+    against: [:email, :name, :slack_id],
+    using: { tsearch: { prefix: true } }
 
   scope :admins, -> { where(is_admin: true) }
 

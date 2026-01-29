@@ -11,11 +11,14 @@ class Components::HeaderBar < Components::Base
           plain "Hack Club CDN"
           sup(class: "app-header-env-badge") { "(dev)" } if Rails.env.development?
         end
-        nav(style: "display: flex; gap: 1rem; margin-left: 1rem;") do
+        nav(style: "display: flex; align-items: center; gap: 1rem; margin-left: 1rem;") do
           if signed_in?
             a(href: uploads_path, style: "color: var(--fgColor-default); text-decoration: none; font-size: 14px;") { "Uploads" }
           end
           a(href: doc_path("getting-started"), style: "color: var(--fgColor-default); text-decoration: none; font-size: 14px;") { "Docs" }
+          admin_tool(element: "span") do
+            a(href: admin_search_path, style: "color: var(--fgColor-default); text-decoration: none; font-size: 14px;") { "Search" }
+          end
         end
       end
 

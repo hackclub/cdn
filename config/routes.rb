@@ -1,4 +1,10 @@
 Rails.application.routes.draw do
+  namespace :admin do
+    get "search", to: "search#index"
+    resources :users, only: [:show, :destroy]
+    resources :uploads, only: [:destroy]
+  end
+
   delete "/logout", to: "sessions#destroy", as: :logout
   get "/login", to: "static_pages#login", as: :login
   root "static_pages#home", as: :root
@@ -22,4 +28,10 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  # Rescue endpoint to find uploads by original URL
+  get "/rescue", to: "external_uploads#rescue", as: :rescue_upload
+
+  # External upload redirects (must be last to avoid conflicts)
+  get "/:id/*filename", to: "external_uploads#show", constraints: { id: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/ }, as: :external_upload
 end

@@ -8,6 +8,8 @@ class Upload < ApplicationRecord
   belongs_to :user
   belongs_to :blob, class_name: 'ActiveStorage::Blob'
 
+  after_destroy :purge_blob
+
   # Delegate file metadata to blob (no duplication!)
   delegate :filename, :byte_size, :content_type, :checksum, to: :blob
 
@@ -19,6 +21,14 @@ class Upload < ApplicationRecord
     using: {
       tsearch: { prefix: true }
     }
+
+  pg_search_scope :search,
+    against: [:original_url],
+    associated_against: {
+      blob: :filename,
+      user: [:email, :name]
+    },
+    using: { tsearch: { prefix: true } }
 
   # Aliases for consistency
   alias_method :file_size, :byte_size
@@ -44,9 +54,13 @@ class Upload < ApplicationRecord
     ActiveSupport::NumberHelper.number_to_human_size(byte_size)
   end
 
-  # Get CDN URL (generated from blob)
+  # Get CDN URL (uses external uploads controller)
   def cdn_url
-    Rails.application.routes.url_helpers.rails_blob_url(blob, host: ENV['CDN_HOST'] || 'cdn.hackclub.com')
+    Rails.application.routes.url_helpers.external_upload_url(
+      id:,
+      filename:,
+      host: ENV['CDN_HOST'] || 'cdn.hackclub.com'
+    )
   end
 
   # Create upload from URL (for API/rescue operations)
@@ -64,5 +78,11 @@ class Upload < ApplicationRecord
       provenance: provenance,
       original_url: original_url
     )
+  end
+
+  private
+
+  def purge_blob
+    blob.purge
   end
 end

@@ -4,7 +4,7 @@ class UploadsController < ApplicationController
   before_action :set_upload, only: [:destroy]
 
   def index
-    @uploads = current_user.uploads.recent
+    @uploads = current_user.uploads.includes(:blob).recent
 
     if params[:query].present?
       @uploads = @uploads.search_by_filename(params[:query])

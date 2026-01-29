@@ -4,10 +4,11 @@ class Components::Uploads::Row < Components::Base
   include Phlex::Rails::Helpers::FormWith
   include Phlex::Rails::Helpers::LinkTo
 
-  def initialize(upload:, index: 0, compact: false)
+  def initialize(upload:, index: 0, compact: false, admin: false)
     @upload = upload
     @index = index
     @compact = compact
+    @admin = admin
   end
 
   def view_template
@@ -27,7 +28,7 @@ class Components::Uploads::Row < Components::Base
 
   private
 
-  attr_reader :upload, :index, :compact
+  attr_reader :upload, :index, :compact, :admin
 
   def compact_content
     div(style: "flex: 1; min-width: 0;") do
@@ -92,7 +93,7 @@ class Components::Uploads::Row < Components::Base
       end
       dialog.with_footer do
         div(style: "display: flex; justify-content: flex-end; gap: 8px;") do
-          form_with url: upload_path(upload), method: :delete, style: "display: inline;" do
+          form_with url: (admin ? admin_upload_path(upload) : upload_path(upload)), method: :delete, style: "display: inline;" do
             button(type: "submit", class: "btn btn-danger") do
               plain "Delete"
             end
