@@ -105,7 +105,7 @@ class Components::Admin::Users::Show < Components::Base
           end
 
           # Admin controls
-          form(action: helpers.set_quota_admin_user_path(@user), method: :post, style: "display: flex; gap: 8px; align-items: center;") do
+          form(action: helpers.admin_user_path(@user), method: :post, style: "display: flex; gap: 8px; align-items: center;") do
             input(type: "hidden", name: "_method", value: "patch")
             input(type: "hidden", name: "authenticity_token", value: helpers.form_authenticity_token)
 
@@ -114,7 +114,7 @@ class Components::Admin::Users::Show < Components::Base
               fetch_strategy: :local,
               dynamic_label: true,
               dynamic_label_prefix: "Quota Policy",
-              form_arguments: { name: :quota_policy }
+              form_arguments: { name: "user[quota_policy]" }
             )) do |panel|
               panel.with_show_button(scheme: :secondary, size: :small) { current_quota_label }
               panel.with_item(label: "Auto-detect (via HCA)", content_arguments: { data: { value: "" } }, active: @user.quota_policy.nil?)

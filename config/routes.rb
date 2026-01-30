@@ -1,11 +1,7 @@
 Rails.application.routes.draw do
   namespace :admin do
     get "search", to: "search#index"
-    resources :users, only: [ :show, :destroy ] do
-      member do
-        patch "set_quota"
-      end
-    end
+    resources :users, only: [ :show, :update, :destroy ]
     resources :uploads, only: [ :destroy ]
     resources :api_keys, only: [ :destroy ]
   end
