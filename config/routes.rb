@@ -44,6 +44,11 @@ Rails.application.routes.draw do
   # Rescue endpoint to find uploads by original URL
   get "/rescue", to: "external_uploads#rescue", as: :rescue_upload
 
+  # Slack events webhook
+  namespace :slack do
+    post "events", to: "events#create"
+  end
+
   # External upload redirects (must be last to avoid conflicts)
   get "/:id/*filename", to: "external_uploads#show", constraints: { id: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/ }, as: :external_upload
 end
