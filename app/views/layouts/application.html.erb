@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html data-color-mode="auto" data-light-theme="light" data-dark-theme="dark">
+  <head>
+    <title><%= content_for(:title) || "CDN" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= vite_stylesheet_tag "application.scss" %>
+    <%= vite_client_tag %>
+    <%= vite_javascript_tag 'application' %>
+    <!--
+      If using a TypeScript entrypoint file:
+        vite_typescript_tag 'application'
+
+      If using a .jsx or .tsx entrypoint, add the extension:
+        vite_javascript_tag 'application.jsx'
+
+      Visit the guide for more information: https://vite-ruby.netlify.app/guide/rails
+    -->
+
+  </head>
+
+  <body>
+    <%= render(Components::HeaderBar.new) if signed_in? %>
+    <% if signed_in? %>
+      <%= quota_banner_for(current_user) %>
+    <% end %>
+    <% if flash[:notice] || flash[:alert] %>
+      <div style="max-width: 768px; margin: 16px auto; padding: 0 16px;">
+        <% if flash[:notice] %>
+          <%= render(Primer::Beta::Flash.new(scheme: :success, icon: :check)) { flash[:notice] } %>
+        <% end %>
+        <% if flash[:alert] %>
+          <%= render(Primer::Beta::Flash.new(scheme: :danger, icon: :alert)) { flash[:alert] } %>
+        <% end %>
+      </div>
+    <% end %>
+    <%= yield %>
+  </body>
+</html>

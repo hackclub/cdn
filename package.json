@@ -1,22 +1,16 @@
 {
-  "name": "cdn-v2-hackclub",
-  "version": "1.0.0",
-  "description": "API to upload files to S3-compatible storage with unique URLs",
-  "main": "index.js",
-  "scripts": {
-    "start": "bun index.js",
-    "dev": "bun --watch index.js"
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "sass-embedded": "^1.97.3",
+    "vite": "^6.0.0",
+    "vite-plugin-ruby": "5.1.1"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.478.0",
-    "@smithy/fetch-http-handler": "^5.1.0",
-    "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "multer": "^1.4.5-lts.1",
-    "node-fetch": "^2.6.1",
-    "p-limit": "^6.2.0",
-    "winston": "^3.17.0"
-  },
-  "author": "",
-  "license": "MIT"
+    "@hotwired/turbo": "^8.0.22",
+    "@primer/css": "^22.1.0",
+    "@primer/primitives": "^11.3.2",
+    "@primer/view-components": "^0.49.0",
+    "@rails/ujs": "^7.1.3-4"
+  }
 }
