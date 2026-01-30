@@ -109,20 +109,14 @@ class Components::Admin::Users::Show < Components::Base
             input(type: "hidden", name: "_method", value: "patch")
             input(type: "hidden", name: "authenticity_token", value: helpers.form_authenticity_token)
 
-            render(Primer::Alpha::SelectPanel.new(
-              select_variant: :single,
-              fetch_strategy: :local,
-              dynamic_label: true,
-              dynamic_label_prefix: "Quota Policy",
-              form_arguments: { name: "user[quota_policy]" }
-            )) do |panel|
-              panel.with_show_button(scheme: :secondary, size: :small) { current_quota_label }
-              panel.with_item(label: "Auto-detect (via HCA)", content_arguments: { data: { value: "" } }, active: @user.quota_policy.nil?)
-              panel.with_item(label: "Verified", content_arguments: { data: { value: "verified" } }, active: @user.quota_policy == "verified")
-              panel.with_item(label: "Functionally Unlimited", content_arguments: { data: { value: "functionally_unlimited" } }, active: @user.quota_policy == "functionally_unlimited")
+            select(name: "user[quota_policy]", class: "form-select", style: "width: auto;") do
+              option(value: "", selected: @user.quota_policy.nil?) { "Auto-detect (via HCA)" }
+              Quota::ADMIN_ASSIGNABLE.each do |slug|
+                option(value: slug.to_s, selected: @user.quota_policy == slug.to_s) { slug.to_s.humanize }
+              end
             end
 
-            button(type: "submit", class: "btn btn-sm btn-primary") { "Set Policy" }
+            button(type: "submit", class: "btn btn-sm btn-primary") { "Update" }
           end
         end
       end
@@ -137,17 +131,6 @@ class Components::Admin::Users::Show < Components::Base
       :accent
     else
       :default
-    end
-  end
-
-  def current_quota_label
-    case @user.quota_policy&.to_sym
-    when :functionally_unlimited
-      "Functionally Unlimited"
-    when :verified
-      "Verified"
-    else
-      "Auto-detect (via HCA)"
     end
   end
 

@@ -24,10 +24,9 @@ module Admin
     end
 
     def user_params
-      params.require(:user).permit(:quota_policy).tap do |p|
-        # Normalize empty string to nil for auto-detect
-        p[:quota_policy] = nil if p[:quota_policy].blank?
-      end
+      permitted = params.fetch(:user, params).permit(:quota_policy)
+      permitted[:quota_policy] = nil if permitted[:quota_policy].blank?
+      permitted
     end
   end
 end

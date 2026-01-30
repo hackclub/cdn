@@ -13,6 +13,7 @@ class User < ApplicationRecord
   scope :admins, -> { where(is_admin: true) }
 
   validates :hca_id, presence: true, uniqueness: true
+  validates :quota_policy, inclusion: { in: Quota::ADMIN_ASSIGNABLE.map(&:to_s) }, allow_nil: true
   encrypts :hca_access_token
 
   has_many :uploads, dependent: :destroy

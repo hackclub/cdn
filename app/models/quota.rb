@@ -4,8 +4,10 @@ class Quota
   ALL_POLICIES = [
     Policy[:unverified, 10.megabytes, 50.megabytes],
     Policy[:verified, 50.megabytes, 50.gigabytes],
-    Policy[:functionally_unlimited, 200.megabytes, 300.gigabytes]
+    Policy[:functionally_unlimited, 500.megabytes, 300.gigabytes]
   ].index_by &:slug
+
+  ADMIN_ASSIGNABLE = %i[verified functionally_unlimited].freeze
 
   def self.policy(slug) = ALL_POLICIES.fetch slug
 end
