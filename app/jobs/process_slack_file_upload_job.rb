@@ -83,11 +83,11 @@ class ProcessSlackFileUploadJob < ApplicationJob
     quota_service = QuotaService.new(@user)
     policy = quota_service.current_policy
 
-    if upload.file.byte_size > policy.max_file_size
+    if upload.byte_size > policy.max_file_size
       upload.destroy!
       raise QuotaExceededError.new(
         :file_too_large,
-        "File is #{number_to_human_size(upload.file.byte_size)} but max is #{number_to_human_size(policy.max_file_size)}"
+        "File is #{number_to_human_size(upload.byte_size)} but max is #{number_to_human_size(policy.max_file_size)}"
       )
     end
 
