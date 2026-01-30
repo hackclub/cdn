@@ -108,6 +108,8 @@ class ProcessSlackFileUploadJob < ApplicationJob
       channel: @channel_id,
       thread_ts: @message_ts,
       text: "Yeah! Here's yo' links",
+      unfurl_links: false,
+      unfurl_media: false,
       **render_slack_template("upload_success", uploads: uploads, slack_user_id: @slack_user_id)
     )
   end
@@ -155,6 +157,8 @@ class ProcessSlackFileUploadJob < ApplicationJob
         channel: @channel_id,
         thread_ts: @message_ts,
         text: "Something went wrong uploading your file",
+        unfurl_links: false,
+        unfurl_media: false,
         **render_slack_template("upload_error",
           flavor_message: pick_error_message,
           error_message: error.message,
@@ -179,7 +183,7 @@ class ProcessSlackFileUploadJob < ApplicationJob
   end
 
   def reply_in_thread(text)
-    @slack.chat_postMessage(channel: @channel_id, thread_ts: @message_ts, text: text)
+    @slack.chat_postMessage(channel: @channel_id, thread_ts: @message_ts, text: text, unfurl_links: false, unfurl_media: false)
   end
 
   def render_slack_template(template, locals = {})
