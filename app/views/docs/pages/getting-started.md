@@ -32,7 +32,7 @@ Click **Sign in with Hack Club** on the homepage to authenticate.
 
 ## Hotlinking
 
-URLs work everywhere—GitHub READMEs, Notion, Discord, Slack, personal websites, etc.
+URLs work everywhere - READMEs, personal websites, whatever.
 
 ## Programmatic Uploads
 
