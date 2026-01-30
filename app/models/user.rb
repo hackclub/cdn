@@ -21,7 +21,7 @@ class User < ApplicationRecord
 
   def self.find_or_create_from_omniauth(auth)
     hca_id = auth.uid
-    slack_id = auth.extra.raw_info.slack_id
+    slack_id = auth.extra.raw_info.dig("identity", "slack_id")
     raise "Missing HCA user ID from authentication" if hca_id.blank?
 
     user = find_by(hca_id:)
