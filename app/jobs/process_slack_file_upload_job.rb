@@ -1,9 +1,19 @@
 # frozen_string_literal: true
 
 class ProcessSlackFileUploadJob < ApplicationJob
+  include ActionView::Helpers::NumberHelper
+
   queue_as :default
 
-  class QuotaExceededError < StandardError; end
+  class QuotaExceededError < StandardError
+    attr_reader :reason, :details
+
+    def initialize(reason, details = nil)
+      @reason = reason
+      @details = details
+      super(details || reason.to_s)
+    end
+  end
 
   def perform(event)
     channel_id = event["channel"]
@@ -53,9 +63,22 @@ class ProcessSlackFileUploadJob < ApplicationJob
 
         # Check quota AFTER upload (size unknown beforehand)
         quota_service = QuotaService.new(user)
-        if user.total_storage_bytes > quota_service.current_policy.max_total_storage
+        policy = quota_service.current_policy
+
+        if upload.file.byte_size > policy.max_file_size
           upload.destroy!
-          raise QuotaExceededError, "Storage quota exceeded"
+          raise QuotaExceededError.new(
+            :file_too_large,
+            "File is #{number_to_human_size(upload.file.byte_size)} but max is #{number_to_human_size(policy.max_file_size)}"
+          )
+        end
+
+        if user.total_storage_bytes > policy.max_total_storage
+          upload.destroy!
+          raise QuotaExceededError.new(
+            :storage_exceeded,
+            "You've used #{number_to_human_size(user.total_storage_bytes)} of your #{number_to_human_size(policy.max_total_storage)} storage"
+          )
         end
 
         uploads << upload
@@ -97,18 +120,27 @@ class ProcessSlackFileUploadJob < ApplicationJob
         channel: channel_id,
         timestamp: message_ts,
         emoji: "beach_ball"
-      )
+      ) rescue nil
 
       slack_service.add_reaction(
         channel: channel_id,
         timestamp: message_ts,
         emoji: "x"
-      )
+      ) rescue nil
+
+      error_text = case e.reason
+      when :file_too_large
+        ":warning: *File too large!* #{e.details}\n\nVerify your account at cdn.hackclub.com to upload larger files."
+      when :storage_exceeded
+        ":warning: *Storage quota exceeded!* #{e.details}\n\nVerify your account at cdn.hackclub.com for more storage, or delete some files."
+      else
+        "Quota exceeded - verify your account at cdn.hackclub.com"
+      end
 
       slack_service.reply_in_thread(
         channel: channel_id,
         thread_ts: message_ts,
-        text: "Storage quota exceeded - verify your account at cdn.hackclub.com"
+        text: error_text
       )
 
     rescue => e
@@ -123,13 +155,13 @@ class ProcessSlackFileUploadJob < ApplicationJob
             channel: channel_id,
             timestamp: message_ts,
             emoji: "beach_ball"
-          )
+          ) rescue nil
 
           slack_service.add_reaction(
             channel: channel_id,
             timestamp: message_ts,
             emoji: "x"
-          )
+          ) rescue nil
 
           error_message = pick_error_message
           slack_service.reply_in_thread(
