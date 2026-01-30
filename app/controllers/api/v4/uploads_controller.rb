@@ -34,7 +34,8 @@ module API
           return
         end
 
-        upload = Upload.create_from_url(url, user: current_user, provenance: :api, original_url: url)
+        download_auth = request.headers["X-Download-Authorization"]
+        upload = Upload.create_from_url(url, user: current_user, provenance: :api, original_url: url, authorization: download_auth)
 
         render json: upload_json(upload), status: :created
       rescue => e

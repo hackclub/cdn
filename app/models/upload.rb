@@ -66,8 +66,11 @@ class Upload < ApplicationRecord
   end
 
   # Create upload from URL (for API/rescue operations)
-  def self.create_from_url(url, user:, provenance:, original_url: nil)
-    downloaded = URI.open(url)
+  def self.create_from_url(url, user:, provenance:, original_url: nil, authorization: nil)
+    open_options = {}
+    open_options["Authorization"] = authorization if authorization.present?
+
+    downloaded = URI.open(url, open_options)
 
     blob = ActiveStorage::Blob.create_and_upload!(
       io: downloaded,

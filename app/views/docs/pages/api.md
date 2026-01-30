@@ -59,11 +59,21 @@ const { url } = await response.json();
 
 Upload an image from a URL.
 
+**Optional header:** `X-Download-Authorization` — passed as `Authorization` when fetching the source URL (useful for protected resources).
+
 ```bash
 curl -X POST \
   -H "Authorization: Bearer sk_cdn_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{"url":"https://example.com/image.jpg"}' \
+  https://cdn.hackclub.com/api/v4/upload_from_url
+
+# With authentication for the source URL:
+curl -X POST \
+  -H "Authorization: Bearer sk_cdn_your_key_here" \
+  -H "X-Download-Authorization: Bearer source_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://protected.example.com/image.jpg"}' \
   https://cdn.hackclub.com/api/v4/upload_from_url
 ```
 
@@ -72,7 +82,9 @@ const response = await fetch('https://cdn.hackclub.com/api/v4/upload_from_url', 
   method: 'POST',
   headers: {
     'Authorization': 'Bearer sk_cdn_your_key_here',
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    // Optional: auth for the source URL
+    'X-Download-Authorization': 'Bearer source_token_here'
   },
   body: JSON.stringify({ url: 'https://example.com/image.jpg' })
 });
