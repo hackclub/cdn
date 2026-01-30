@@ -103,7 +103,7 @@ class QuotaService
 
     hca = HCAService.new(@user.hca_access_token)
     response = hca.check_verification(idv_id: @user.hca_id)
-    response[:verified] == true
+    response[:result] == "verified_eligible"
   rescue Faraday::Error, ArgumentError => e
     Rails.logger.warn "HCA API error for user #{@user.id}: #{e.message}"
     false
