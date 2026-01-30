@@ -15,7 +15,7 @@ class ApplicationController < ActionController::Base
   def signed_in? = current_user.present?
 
   def require_authentication!
-    redirect_to login_path, alert: "Please sign in to continue." unless signed_in?
+    redirect_to root_path, alert: "Please sign in to continue." unless signed_in?
   end
 
   def impersonating? = false

@@ -20,6 +20,6 @@ class SessionsController < ApplicationController
   end
 
   def failure
-    redirect_to login_path, alert: "Authentication failed: #{params[:message]}"
+    redirect_to root_path, alert: "Authentication failed: #{params[:message]}"
   end
 end
