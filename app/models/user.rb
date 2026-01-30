@@ -23,7 +23,8 @@ class User < ApplicationRecord
     slack_id = auth.extra.raw_info.slack_id
     raise "Missing HCA user ID from authentication" if hca_id.blank?
 
-    user = find_by(hca_id:) || find_by(slack_id:)
+    user = find_by(hca_id:)
+    user ||= find_by(slack_id:) if slack_id.present?
 
     if user
       user.update(
