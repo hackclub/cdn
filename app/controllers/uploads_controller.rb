@@ -42,9 +42,9 @@ class UploadsController < ApplicationController
     authorize @upload
 
     @upload.destroy!
-    redirect_to uploads_path, notice: "Upload deleted successfully."
+    redirect_back fallback_location: uploads_path, notice: "Upload deleted successfully."
   rescue Pundit::NotAuthorizedError
-    redirect_to uploads_path, alert: "You are not authorized to delete this upload."
+    redirect_back fallback_location: uploads_path, alert: "You are not authorized to delete this upload."
   end
 
   private
