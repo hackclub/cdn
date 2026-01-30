@@ -32,8 +32,7 @@ class Components::APIKeys::Index < Components::Base
   end
 
   def new_token_alert
-    render Primer::Beta::Flash.new(scheme: :success, mb: 4) do |component|
-      component.with_icon(icon: :check)
+    render Primer::Beta::Flash.new(scheme: :success, icon: :check, mb: 4) do |component|
       div do
         p(style: "margin: 0 0 8px; font-weight: 600;") { "API key created successfully!" }
         p(style: "margin: 0 0 8px;") { "Copy your API key now. You won't be able to see it again!" }
