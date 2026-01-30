@@ -35,7 +35,8 @@ class UploadsController < ApplicationController
 
     redirect_to uploads_path, notice: "File uploaded successfully!"
   rescue StandardError => e
-    redirect_to uploads_path, alert: "Upload failed: #{e.message}"
+    event_id = Sentry.capture_exception(e)
+    redirect_to uploads_path, alert: "Upload failed: #{e.message} (Error ID: #{event_id})"
   end
 
   def destroy
