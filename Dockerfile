@@ -32,7 +32,7 @@ FROM base AS build
 # Install packages needed to build gems and Node.js/Yarn
 ARG NODE_VERSION
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config curl && \
+    apt-get install --no-install-recommends -y build-essential git libyaml-dev libffi-dev pkg-config curl && \
     curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
     apt-get install --no-install-recommends -y nodejs && \
     corepack enable && \
