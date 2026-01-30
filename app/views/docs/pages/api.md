@@ -94,7 +94,7 @@ const { url } = await response.json();
 
 ## GET /api/v4/me
 
-Get the authenticated user.
+Get the authenticated user and quota information.
 
 ```bash
 curl -H "Authorization: Bearer sk_cdn_your_key_here" \
@@ -105,9 +105,17 @@ curl -H "Authorization: Bearer sk_cdn_your_key_here" \
 {
   "id": "usr_abc123",
   "email": "you@hackclub.com",
-  "name": "Your Name"
+  "name": "Your Name",
+  "storage_used": 1048576000,
+  "storage_limit": 53687091200,
+  "quota_tier": "verified"
 }
 ```
+
+**Quota fields:**
+- `storage_used` — bytes used
+- `storage_limit` — bytes allowed
+- `quota_tier` — `"unverified"`, `"verified"`, or `"functionally_unlimited"`
 
 ## Errors
 
@@ -115,14 +123,33 @@ curl -H "Authorization: Bearer sk_cdn_your_key_here" \
 |--------|---------|
 | 400 | Missing required parameters |
 | 401 | Invalid or missing API key |
+| 402 | Storage quota exceeded |
 | 404 | Resource not found |
 | 422 | Validation failed |
+
+**Standard error:**
 
 ```json
 {
   "error": "Missing file parameter"
 }
 ```
+
+**Quota error (402):**
+
+```json
+{
+  "error": "Storage quota exceeded",
+  "quota": {
+    "storage_used": 52428800,
+    "storage_limit": 52428800,
+    "quota_tier": "unverified",
+    "percentage_used": 100.0
+  }
+}
+```
+
+See [Storage Quotas](/docs/quotas) for details on getting more space.
 
 ## Help
 

@@ -2,6 +2,7 @@
 
 class UploadsController < ApplicationController
   before_action :set_upload, only: [:destroy]
+  before_action :check_quota, only: [:create]
 
   def index
     @uploads = current_user.uploads.includes(:blob).recent
@@ -47,6 +48,28 @@ class UploadsController < ApplicationController
   end
 
   private
+
+  def check_quota
+    uploaded_file = params[:file]
+    return if uploaded_file.blank? # Let create action handle missing file
+
+    quota_service = QuotaService.new(current_user)
+    file_size = uploaded_file.size
+    policy = quota_service.current_policy
+
+    # Check per-file size limit
+    if file_size > policy.max_file_size
+      redirect_to uploads_path, alert: "File size (#{ActiveSupport::NumberHelper.number_to_human_size(file_size)}) exceeds your limit of #{ActiveSupport::NumberHelper.number_to_human_size(policy.max_file_size)} per file."
+      return
+    end
+
+    # Check if upload would exceed total storage quota
+    unless quota_service.can_upload?(file_size)
+      usage = quota_service.current_usage
+      redirect_to uploads_path, alert: "Uploading this file would exceed your storage quota. You're using #{ActiveSupport::NumberHelper.number_to_human_size(usage[:storage_used])} of #{ActiveSupport::NumberHelper.number_to_human_size(usage[:storage_limit])}."
+      return
+    end
+  end
 
   def set_upload
     @upload = Upload.find(params[:id])

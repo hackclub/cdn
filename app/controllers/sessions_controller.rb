@@ -8,6 +8,9 @@ class SessionsController < ApplicationController
     user = User.find_or_create_from_omniauth(auth)
     session[:user_id] = user.id
 
+    # Check and upgrade verification status if needed
+    QuotaService.new(user).check_and_upgrade_verification!
+
     redirect_to root_path, notice: "Signed in successfully!"
   end
 

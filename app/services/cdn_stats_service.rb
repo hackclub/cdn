@@ -19,13 +19,30 @@ class CDNStatsService
 
   # User stats (live) - for logged-in users
   def self.user_stats(user)
+    quota_service = QuotaService.new(user)
+    usage = quota_service.current_usage
+    policy = quota_service.current_policy
+
+    used = usage[:storage_used]
+    max = usage[:storage_limit]
+    percentage = usage[:percentage_used]
+    available = [max - used, 0].max
+
     {
       total_files: user.total_files,
-      total_storage: user.total_storage_bytes,
+      total_storage: used,
       storage_formatted: user.total_storage_formatted,
       files_today: user.uploads.today.count,
       files_this_week: user.uploads.this_week.count,
-      recent_uploads: user.uploads.includes(:blob).recent.limit(5)
+      recent_uploads: user.uploads.includes(:blob).recent.limit(5),
+      quota: {
+        policy: usage[:policy],
+        storage_limit: max,
+        available: available,
+        percentage_used: percentage,
+        at_warning: usage[:at_warning],
+        over_quota: usage[:over_quota]
+      }
     }
   end
 

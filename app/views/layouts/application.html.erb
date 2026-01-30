@@ -35,6 +35,9 @@
 
   <body>
     <%= render(Components::HeaderBar.new) if signed_in? %>
+    <% if signed_in? %>
+      <%= quota_banner_for(current_user) %>
+    <% end %>
     <% if flash[:notice] || flash[:alert] %>
       <div style="max-width: 768px; margin: 16px auto; padding: 0 16px;">
         <% if flash[:notice] %>

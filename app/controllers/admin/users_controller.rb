@@ -12,6 +12,25 @@ module Admin
       redirect_to admin_search_path, notice: "User #{@user.name || @user.email} deleted."
     end
 
+    def set_quota
+      quota_policy = params[:quota_policy]
+
+      # Empty string means auto-detect (clear override)
+      if quota_policy.blank?
+        @user.update!(quota_policy: nil)
+        redirect_to admin_user_path(@user), notice: "Quota policy cleared. Will auto-detect via HCA."
+        return
+      end
+
+      unless %w[verified functionally_unlimited].include?(quota_policy)
+        redirect_to admin_user_path(@user), alert: "Invalid quota policy."
+        return
+      end
+
+      @user.update!(quota_policy: quota_policy)
+      redirect_to admin_user_path(@user), notice: "Quota policy set to #{quota_policy.humanize}."
+    end
+
     private
 
     def set_user
