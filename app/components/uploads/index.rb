@@ -31,7 +31,7 @@ class Components::Uploads::Index < Components::Base
         h1(style: "font-size: 2rem; font-weight: 600; margin: 0;") { "Your Uploads" }
         p(style: "color: var(--fgColor-muted, #656d76); margin: 8px 0 0; font-size: 14px;") do
           count = uploads.respond_to?(:total_count) ? uploads.total_count : uploads.size
-          plain "#{count} file#{count == 1 ? '' : 's'}"
+          plain pluralize(count, "file")
         end
       end
 

@@ -105,7 +105,7 @@ class Components::Admin::Search::Index < Components::Base
       end
       div(style: "display: flex; align-items: center; gap: 16px;") do
         div(style: "text-align: right; font-size: 12px; color: var(--fgColor-muted);") do
-          div { "#{user.total_files} files" }
+          div { pluralize(user.total_files, "file") }
           div { user.total_storage_formatted }
         end
         if user.is_admin?

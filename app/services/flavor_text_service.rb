@@ -167,7 +167,7 @@ class FlavorTextService
       "low-sodium edition",
       'we put the ":3" in "S3"!',
       "do not adjust your monitor.",
-      "only #{@random.rand(5..50)} missing #{[ "file", "files" ].sample(random: @random)}!",
+      "only #{@random.rand(5..50)} missing files!",
       "why are you reading these",
       "go outside",
       "posture check!",
