@@ -185,7 +185,7 @@ class ProcessSlackFileUploadJob < ApplicationJob
   def render_slack_template(template, locals = {})
     json = ApplicationController.render(
       template: "slack/#{template}",
-      formats: [:slack_message],
+      formats: [ :slack_message ],
       locals:
     )
     JSON.parse(json, symbolize_names: true)
@@ -193,21 +193,21 @@ class ProcessSlackFileUploadJob < ApplicationJob
 
   def pick_flavor_message
     # Collect all possible flavor messages based on file extensions
-    flavor_messages = ["thanks, i'm gonna sell these to adfly!"]  # generic fallback
+    flavor_messages = [ "thanks, i'm gonna sell these to adfly!" ]  # generic fallback
 
     @files.each do |file|
       ext = File.extname(file["name"]).delete_prefix(".").downcase
       case ext
       when "gif"
-        flavor_messages += ["_gif_ that file to me and i'll upload it", "_gif_ me all all your files!"]
+        flavor_messages += [ "_gif_ that file to me and i'll upload it", "_gif_ me all all your files!" ]
       when "heic"
         flavor_messages << "What the heic???"
       when "mov"
         flavor_messages << "I'll _mov_ that to a permanent link for you"
       when "html"
-        flavor_messages += ["Oh, launching a new website?", "uwu, what's this site?", "WooOOAAah hey! Are you serving a site?", "h-t-m-ello :wave:"]
+        flavor_messages += [ "Oh, launching a new website?", "uwu, what's this site?", "WooOOAAah hey! Are you serving a site?", "h-t-m-ello :wave:" ]
       when "rar"
-        flavor_messages += [".rawr xD", "i also go \"rar\" sometimes!"]
+        flavor_messages += [ ".rawr xD", "i also go \"rar\" sometimes!" ]
       end
     end
 
