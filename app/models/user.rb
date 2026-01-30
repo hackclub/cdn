@@ -7,7 +7,7 @@ class User < ApplicationRecord
   def to_param = public_id
 
   pg_search_scope :search,
-    against: [:email, :name, :slack_id],
+    against: [ :email, :name, :slack_id ],
     using: { tsearch: { prefix: true } }
 
   scope :admins, -> { where(is_admin: true) }
@@ -16,7 +16,7 @@ class User < ApplicationRecord
   encrypts :hca_access_token
 
   has_many :uploads, dependent: :destroy
-  has_many :api_keys, dependent: :destroy, class_name: 'APIKey'
+  has_many :api_keys, dependent: :destroy, class_name: "APIKey"
 
   def self.find_or_create_from_omniauth(auth)
     hca_id = auth.uid
@@ -53,7 +53,7 @@ class User < ApplicationRecord
   end
 
   def total_storage_bytes
-    uploads.joins(:blob).sum('active_storage_blobs.byte_size')
+    uploads.joins(:blob).sum("active_storage_blobs.byte_size")
   end
 
   def total_storage_gb

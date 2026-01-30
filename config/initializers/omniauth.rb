@@ -5,5 +5,5 @@ Rails.application.config.middleware.use OmniAuth::Builder do
     scope: "openid email name slack_id verification_status",
     staging: !Rails.env.production?
 end
-OmniAuth.config.allowed_request_methods = [:post]
+OmniAuth.config.allowed_request_methods = [ :post ]
 OmniAuth.config.request_validation_phase = OmniAuth::AuthenticityTokenProtection.new(key: :_csrf_token)

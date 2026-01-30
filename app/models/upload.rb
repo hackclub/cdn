@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'open-uri'
+require "open-uri"
 
 class Upload < ApplicationRecord
   include PgSearch::Model
@@ -8,7 +8,7 @@ class Upload < ApplicationRecord
   # UUID v7 primary key (automatic via migration)
 
   belongs_to :user
-  belongs_to :blob, class_name: 'ActiveStorage::Blob'
+  belongs_to :blob, class_name: "ActiveStorage::Blob"
 
   after_destroy :purge_blob
 
@@ -25,10 +25,10 @@ class Upload < ApplicationRecord
     }
 
   pg_search_scope :search,
-    against: [:original_url],
+    against: [ :original_url ],
     associated_against: {
       blob: :filename,
-      user: [:email, :name]
+      user: [ :email, :name ]
     },
     using: { tsearch: { prefix: true } }
 
@@ -38,19 +38,19 @@ class Upload < ApplicationRecord
 
   # Provenance enum
   enum :provenance, {
-    slack: 'slack',
-    web: 'web',
-    api: 'api',
-    rescued: 'rescued'
+    slack: "slack",
+    web: "web",
+    api: "api",
+    rescued: "rescued"
   }, validate: true
 
   validates :provenance, presence: true
 
   scope :recent, -> { order(created_at: :desc) }
   scope :by_user, ->(user) { where(user: user) }
-  scope :today, -> { where('created_at >= ?', Time.zone.now.beginning_of_day) }
-  scope :this_week, -> { where('created_at >= ?', Time.zone.now.beginning_of_week) }
-  scope :this_month, -> { where('created_at >= ?', Time.zone.now.beginning_of_month) }
+  scope :today, -> { where("created_at >= ?", Time.zone.now.beginning_of_day) }
+  scope :this_week, -> { where("created_at >= ?", Time.zone.now.beginning_of_week) }
+  scope :this_month, -> { where("created_at >= ?", Time.zone.now.beginning_of_month) }
 
   def human_file_size
     ActiveSupport::NumberHelper.number_to_human_size(byte_size)
@@ -61,7 +61,7 @@ class Upload < ApplicationRecord
     Rails.application.routes.url_helpers.external_upload_url(
       id:,
       filename:,
-      host: ENV['CDN_HOST'] || 'cdn.hackclub.com'
+      host: ENV["CDN_HOST"] || "cdn.hackclub.com"
     )
   end
 

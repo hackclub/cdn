@@ -26,7 +26,7 @@ class CDNStatsService
     used = usage[:storage_used]
     max = usage[:storage_limit]
     percentage = usage[:percentage_used]
-    available = [max - used, 0].max
+    available = [ max - used, 0 ].max
 
     {
       total_files: user.total_files,
@@ -50,7 +50,7 @@ class CDNStatsService
 
   def self.calculate_global_stats
     total_files = Upload.count
-    total_storage_bytes = Upload.joins(:blob).sum('active_storage_blobs.byte_size')
+    total_storage_bytes = Upload.joins(:blob).sum("active_storage_blobs.byte_size")
     total_users = User.joins(:uploads).distinct.count
 
     {

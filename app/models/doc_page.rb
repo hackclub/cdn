@@ -53,10 +53,10 @@ class DocPage
         parts = content.split("---", 3)
         if parts.length >= 3
           frontmatter = YAML.safe_load(parts[1]) || {}
-          return [frontmatter, parts[2].strip]
+          return [ frontmatter, parts[2].strip ]
         end
       end
-      [{}, content]
+      [ {}, content ]
     end
 
     def render_markdown(content)

@@ -167,7 +167,7 @@ class FlavorTextService
       "low-sodium edition",
       'we put the ":3" in "S3"!',
       "do not adjust your monitor.",
-      "only #{@random.rand(5..50)} missing #{["file", "files"].sample(random: @random)}!",
+      "only #{@random.rand(5..50)} missing #{[ "file", "files" ].sample(random: @random)}!",
       "why are you reading these",
       "go outside",
       "posture check!",
@@ -229,7 +229,7 @@ class FlavorTextService
       "100% bug-free* *no it's not",
       "who let me cook",
       "cooked (derogatory)",
-      "this seemed like a good idea at the time",
+      "this seemed like a good idea at the time"
     ]
   end
 

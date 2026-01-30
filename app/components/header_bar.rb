@@ -25,7 +25,6 @@ class Components::HeaderBar < Components::Base
 
       return unless signed_in?
       div(style: "display: flex; align-items: center; gap: 0.5rem;") do
-
         render(Primer::Alpha::ActionMenu.new(anchor_align: :end)) do |menu|
           menu.with_show_button(scheme: :invisible) do |btn|
             btn.with_leading_visual_icon(icon: impersonating? ? :eye : :person)

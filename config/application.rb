@@ -8,7 +8,6 @@ Bundler.require(*Rails.groups)
 
 module CDN
   class Application < Rails::Application
-
     require "view_component"
     require "primer/view_components"
 

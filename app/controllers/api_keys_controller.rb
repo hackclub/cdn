@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class APIKeysController < ApplicationController
-  before_action :set_api_key, only: [:destroy]
+  before_action :set_api_key, only: [ :destroy ]
 
   def index
     @api_keys = current_user.api_keys.active.recent

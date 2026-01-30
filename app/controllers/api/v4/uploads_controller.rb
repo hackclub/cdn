@@ -3,7 +3,7 @@
 module API
   module V4
     class UploadsController < ApplicationController
-      before_action :check_quota, only: [:create, :create_from_url]
+      before_action :check_quota, only: [ :create, :create_from_url ]
 
       # POST /api/v4/upload
       def create
@@ -75,7 +75,7 @@ module API
           unless quota_service.can_upload?(file_size)
             usage = quota_service.current_usage
             render json: quota_error_json(usage), status: :payment_required
-            return
+            nil
           end
         end
         # For URL uploads, quota is checked after download in create_from_url

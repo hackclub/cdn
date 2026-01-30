@@ -115,7 +115,7 @@ class Components::StaticPages::Home < Components::StaticPages::Base
       end
       # Progress bar
       div(style: "background: var(--bgColor-muted); border-radius: 3px; height: 6px; overflow: hidden;") do
-        div(style: "background: #{progress_color}; height: 100%; width: #{[percentage, 100].min}%;")
+        div(style: "background: #{progress_color}; height: 100%; width: #{[ percentage, 100 ].min}%;")
       end
     end
   end

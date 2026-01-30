@@ -15,7 +15,7 @@ if Rails.env.development?
     name: 'Dev User'
   )
 
-  provenances = [:web, :api, :slack, :rescued]
+  provenances = [ :web, :api, :slack, :rescued ]
 
   10.times do |i|
     # Create dummy file content

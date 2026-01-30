@@ -1,13 +1,13 @@
 Rails.application.routes.draw do
   namespace :admin do
     get "search", to: "search#index"
-    resources :users, only: [:show, :destroy] do
+    resources :users, only: [ :show, :destroy ] do
       member do
         patch "set_quota"
       end
     end
-    resources :uploads, only: [:destroy]
-    resources :api_keys, only: [:destroy]
+    resources :uploads, only: [ :destroy ]
+    resources :api_keys, only: [ :destroy ]
   end
 
   delete "/logout", to: "sessions#destroy", as: :logout
@@ -17,9 +17,9 @@ Rails.application.routes.draw do
   get "/auth/hack_club/callback", to: "sessions#create"
   get "/auth/failure", to: "sessions#failure"
 
-  resources :uploads, only: [:index, :create, :destroy]
+  resources :uploads, only: [ :index, :create, :destroy ]
 
-  resources :api_keys, only: [:index, :create, :destroy]
+  resources :api_keys, only: [ :index, :create, :destroy ]
 
   namespace :api do
     namespace :v4 do

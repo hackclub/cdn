@@ -53,7 +53,7 @@ end
 gem "jb"
 gem "pry-rails", group: :development
 gem "awesome_print"
-gem "dotenv-rails", groups: [:development, :test]
+gem "dotenv-rails", groups: [ :development, :test ]
 gem "hashid-rails"
 gem "vite_rails"
 gem "phlex-rails"

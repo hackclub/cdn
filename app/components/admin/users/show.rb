@@ -100,7 +100,7 @@ class Components::Admin::Users::Show < Components::Base
             end
             # Progress bar
             div(style: "background: var(--bgColor-muted); border-radius: 3px; height: 8px; overflow: hidden;") do
-              div(style: "background: #{progress_bar_color(usage[:percentage_used])}; height: 100%; width: #{[usage[:percentage_used], 100].min}%;")
+              div(style: "background: #{progress_bar_color(usage[:percentage_used])}; height: 100%; width: #{[ usage[:percentage_used], 100 ].min}%;")
             end
           end
 

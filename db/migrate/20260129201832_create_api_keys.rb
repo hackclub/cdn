@@ -10,7 +10,7 @@ class CreateAPIKeys < ActiveRecord::Migration[8.0]
       t.timestamps
 
       t.index :token_bidx, unique: true
-      t.index [:user_id, :revoked]
+      t.index [ :user_id, :revoked ]
     end
   end
 end

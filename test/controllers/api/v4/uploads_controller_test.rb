@@ -82,7 +82,7 @@ class API::V4::UploadsControllerTest < ActionDispatch::IntegrationTest
     url = "https://example.com/broken.jpg"
 
     # Simulate an error
-    URI.stub :open, -> (_) { raise StandardError, "Network error" } do
+    URI.stub :open, ->(_) { raise StandardError, "Network error" } do
       post api_v4_upload_from_url_url,
         params: { url: url }.to_json,
         headers: {
