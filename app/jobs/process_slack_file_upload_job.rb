@@ -118,11 +118,23 @@ class ProcessSlackFileUploadJob < ApplicationJob
 
     error_text = case error.reason
     when :file_too_large
-      ":warning: *File too large!* #{error.details}\n\nVerify your account at cdn.hackclub.com to upload larger files."
+      [
+        "_cdnpheus tries to pick up the file but it's too heavy. she strains. she sweats. she gives up._ #{error.details}",
+        "whoa there, that file is THICC. #{error.details} – verify at cdn.hackclub.com for chonkier uploads!",
+        "_cdnpheus attempts to stuff the file into her tiny dinosaur backpack. it does not fit._ #{error.details}",
+        "i tried to eat this file but it's too big and i'm just a small dinosaur :( #{error.details}"
+      ].sample
     when :storage_exceeded
-      ":warning: *Storage quota exceeded!* #{error.details}\n\nVerify your account at cdn.hackclub.com for more storage, or delete some files."
+      [
+        "_cdnpheus opens her filing cabinet but papers explode everywhere._ you're out of space! #{error.details}",
+        "your storage is fuller than my inbox after i mass-DM'd everyone about my soundcloud. #{error.details}",
+        "no room at the inn! #{error.details} – delete some files or verify at cdn.hackclub.com for more space"
+      ].sample
     else
-      "Quota exceeded - verify your account at cdn.hackclub.com"
+      [
+        "quota exceeded! verify at cdn.hackclub.com to unlock your true potential",
+        "_cdnpheus taps the \"quota exceeded\" sign apologetically_"
+      ].sample
     end
 
     reply_in_thread(error_text)
@@ -224,7 +236,14 @@ class ProcessSlackFileUploadJob < ApplicationJob
     [
       "_cdnpheus sneezes and drops the files on the ground before blowing her nose on a blank jpeg._",
       "_cdnpheus trips and your files slip out of her hands and into an inconveniently placed sewer grate._",
-      "_cdnpheus accidentally slips the files into a folder in her briefcase labeled \"homework\". she starts sweating profusely._"
+      "_cdnpheus accidentally slips the files into a folder in her briefcase labeled \"homework\". she starts sweating profusely._",
+      "Hmmm... I'm having trouble thinking right now. Whenever I focus, the only thing that comes to mind is this error",
+      "Aw jeez, this is embarrassing. My database just texted me this",
+      "I just opened my notebook to take a note, but it just says this error all over the pages",
+      "Do you ever try to remember something, but end up thinking about server errors instead? Wait... what were we talking about?",
+      "Super embarrassing, but I just forgot how to upload files.",
+      "i live. i hunger. i. fail to upload your file. i. am. sinister.",
+      "_cdnpheus tries to catch the file but it phases through her claws like a ghost. spooky._"
     ].sample
   end
 end
