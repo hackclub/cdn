@@ -24,28 +24,19 @@ test:
 production:
   primary:
     <<: *default
-    database: <%= ENV["DATABASE_NAME"] || "cdn_production" %>
-    host: <%= ENV["DATABASE_HOST"] %>
-    user: <%= ENV["DATABASE_USER"] %>
-    password: <%= ENV["DATABASE_PASSWORD"] %>
+    url: <%= ENV["DATABASE_URL"] %>
   cache:
     <<: *default
-    database: <%= ENV["CACHE_DATABASE_NAME"] || "cdn_cache" %>
-    host: <%= ENV["CACHE_DATABASE_HOST"] %>
-    user: <%= ENV["CACHE_DATABASE_USER"] %>
-    password: <%= ENV["CACHE_DATABASE_PASSWORD"] %>
+    url: <%= ENV["CACHE_DATABASE_URL"] || ENV["DATABASE_URL"] %>
+    database: cdn_cache
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
-    database: <%= ENV["QUEUE_DATABASE_NAME"] || "cdn_queue" %>
-    host: <%= ENV["QUEUE_DATABASE_HOST"] %>
-    user: <%= ENV["QUEUE_DATABASE_USER"] %>
-    password: <%= ENV["QUEUE_DATABASE_PASSWORD"] %>
+    url: <%= ENV["QUEUE_DATABASE_URL"] || ENV["DATABASE_URL"] %>
+    database: cdn_queue
     migrations_paths: db/queue_migrate
   cable:
     <<: *default
-    database: <%= ENV["CABLE_DATABASE_NAME"] || "cdn_cable" %>
-    host: <%= ENV["CABLE_DATABASE_HOST"] %>
-    user: <%= ENV["CABLE_DATABASE_USER"] %>
-    password: <%= ENV["CABLE_DATABASE_PASSWORD"] %>
+    url: <%= ENV["CABLE_DATABASE_URL"] || ENV["DATABASE_URL"] %>
+    database: cdn_cable
     migrations_paths: db/cable_migrate
