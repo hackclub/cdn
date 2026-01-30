@@ -16,180 +16,42 @@ class ProcessSlackFileUploadJob < ApplicationJob
   end
 
   def perform(event)
-    channel_id = event["channel"]
-    message_ts = event["ts"]
-    slack_user_id = event["user"]
-    files = event["files"]
+    @channel_id = event["channel"]
+    @message_ts = event["ts"]
+    @slack_user_id = event["user"]
+    @files = event["files"]
 
-    return unless files.present?
+    return unless @files.present?
 
-    slack_service = nil
+    @slack = SlackService.client
+    @user = nil
 
     begin
-      slack_service = SlackService.new
-      bot_token = Rails.application.config.slack.bot_token
-      # Find or create user
-      user = find_or_create_user(slack_user_id, slack_service)
+      @user = find_or_create_user
 
-      # Add beachball reaction
-      slack_service.add_reaction(
-        channel: channel_id,
-        timestamp: message_ts,
-        emoji: "beach_ball"
-      )
+      add_reaction("beachball")
+      reply_in_thread(pick_flavor_message)
 
-      # Send initial funny flavor message
-      flavor_message = pick_flavor_message(files)
-      slack_service.reply_in_thread(
-        channel: channel_id,
-        thread_ts: message_ts,
-        text: flavor_message
-      )
-
-      uploads = []
-
-      # Process each file
-      files.each do |file|
-        original_url = file["url_private"]
-
-        # Create upload with Slack authorization
-        upload = Upload.create_from_url(
-          original_url,
-          user: user,
-          provenance: :slack,
-          original_url: original_url,
-          authorization: "Bearer #{bot_token}"
-        )
-
-        # Check quota AFTER upload (size unknown beforehand)
-        quota_service = QuotaService.new(user)
-        policy = quota_service.current_policy
-
-        if upload.file.byte_size > policy.max_file_size
-          upload.destroy!
-          raise QuotaExceededError.new(
-            :file_too_large,
-            "File is #{number_to_human_size(upload.file.byte_size)} but max is #{number_to_human_size(policy.max_file_size)}"
-          )
-        end
-
-        if user.total_storage_bytes > policy.max_total_storage
-          upload.destroy!
-          raise QuotaExceededError.new(
-            :storage_exceeded,
-            "You've used #{number_to_human_size(user.total_storage_bytes)} of your #{number_to_human_size(policy.max_total_storage)} storage"
-          )
-        end
-
-        uploads << upload
-      end
-
-      # Success: remove beachball, add checkmark, reply with Block Kit message
-      slack_service.remove_reaction(
-        channel: channel_id,
-        timestamp: message_ts,
-        emoji: "beach_ball"
-      )
-
-      slack_service.add_reaction(
-        channel: channel_id,
-        timestamp: message_ts,
-        emoji: "white_check_mark"
-      )
-
-      # Build Block Kit message using Slocks template
-      blocks_json = ApplicationController.render(
-        template: "slack/upload_success",
-        formats: [:slack_message],
-        locals: {
-          uploads: uploads,
-          slack_user_id: slack_user_id
-        }
-      )
-
-      slack_service.reply_in_thread(
-        channel: channel_id,
-        thread_ts: message_ts,
-        text: "Yeah! Here's yo' links", # Fallback for notifications
-        blocks: JSON.parse(blocks_json)
-      )
-
+      uploads = process_files
+      notify_success(uploads)
     rescue QuotaExceededError => e
-      # Quota exceeded: remove beachball, add X, reply with error
-      slack_service.remove_reaction(
-        channel: channel_id,
-        timestamp: message_ts,
-        emoji: "beach_ball"
-      ) rescue nil
-
-      slack_service.add_reaction(
-        channel: channel_id,
-        timestamp: message_ts,
-        emoji: "x"
-      ) rescue nil
-
-      error_text = case e.reason
-      when :file_too_large
-        ":warning: *File too large!* #{e.details}\n\nVerify your account at cdn.hackclub.com to upload larger files."
-      when :storage_exceeded
-        ":warning: *Storage quota exceeded!* #{e.details}\n\nVerify your account at cdn.hackclub.com for more storage, or delete some files."
-      else
-        "Quota exceeded - verify your account at cdn.hackclub.com"
-      end
-
-      slack_service.reply_in_thread(
-        channel: channel_id,
-        thread_ts: message_ts,
-        text: error_text
-      )
-
+      notify_quota_exceeded(e)
     rescue => e
-      # General error: remove beachball, add X, reply with error and Sentry ID
-      Rails.logger.error "Slack file upload failed: #{e.message}\n#{e.backtrace.join("\n")}"
-      sentry_event = Sentry.capture_exception(e)
-      sentry_id = sentry_event&.event_id || "unknown"
-
-      begin
-        if slack_service
-          slack_service.remove_reaction(
-            channel: channel_id,
-            timestamp: message_ts,
-            emoji: "beach_ball"
-          ) rescue nil
-
-          slack_service.add_reaction(
-            channel: channel_id,
-            timestamp: message_ts,
-            emoji: "x"
-          ) rescue nil
-
-          error_message = pick_error_message
-          slack_service.reply_in_thread(
-            channel: channel_id,
-            thread_ts: message_ts,
-            text: "#{error_message}\n\n_Error ID: `#{sentry_id}`_"
-          )
-        end
-      rescue => slack_error
-        Rails.logger.error "Failed to send Slack error notification: #{slack_error.message}"
-      end
+      notify_error(e)
     end
   end
 
   private
 
-  def find_or_create_user(slack_user_id, slack_service)
-    # First check if user exists
-    user = User.find_by(slack_id: slack_user_id)
+  def find_or_create_user
+    user = User.find_by(slack_id: @slack_user_id)
 
     unless user
-      # Fetch profile from Slack API
-      profile = slack_service.fetch_user_profile(slack_user_id)
+      profile = @slack.users_info(user: @slack_user_id).user
 
-      puts profile
       user = User.create!(
-        slack_id: slack_user_id,
-        email: profile[:profile][:email] || "slack-#{slack_user_id}@temp.hackclub.com",
+        slack_id: @slack_user_id,
+        email: profile[:profile][:email] || "slack-#{@slack_user_id}@temp.hackclub.com",
         name: profile[:real_name] || profile[:name] || "Slack User"
       )
     end
@@ -197,11 +59,131 @@ class ProcessSlackFileUploadJob < ApplicationJob
     user
   end
 
-  def pick_flavor_message(files)
+  def process_files
+    uploads = []
+
+    @files.each do |file|
+      original_url = file["url_private"]
+      upload = Upload.create_from_url(
+        original_url,
+        user: @user,
+        provenance: :slack,
+        original_url: original_url,
+        authorization: "Bearer #{Rails.application.config.slack.bot_token}"
+      )
+
+      enforce_quota!(upload)
+      uploads << upload
+    end
+
+    uploads
+  end
+
+  def enforce_quota!(upload)
+    quota_service = QuotaService.new(@user)
+    policy = quota_service.current_policy
+
+    if upload.file.byte_size > policy.max_file_size
+      upload.destroy!
+      raise QuotaExceededError.new(
+        :file_too_large,
+        "File is #{number_to_human_size(upload.file.byte_size)} but max is #{number_to_human_size(policy.max_file_size)}"
+      )
+    end
+
+    return unless @user.total_storage_bytes > policy.max_total_storage
+
+    upload.destroy!
+    raise QuotaExceededError.new(
+      :storage_exceeded,
+      "You've used #{number_to_human_size(@user.total_storage_bytes)} of your #{number_to_human_size(policy.max_total_storage)} storage"
+    )
+  end
+
+  def notify_success(uploads)
+    remove_reaction("beachball")
+    add_reaction("white_check_mark")
+
+    @slack.chat_postMessage(
+      channel: @channel_id,
+      thread_ts: @message_ts,
+      text: "Yeah! Here's yo' links",
+      **render_slack_template("upload_success", uploads: uploads, slack_user_id: @slack_user_id)
+    )
+  end
+
+  def notify_quota_exceeded(error)
+    remove_reaction("beachball")
+    add_reaction("x")
+
+    error_text = case error.reason
+    when :file_too_large
+      ":warning: *File too large!* #{error.details}\n\nVerify your account at cdn.hackclub.com to upload larger files."
+    when :storage_exceeded
+      ":warning: *Storage quota exceeded!* #{error.details}\n\nVerify your account at cdn.hackclub.com for more storage, or delete some files."
+    else
+      "Quota exceeded - verify your account at cdn.hackclub.com"
+    end
+
+    reply_in_thread(error_text)
+  end
+
+  def notify_error(error)
+    Rails.logger.error "Slack file upload failed: #{error.message}\n#{error.backtrace.join("\n")}"
+    sentry_event = Sentry.capture_exception(error)
+    sentry_id = sentry_event&.event_id || "unknown"
+
+    return unless @slack
+
+    begin
+      remove_reaction("beachball")
+      add_reaction("x")
+
+      @slack.chat_postMessage(
+        channel: @channel_id,
+        thread_ts: @message_ts,
+        text: "Something went wrong uploading your file",
+        **render_slack_template("upload_error",
+          flavor_message: pick_error_message,
+          error_message: error.message,
+          backtrace: format_backtrace(error.backtrace),
+          sentry_id: sentry_id)
+      )
+    rescue => slack_error
+      Rails.logger.error "Failed to send Slack error notification: #{slack_error.message}"
+    end
+  end
+
+  def add_reaction(emoji)
+    @slack.reactions_add(channel: @channel_id, timestamp: @message_ts, name: emoji)
+  rescue StandardError
+    nil
+  end
+
+  def remove_reaction(emoji)
+    @slack.reactions_remove(channel: @channel_id, timestamp: @message_ts, name: emoji)
+  rescue StandardError
+    nil
+  end
+
+  def reply_in_thread(text)
+    @slack.chat_postMessage(channel: @channel_id, thread_ts: @message_ts, text: text)
+  end
+
+  def render_slack_template(template, locals = {})
+    json = ApplicationController.render(
+      template: "slack/#{template}",
+      formats: [:slack_message],
+      locals:
+    )
+    JSON.parse(json, symbolize_names: true)
+  end
+
+  def pick_flavor_message
     # Collect all possible flavor messages based on file extensions
     flavor_messages = ["thanks, i'm gonna sell these to adfly!"]  # generic fallback
 
-    files.each do |file|
+    @files.each do |file|
       ext = File.extname(file["name"]).delete_prefix(".").downcase
       case ext
       when "gif"
@@ -218,6 +200,24 @@ class ProcessSlackFileUploadJob < ApplicationJob
     end
 
     flavor_messages.sample
+  end
+
+  def format_backtrace(backtrace)
+    return "" if backtrace.blank?
+
+    Rails.backtrace_cleaner.clean(backtrace).first(3).map do |line|
+      if line =~ /^(.+):(\d+):in\s+'(.+)'$/
+        file, line_num, method_name = $1, $2, $3
+        url = "https://github.com/hackclub/cdn/blob/main/#{file}#L#{line_num}"
+        "<#{url}|#{file}:#{line_num}> in `#{method_name}`"
+      elsif line =~ /^(.+):(\d+)/
+        file, line_num = $1, $2
+        url = "https://github.com/hackclub/cdn/blob/main/#{file}#L#{line_num}"
+        "<#{url}|#{file}:#{line_num}>"
+      else
+        line
+      end
+    end.join("\n")
   end
 
   def pick_error_message
