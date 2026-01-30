@@ -38,7 +38,8 @@ class ApplicationController < ActionController::Base
   def handle_error(exception)
     raise exception if Rails.env.local?
 
-    event_id = Sentry.capture_exception(exception)
+    event = Sentry.capture_exception(exception)
+    event_id = event&.event_id
 
     respond_to do |format|
       format.html do

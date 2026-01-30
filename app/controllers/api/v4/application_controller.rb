@@ -45,8 +45,8 @@ module API
       def handle_error(exception)
         raise exception if Rails.env.local?
 
-        event_id = Sentry.capture_exception(exception)
-        render json: { error: exception.message, error_id: event_id }, status: :internal_server_error
+        event = Sentry.capture_exception(exception)
+        render json: { error: exception.message, error_id: event&.event_id }, status: :internal_server_error
       end
     end
   end
