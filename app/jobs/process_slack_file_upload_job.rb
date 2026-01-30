@@ -13,28 +13,29 @@ class ProcessSlackFileUploadJob < ApplicationJob
 
     return unless files.present?
 
-    slack_service = SlackService.new
-    bot_token = Rails.application.config.slack.bot_token
-
-    # Find or create user
-    user = find_or_create_user(slack_user_id, slack_service)
-
-    # Add beachball reaction
-    slack_service.add_reaction(
-      channel: channel_id,
-      timestamp: message_ts,
-      emoji: "beach_ball"
-    )
-
-    # Send initial funny flavor message
-    flavor_message = pick_flavor_message(files)
-    slack_service.reply_in_thread(
-      channel: channel_id,
-      thread_ts: message_ts,
-      text: flavor_message
-    )
+    slack_service = nil
 
     begin
+      slack_service = SlackService.new
+      bot_token = Rails.application.config.slack.bot_token
+      # Find or create user
+      user = find_or_create_user(slack_user_id, slack_service)
+
+      # Add beachball reaction
+      slack_service.add_reaction(
+        channel: channel_id,
+        timestamp: message_ts,
+        emoji: "beach_ball"
+      )
+
+      # Send initial funny flavor message
+      flavor_message = pick_flavor_message(files)
+      slack_service.reply_in_thread(
+        channel: channel_id,
+        thread_ts: message_ts,
+        text: flavor_message
+      )
+
       uploads = []
 
       # Process each file
@@ -111,28 +112,32 @@ class ProcessSlackFileUploadJob < ApplicationJob
       )
 
     rescue => e
-      # General error: remove beachball, add X, reply with funny error
+      # General error: remove beachball, add X, reply with error and Sentry ID
       Rails.logger.error "Slack file upload failed: #{e.message}\n#{e.backtrace.join("\n")}"
+      sentry_event = Sentry.capture_exception(e)
+      sentry_id = sentry_event&.event_id || "unknown"
 
       begin
-        slack_service.remove_reaction(
-          channel: channel_id,
-          timestamp: message_ts,
-          emoji: "beach_ball"
-        )
+        if slack_service
+          slack_service.remove_reaction(
+            channel: channel_id,
+            timestamp: message_ts,
+            emoji: "beach_ball"
+          )
 
-        slack_service.add_reaction(
-          channel: channel_id,
-          timestamp: message_ts,
-          emoji: "x"
-        )
+          slack_service.add_reaction(
+            channel: channel_id,
+            timestamp: message_ts,
+            emoji: "x"
+          )
 
-        error_message = pick_error_message
-        slack_service.reply_in_thread(
-          channel: channel_id,
-          thread_ts: message_ts,
-          text: error_message
-        )
+          error_message = pick_error_message
+          slack_service.reply_in_thread(
+            channel: channel_id,
+            thread_ts: message_ts,
+            text: "#{error_message}\n\n_Error ID: `#{sentry_id}`_"
+          )
+        end
       rescue => slack_error
         Rails.logger.error "Failed to send Slack error notification: #{slack_error.message}"
       end
@@ -149,6 +154,7 @@ class ProcessSlackFileUploadJob < ApplicationJob
       # Fetch profile from Slack API
       profile = slack_service.fetch_user_profile(slack_user_id)
 
+      puts profile
       user = User.create!(
         slack_id: slack_user_id,
         email: profile[:profile][:email] || "slack-#{slack_user_id}@temp.hackclub.com",

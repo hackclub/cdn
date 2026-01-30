@@ -2,7 +2,6 @@
 
 module Slack
   class EventsController < ActionController::API
-    skip_before_action :verify_authenticity_token
     before_action :verify_slack_signature
 
     def create
@@ -28,13 +27,11 @@ module Slack
     private
 
     def verify_slack_signature
-      timestamp = request.headers["X-Slack-Request-Timestamp"]
-      signature = request.headers["X-Slack-Signature"]
-      body = request.raw_post
-
-      unless SlackService.verify_signature(timestamp, body, signature)
-        render json: { error: "Invalid signature" }, status: :unauthorized
-      end
+      ::Slack::Events::Request.new(request).verify!
+    rescue ::Slack::Events::Request::MissingSigningSecret,
+           ::Slack::Events::Request::InvalidSignature,
+           ::Slack::Events::Request::TimestampExpired
+      render json: { error: "Invalid signature" }, status: :unauthorized
     end
 
     def monitored_channel?(channel_id)
