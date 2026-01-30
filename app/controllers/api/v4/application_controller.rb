@@ -27,8 +27,8 @@ module API
       end
 
       def set_sentry_context
-        Sentry.set_user(id: current_user&.id) if current_user
-        Sentry.set_tags(api_key_id: current_token&.hashid) if current_token
+        Sentry.set_user(id: current_user&.public_id) if current_user
+        Sentry.set_tags(api_key_id: current_token&.id) if current_token
       end
 
       def not_found
