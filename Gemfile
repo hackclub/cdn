@@ -70,3 +70,4 @@ gem "lockbox"
 gem "blind_index"
 gem "sentry-ruby"
 gem "sentry-rails"
+gem "aws-sdk-s3", require: false
