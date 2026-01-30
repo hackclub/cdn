@@ -78,6 +78,25 @@ GEM
       fiddle
     ast (2.4.3)
     awesome_print (1.9.2)
+    aws-eventstream (1.4.0)
+    aws-partitions (1.1210.0)
+    aws-sdk-core (3.241.4)
+      aws-eventstream (~> 1, >= 1.3.0)
+      aws-partitions (~> 1, >= 1.992.0)
+      aws-sigv4 (~> 1.9)
+      base64
+      bigdecimal
+      jmespath (~> 1, >= 1.6.1)
+      logger
+    aws-sdk-kms (1.121.0)
+      aws-sdk-core (~> 3, >= 3.241.4)
+      aws-sigv4 (~> 1.5)
+    aws-sdk-s3 (1.213.0)
+      aws-sdk-core (~> 3, >= 3.241.4)
+      aws-sdk-kms (~> 1)
+      aws-sigv4 (~> 1.5)
+    aws-sigv4 (1.12.1)
+      aws-eventstream (~> 1, >= 1.0.2)
     base64 (0.3.0)
     benchmark (0.5.0)
     bigdecimal (4.0.1)
@@ -144,6 +163,7 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     jb (0.8.2)
+    jmespath (1.6.2)
     json (2.18.0)
     jwt (3.1.2)
       base64
@@ -457,6 +477,7 @@ PLATFORMS
 
 DEPENDENCIES
   awesome_print
+  aws-sdk-s3
   blind_index
   bootsnap
   brakeman
