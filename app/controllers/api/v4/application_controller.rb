@@ -6,9 +6,11 @@ module API
       attr_reader :current_user, :current_token
 
       before_action :authenticate!
+      before_action :set_sentry_context
 
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
+      rescue_from StandardError, with: :handle_error
 
       private
 
@@ -24,6 +26,11 @@ module API
         @current_user = @current_token.user
       end
 
+      def set_sentry_context
+        Sentry.set_user(id: current_user&.id) if current_user
+        Sentry.set_tags(api_key_id: current_token&.hashid) if current_token
+      end
+
       def not_found
         render json: { error: "Not found" }, status: :not_found
       end
@@ -33,6 +40,13 @@ module API
           error: "Validation failed",
           details: exception.record.errors.full_messages
         }, status: :unprocessable_entity
+      end
+
+      def handle_error(exception)
+        raise exception if Rails.env.local?
+
+        event_id = Sentry.capture_exception(exception)
+        render json: { error: exception.message, error_id: event_id }, status: :internal_server_error
       end
     end
   end
