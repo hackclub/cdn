@@ -5,7 +5,7 @@ class ExternalUploadsController < ApplicationController
 
   def show
     upload = Upload.includes(:blob).find(params[:id])
-    redirect_to rails_blob_url(upload.blob, disposition: :inline), allow_other_host: true
+    redirect_to upload.blob.url(disposition: :inline), allow_other_host: true
   rescue ActiveRecord::RecordNotFound
     head :not_found
   end
