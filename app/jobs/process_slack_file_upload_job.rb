@@ -68,7 +68,6 @@ class ProcessSlackFileUploadJob < ApplicationJob
         original_url,
         user: @user,
         provenance: :slack,
-        original_url: original_url,
         authorization: "Bearer #{Rails.application.config.slack.bot_token}"
       )
 
