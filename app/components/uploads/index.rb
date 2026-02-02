@@ -37,7 +37,7 @@ class Components::Uploads::Index < Components::Base
 
       label(for: "dropzone-file-input", class: "btn btn-primary", style: "cursor: pointer;") do
         render Primer::Beta::Octicon.new(icon: :upload, mr: 1)
-        plain "Upload File"
+        plain "Upload Files"
       end
     end
   end
@@ -101,7 +101,7 @@ class Components::Uploads::Index < Components::Base
 
   def dropzone_form
     form_with url: uploads_path, method: :post, multipart: true, data: { dropzone_form: true } do
-      input(type: "file", name: "file", id: "dropzone-file-input", data: { dropzone_input: true }, style: "display: none;")
+      input(type: "file", name: "files[]", id: "dropzone-file-input", multiple: true, data: { dropzone_input: true }, style: "display: none;")
     end
   end
 end

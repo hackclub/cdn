@@ -22,10 +22,9 @@
 
     initialized = true;
 
-    // Handle file input change
+    // Handle file input change (supports multiple files)
     fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) {
+      if (e.target.files.length > 0) {
         form.requestSubmit();
       }
     });
@@ -77,7 +76,7 @@
       dropzone.classList.add("file-dropzone");
 
       const title = document.createElement("h1");
-      title.innerText = "Drop your file here";
+      title.innerText = "Drop your files here";
       dropzone.appendChild(title);
 
       document.body.appendChild(dropzone);

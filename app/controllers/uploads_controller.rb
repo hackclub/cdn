@@ -15,28 +15,38 @@ class UploadsController < ApplicationController
   end
 
   def create
-    uploaded_file = params[:file]
+    uploaded_files = Array(params[:files]).reject(&:blank?)
 
-    if uploaded_file.blank?
-      redirect_to uploads_path, alert: "Please select a file to upload."
+    if uploaded_files.empty?
+      redirect_to uploads_path, alert: "Please select at least one file to upload."
       return
     end
 
-    blob = ActiveStorage::Blob.create_and_upload!(
-      io: uploaded_file.tempfile,
-      filename: uploaded_file.original_filename,
-      content_type: uploaded_file.content_type
-    )
+    success_count = 0
+    errors = []
 
-    @upload = current_user.uploads.create!(
-      blob: blob,
-      provenance: :web
-    )
+    uploaded_files.each do |uploaded_file|
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: uploaded_file.tempfile,
+        filename: uploaded_file.original_filename,
+        content_type: uploaded_file.content_type
+      )
 
-    redirect_to uploads_path, notice: "File uploaded successfully!"
-  rescue StandardError => e
-    event = Sentry.capture_exception(e)
-    redirect_to uploads_path, alert: "Upload failed: #{e.message} (Error ID: #{event&.event_id})"
+      current_user.uploads.create!(
+        blob: blob,
+        provenance: :web
+      )
+      success_count += 1
+    rescue StandardError => e
+      Sentry.capture_exception(e)
+      errors << "#{uploaded_file.original_filename}: #{e.message}"
+    end
+
+    if errors.any?
+      redirect_to uploads_path, alert: "#{success_count} file(s) uploaded. Errors: #{errors.join(', ')}"
+    else
+      redirect_to uploads_path, notice: "#{success_count} #{'file'.pluralize(success_count)} uploaded successfully!"
+    end
   end
 
   def destroy
@@ -51,23 +61,25 @@ class UploadsController < ApplicationController
   private
 
   def check_quota
-    uploaded_file = params[:file]
-    return if uploaded_file.blank? # Let create action handle missing file
+    uploaded_files = Array(params[:files]).reject(&:blank?)
+    return if uploaded_files.empty? # Let create action handle missing files
 
     quota_service = QuotaService.new(current_user)
-    file_size = uploaded_file.size
     policy = quota_service.current_policy
+    total_size = uploaded_files.sum(&:size)
 
-    # Check per-file size limit
-    if file_size > policy.max_file_size
-      redirect_to uploads_path, alert: "File size (#{ActiveSupport::NumberHelper.number_to_human_size(file_size)}) exceeds your limit of #{ActiveSupport::NumberHelper.number_to_human_size(policy.max_file_size)} per file."
-      return
+    # Check per-file size limit for each file
+    uploaded_files.each do |uploaded_file|
+      if uploaded_file.size > policy.max_file_size
+        redirect_to uploads_path, alert: "File '#{uploaded_file.original_filename}' (#{ActiveSupport::NumberHelper.number_to_human_size(uploaded_file.size)}) exceeds your limit of #{ActiveSupport::NumberHelper.number_to_human_size(policy.max_file_size)} per file."
+        return
+      end
     end
 
-    # Check if upload would exceed total storage quota
-    unless quota_service.can_upload?(file_size)
+    # Check if uploads would exceed total storage quota
+    unless quota_service.can_upload?(total_size)
       usage = quota_service.current_usage
-      redirect_to uploads_path, alert: "Uploading this file would exceed your storage quota. You're using #{ActiveSupport::NumberHelper.number_to_human_size(usage[:storage_used])} of #{ActiveSupport::NumberHelper.number_to_human_size(usage[:storage_limit])}."
+      redirect_to uploads_path, alert: "Uploading these files would exceed your storage quota. You're using #{ActiveSupport::NumberHelper.number_to_human_size(usage[:storage_used])} of #{ActiveSupport::NumberHelper.number_to_human_size(usage[:storage_limit])}."
       nil
     end
   end
