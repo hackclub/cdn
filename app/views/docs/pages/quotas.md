@@ -12,9 +12,9 @@ CDN provides free storage for the Hack Club community. Your quota depends on whe
 
 | Tier | Per File | Total Storage |
 |------|----------|---------------|
-| **Unverified** | 10 MB | 50 MB |
-| **Verified** | 50 MB | 50 GB |
-| **Unlimited** | 200 MB | 300 GB |
+| **Unverified** | 10 MB    | 50 MB |
+| **Verified** | 100 MB   | 50 GB |
+| **"Unlimited"** | 200 MB   | 300 GB |
 
 **New users start unverified.** Once you verify with Hack Club, you automatically get 50GB.
 
