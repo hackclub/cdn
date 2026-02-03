@@ -73,3 +73,8 @@ gem "sentry-rails"
 gem "aws-sdk-s3", require: false
 gem "slack-ruby-client"
 gem "slocks", git: "https://github.com/24c02/slocks"
+gem "ruby-progressbar"
+gem "concurrent-ruby"
+gem "csv"
+
+gem "openssl", "~> 4.0"
