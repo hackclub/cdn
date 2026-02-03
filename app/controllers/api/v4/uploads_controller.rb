@@ -14,10 +14,12 @@ module API
           return
         end
 
+        content_type = Marcel::MimeType.for(file.tempfile, name: file.original_filename) || file.content_type || "application/octet-stream"
+
         blob = ActiveStorage::Blob.create_and_upload!(
           io: file.tempfile,
           filename: file.original_filename,
-          content_type: file.content_type
+          content_type: content_type
         )
 
         upload = current_user.uploads.create!(blob: blob, provenance: :api)

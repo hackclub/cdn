@@ -22,10 +22,12 @@ class UploadsController < ApplicationController
       return
     end
 
+    content_type = Marcel::MimeType.for(uploaded_file.tempfile, name: uploaded_file.original_filename) || uploaded_file.content_type || "application/octet-stream"
+
     blob = ActiveStorage::Blob.create_and_upload!(
       io: uploaded_file.tempfile,
       filename: uploaded_file.original_filename,
-      content_type: uploaded_file.content_type
+      content_type: content_type
     )
 
     @upload = current_user.uploads.create!(

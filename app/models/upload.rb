@@ -66,15 +66,34 @@ class Upload < ApplicationRecord
   end
 
   # Create upload from URL (for API/rescue operations)
-  def self.create_from_url(url, user:, provenance:, original_url: nil, authorization: nil)
-    open_options = {}
-    open_options["Authorization"] = authorization if authorization.present?
+  def self.create_from_url(url, user:, provenance:, original_url: nil, authorization: nil, filename: nil)
+    conn = Faraday.new(ssl: { verify: true, verify_mode: OpenSSL::SSL::VERIFY_PEER }) do |f|
+      # f.response :follow_redirects, limit: 5
+      f.adapter Faraday.default_adapter
+    end
+    # Disable CRL checking which fails on some servers
+    conn.options.open_timeout = 30
+    conn.options.timeout = 120
 
-    downloaded = URI.open(url, open_options)
+    headers = {}
+    headers["Authorization"] = authorization if authorization.present?
+
+    response = conn.get(url, nil, headers)
+    if response.status.between?(300, 399)
+      location = response.headers["location"]
+      raise "Failed to download: #{response.status} redirect to #{location}"
+    end
+    raise "Failed to download: #{response.status}" unless response.success?
+
+    filename ||= File.basename(URI.parse(url).path)
+    body = response.body
+    content_type = Marcel::MimeType.for(StringIO.new(body), name: filename) || response.headers["content-type"] || "application/octet-stream"
 
     blob = ActiveStorage::Blob.create_and_upload!(
-      io: downloaded,
-      filename: File.basename(URI.parse(url).path)
+      io: StringIO.new(body),
+      filename: filename,
+      content_type: content_type,
+      identify: false
     )
 
     create!(
