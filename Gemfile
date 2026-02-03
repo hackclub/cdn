@@ -77,4 +77,4 @@ gem "ruby-progressbar"
 gem "concurrent-ruby"
 gem "csv"
 
-gem "openssl", "~> 4.0"
+# gem "openssl", "~> 4.0"
