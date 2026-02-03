@@ -3,7 +3,7 @@ class Quota
 
   ALL_POLICIES = [
     Policy[:unverified, 10.megabytes, 50.megabytes],
-    Policy[:verified, 50.megabytes, 50.gigabytes],
+    Policy[:verified, 100.megabytes, 50.gigabytes],
     Policy[:functionally_unlimited, 500.megabytes, 300.gigabytes]
   ].index_by &:slug
 
