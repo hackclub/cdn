@@ -89,5 +89,7 @@ class Upload < ApplicationRecord
 
   def purge_blob
     blob.purge
+  rescue Aws::S3::Errors::NoSuchKey
+    Rails.logger.info("Blob #{blob.key} already deleted from S3, skipping purge")
   end
 end
