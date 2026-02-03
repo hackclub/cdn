@@ -7,10 +7,12 @@ module QuotaHelper
 
     if quota_service.over_quota?
       # Danger banner when over quota
-      render Primer::Beta::Flash.new(scheme: :danger, full: true) do
-        plain "You've exceeded your storage quota. "
-        plain "You're using #{number_to_human_size(usage[:storage_used])} of #{number_to_human_size(usage[:storage_limit])}. "
-        plain "Please delete some files to continue uploading."
+      render Primer::Beta::Flash.new(scheme: :danger) do
+        <<~EOM
+          You've exceeded your storage quota.
+          You're using #{number_to_human_size(usage[:storage_used])} of #{number_to_human_size(usage[:storage_limit])}. 
+          Please delete some files to continue uploading.
+        EOM
       end
     elsif quota_service.at_warning?
       # Warning banner when >= 80% used
