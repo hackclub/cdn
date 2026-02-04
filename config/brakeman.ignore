@@ -21,7 +21,7 @@
       "cwe_id": [
         601
       ],
-      "note": ""
+      "note": "Redirect target is CDN_ASSETS_HOST env var + blob.key from database, not user input"
     },
     {
       "warning_type": "Redirect",
@@ -44,7 +44,7 @@
       "cwe_id": [
         601
       ],
-      "note": ""
+      "note": "Redirect to cdn_url which points to our own CDN_HOST domain, not user input"
     }
   ],
   "brakeman_version": "8.0.2"

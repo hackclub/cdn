@@ -84,7 +84,7 @@ See `.env.example` for the full list. Key variables:
 | `LOCKBOX_MASTER_KEY` | 64-char hex key for encrypting API keys |
 | `BLIND_INDEX_MASTER_KEY` | 64-char hex key for searchable encryption |
 
-DNS Setup
+## DNS Setup
 
 | Domain | Points to |
 |--------|-----------|

@@ -46,7 +46,7 @@ namespace :storage do
         blob.update_column(:key, new_key)
         client.delete_object(bucket: bucket.name, key: old_key)
         migrated += 1
-      rescue Aws::S3::Errors::ServiceError => e
+      rescue StandardError => e
         puts "\n  ERROR migrating #{upload.id}: #{e.message}"
         errors += 1
       end

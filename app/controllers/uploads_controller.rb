@@ -23,21 +23,24 @@ class UploadsController < ApplicationController
     end
 
     content_type = Marcel::MimeType.for(uploaded_file.tempfile, name: uploaded_file.original_filename) || uploaded_file.content_type || "application/octet-stream"
+
     # pre-gen upload ID for predictable storage path
     upload_id = SecureRandom.uuid_v7
-    sanatized_filename = ActiveStorage::Filename.new(uploaded_file.original_filename).sanitized
-    storage_key = "#{upload_id}/#{sanitized_filename}"
+        sanitized_filename = ActiveStorage::Filename.new(uploaded_file.original_filename).sanitized
+        storage_key = "#{upload_id}/#{sanitized_filename}"
 
-    blob = ActiveStorage::Blob.create_and_upload!(
-      io: uploaded_file.tempfile,
-      filename: uploaded_file.original_filename,
-      content_type: content_type
-    )
+        blob = ActiveStorage::Blob.create_and_upload!(
+          io: uploaded_file.tempfile,
+          filename: uploaded_file.original_filename,
+          content_type: content_type,
+          key: storage_key
+        )
 
-    @upload = current_user.uploads.create!(
-      blob: blob,
-      provenance: :web
-    )
+        @upload = current_user.uploads.create!(
+          id: upload_id,
+          blob: blob,
+          provenance: :web
+        )
 
     redirect_to uploads_path, notice: "File uploaded successfully!"
   rescue StandardError => e

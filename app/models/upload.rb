@@ -56,11 +56,12 @@ class Upload < ApplicationRecord
     ActiveSupport::NumberHelper.number_to_human_size(byte_size)
   end
 
-# direct URL to pub R2 bucket
-def assets_url
-  host = ENV.fetch("CDN_ASSETS_HOST", "cdn.hackclub-assets.com")
-  "https://#{host}/#{id}/#{blob.filename.sanitized}"
-end
+  # Direct URL to public R2 bucket
+  def assets_url
+    host = ENV.fetch("CDN_ASSETS_HOST", "cdn.hackclub-assets.com")
+    "https://#{host}/#{blob.key}"
+  end
+
   # Get CDN URL (uses external uploads controller)
   def cdn_url
     Rails.application.routes.url_helpers.external_upload_url(
@@ -73,10 +74,8 @@ end
   # Create upload from URL (for API/rescue operations)
   def self.create_from_url(url, user:, provenance:, original_url: nil, authorization: nil, filename: nil)
     conn = Faraday.new(ssl: { verify: true, verify_mode: OpenSSL::SSL::VERIFY_PEER }) do |f|
-      # f.response :follow_redirects, limit: 5
       f.adapter Faraday.default_adapter
     end
-    # Disable CRL checking which fails on some servers
     conn.options.open_timeout = 30
     conn.options.timeout = 120
 
@@ -103,10 +102,12 @@ end
       io: StringIO.new(body),
       filename: filename,
       content_type: content_type,
-      identify: false
+      identify: false,
+      key: storage_key
     )
 
     create!(
+      id: upload_id,
       user: user,
       blob: blob,
       provenance: provenance,

@@ -24,10 +24,11 @@ module API
         blob = ActiveStorage::Blob.create_and_upload!(
           io: file.tempfile,
           filename: file.original_filename,
-          content_type: content_type
+          content_type: content_type,
+          key: storage_key
         )
 
-        upload = current_user.uploads.create!(blob: blob, provenance: :api)
+        upload = current_user.uploads.create!(id: upload_id, blob: blob, provenance: :api)
 
         render json: upload_json(upload), status: :created
       rescue => e
