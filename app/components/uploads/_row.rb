@@ -48,9 +48,9 @@ class Components::Uploads::Row < Components::Base
 
   def full_content
     div(style: "flex: 1; min-width: 0;") do
-      div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 8px;") do
+      div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 8px; min-width: 0;") do
         render Primer::Beta::Octicon.new(icon: file_icon_for(upload.content_type), size: :small)
-        div(style: "font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;") do
+        div(style: "flex: 1; min-width: 0; font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;") do
           plain upload.filename.to_s
         end
         render(Primer::Beta::Label.new(scheme: :secondary)) { plain upload.provenance.titleize }
