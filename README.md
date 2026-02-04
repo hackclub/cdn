@@ -78,10 +78,18 @@ See `.env.example` for the full list. Key variables:
 | `R2_BUCKET_NAME` | R2 bucket name |
 | `R2_ENDPOINT` | R2 endpoint URL |
 | `CDN_HOST` | Public hostname for CDN URLs |
+| CDN_ASSETS_HOST` | Public R2 bucket hostname |
 | `HACKCLUB_CLIENT_ID` | OAuth client ID from Hack Club Auth |
 | `HACKCLUB_CLIENT_SECRET` | OAuth client secret |
 | `LOCKBOX_MASTER_KEY` | 64-char hex key for encrypting API keys |
 | `BLIND_INDEX_MASTER_KEY` | 64-char hex key for searchable encryption |
+
+DNS Setup
+
+| Domain | Points to |
+|--------|-----------|
+| `cdn.hackclub.com` | Rails app (Heroku/Fly/etc.) |
+| `cdn.hackclub-assets.com` | R2 bucket (custom domain in R2 settings) |
 
 ## API
 

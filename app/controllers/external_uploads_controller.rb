@@ -5,8 +5,8 @@ class ExternalUploadsController < ApplicationController
 
   def show
     upload = Upload.includes(:blob).find(params[:id])
-    expires_in ActiveStorage.service_urls_expire_in, public: true
-    redirect_to upload.blob.url(disposition: :inline), allow_other_host: true
+    expires_in 1.year, public: true
+    redirect_to upload.assets_url, allow_other_host: true
   rescue ActiveRecord::RecordNotFound
     head :not_found
   end

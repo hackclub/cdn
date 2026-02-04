@@ -56,6 +56,11 @@ class Upload < ApplicationRecord
     ActiveSupport::NumberHelper.number_to_human_size(byte_size)
   end
 
+# direct URL to pub R2 bucket
+def assets_url
+  host = ENV.fetch("CDN_ASSETS_HOST", "cdn.hackclub-assets.com")
+"https://#{host}/#{id}/#{blob.filename.sanitized}"
+end
   # Get CDN URL (uses external uploads controller)
   def cdn_url
     Rails.application.routes.url_helpers.external_upload_url(
