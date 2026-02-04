@@ -10,7 +10,7 @@ module QuotaHelper
       render Primer::Beta::Flash.new(scheme: :danger) do
         <<~EOM
           You've exceeded your storage quota.
-          You're using #{number_to_human_size(usage[:storage_used])} of #{number_to_human_size(usage[:storage_limit])}. 
+          You're using #{number_to_human_size(usage[:storage_used])} of #{number_to_human_size(usage[:storage_limit])}.#{' '}
           Please delete some files to continue uploading.
         EOM
       end
