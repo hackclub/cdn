@@ -3,11 +3,34 @@
     {
       "warning_type": "Redirect",
       "warning_code": 18,
+      "fingerprint": "1b547d3d3a3da6fb3a8813588bc1cc46dec4d4383cab676fbabdf68254550bad",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/external_uploads_controller.rb",
+      "line": 9,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to(Upload.includes(:blob).find(params[:id]).assets_url, :allow_other_host => true)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "ExternalUploadsController",
+        "method": "show"
+      },
+      "user_input": "Upload.includes(:blob).find(params[:id]).assets_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        601
+      ],
+      "note": ""
+    },
+    {
+      "warning_type": "Redirect",
+      "warning_code": 18,
       "fingerprint": "264fe1309b8371f2f0f88576487cb17179e0dfdf33ccd499ae74e707ea91bc1c",
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/external_uploads_controller.rb",
-      "line": 24,
+      "line": 26,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(Upload.includes(:blob).find_by(:original_url => params[:url]).cdn_url, :allow_other_host => true)",
       "render_path": null,
@@ -24,5 +47,5 @@
       "note": ""
     }
   ],
-  "brakeman_version": "8.0.1"
+  "brakeman_version": "8.0.2"
 }
