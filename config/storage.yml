@@ -17,6 +17,8 @@ amazon:
   force_path_style: true
   request_checksum_calculation: when_required
   response_checksum_validation: when_required
+  upload:
+    content_disposition: "inline"
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:
