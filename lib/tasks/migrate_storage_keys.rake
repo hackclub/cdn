@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# frozen_string_literal: true
-
 namespace :storage do
   desc "Migrate existing blobs to public key structure: <upload-id>/<filename>"
   task migrate_to_public_keys: :environment do

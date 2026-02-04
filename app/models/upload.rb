@@ -59,7 +59,7 @@ class Upload < ApplicationRecord
 # direct URL to pub R2 bucket
 def assets_url
   host = ENV.fetch("CDN_ASSETS_HOST", "cdn.hackclub-assets.com")
-"https://#{host}/#{id}/#{blob.filename.sanitized}"
+  "https://#{host}/#{id}/#{blob.filename.sanitized}"
 end
   # Get CDN URL (uses external uploads controller)
   def cdn_url
@@ -93,6 +93,11 @@ end
     filename ||= File.basename(URI.parse(url).path)
     body = response.body
     content_type = Marcel::MimeType.for(StringIO.new(body), name: filename) || response.headers["content-type"] || "application/octet-stream"
+
+    # Pre-generate upload ID for predictable storage path
+      upload_id = SecureRandom.uuid_v7
+      sanitized_filename = ActiveStorage::Filename.new(filename).sanitized
+      storage_key = "#{upload_id}/#{sanitized_filename}"
 
     blob = ActiveStorage::Blob.create_and_upload!(
       io: StringIO.new(body),

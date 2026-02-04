@@ -24,7 +24,7 @@ class UploadsController < ApplicationController
 
     content_type = Marcel::MimeType.for(uploaded_file.tempfile, name: uploaded_file.original_filename) || uploaded_file.content_type || "application/octet-stream"
     # pre-gen upload ID for predictable storage path
-    upload_id = SecureRandlom.uuid_v7
+    upload_id = SecureRandom.uuid_v7
     sanatized_filename = ActiveStorage::Filename.new(uploaded_file.original_filename).sanitized
     storage_key = "#{upload_id}/#{sanitized_filename}"
 
