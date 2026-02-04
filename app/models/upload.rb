@@ -95,9 +95,9 @@ end
     content_type = Marcel::MimeType.for(StringIO.new(body), name: filename) || response.headers["content-type"] || "application/octet-stream"
 
     # Pre-generate upload ID for predictable storage path
-      upload_id = SecureRandom.uuid_v7
-      sanitized_filename = ActiveStorage::Filename.new(filename).sanitized
-      storage_key = "#{upload_id}/#{sanitized_filename}"
+    upload_id = SecureRandom.uuid_v7
+    sanitized_filename = ActiveStorage::Filename.new(filename).sanitized
+    storage_key = "#{upload_id}/#{sanitized_filename}"
 
     blob = ActiveStorage::Blob.create_and_upload!(
       io: StringIO.new(body),
