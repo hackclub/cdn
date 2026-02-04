@@ -41,7 +41,7 @@ namespace :storage do
           bucket: bucket.name,
           copy_source: "#{bucket.name}/#{m[:old_key]}",
           key: m[:new_key],
-          content_type: blob.content_type,
+          content_type: blob.content_type || "application/octet-stream",
           content_disposition: "inline",
           metadata_directive: "REPLACE"
         )
