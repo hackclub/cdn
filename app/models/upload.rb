@@ -74,6 +74,7 @@ class Upload < ApplicationRecord
   # Create upload from URL (for API/rescue operations)
   def self.create_from_url(url, user:, provenance:, original_url: nil, authorization: nil, filename: nil)
     conn = Faraday.new(ssl: { verify: true, verify_mode: OpenSSL::SSL::VERIFY_PEER }) do |f|
+      f.response :follow_redirects, limit: 5
       f.adapter Faraday.default_adapter
     end
     conn.options.open_timeout = 30
