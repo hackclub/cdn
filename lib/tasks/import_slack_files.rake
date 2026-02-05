@@ -133,7 +133,7 @@ namespace :import do
       error_log_path = "import_errors_#{Time.now.strftime('%Y%m%d_%H%M%S')}.csv"
       CSV.open(error_log_path, "w") do |csv|
         csv << %w[id original_url error]
-        errors.each { |err| csv << [err[:id], err[:original_url], err[:error]] }
+        errors.each { |err| csv << [ err[:id], err[:original_url], err[:error] ] }
       end
       puts "Full error log written to: #{error_log_path}"
     end

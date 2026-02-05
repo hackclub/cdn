@@ -56,6 +56,12 @@ class Upload < ApplicationRecord
     ActiveSupport::NumberHelper.number_to_human_size(byte_size)
   end
 
+  # Direct URL to public R2 bucket
+  def assets_url
+    host = ENV.fetch("CDN_ASSETS_HOST", "cdn.hackclub-assets.com")
+    "https://#{host}/#{blob.key}"
+  end
+
   # Get CDN URL (uses external uploads controller)
   def cdn_url
     Rails.application.routes.url_helpers.external_upload_url(
@@ -71,7 +77,6 @@ class Upload < ApplicationRecord
       f.response :follow_redirects, limit: 5
       f.adapter Faraday.default_adapter
     end
-    # Disable CRL checking which fails on some servers
     conn.options.open_timeout = 30
     conn.options.timeout = 120
 
@@ -89,14 +94,21 @@ class Upload < ApplicationRecord
     body = response.body
     content_type = Marcel::MimeType.for(StringIO.new(body), name: filename) || response.headers["content-type"] || "application/octet-stream"
 
+    # Pre-generate upload ID for predictable storage path
+    upload_id = SecureRandom.uuid_v7
+    sanitized_filename = ActiveStorage::Filename.new(filename).sanitized
+    storage_key = "#{upload_id}/#{sanitized_filename}"
+
     blob = ActiveStorage::Blob.create_and_upload!(
       io: StringIO.new(body),
       filename: filename,
       content_type: content_type,
-      identify: false
+      identify: false,
+      key: storage_key
     )
 
     create!(
+      id: upload_id,
       user: user,
       blob: blob,
       provenance: provenance,
