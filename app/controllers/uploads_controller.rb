@@ -53,7 +53,10 @@ class UploadsController < ApplicationController
     @upload.rename!(new_filename)
     redirect_to uploads_path, notice: "Renamed to #{@upload.filename}"
   rescue Pundit::NotAuthorizedError
-    redirect_to uploads_path, alert: "You are not authorized to rename this upload."
+    redirect_back fallback_location: uploads_path, alert: "You are not authorized to rename this upload."
+  rescue StandardError => e
+    event = Sentry.capture_exception(e)
+    redirect_back fallback_location: uploads_path, alert: "Rename failed. (Error ID: #{event&.event_id})"
   end
 
   def destroy
@@ -73,13 +76,12 @@ class UploadsController < ApplicationController
       return
     end
 
-    uploads = current_user.uploads.where(id: ids)
+    uploads = current_user.uploads.where(id: ids).includes(:blob)
     count = uploads.size
-    filenames = uploads.includes(:blob).map { |u| u.filename.to_s }
 
     uploads.destroy_all
 
-    redirect_to uploads_path, notice: "Deleted #{count} #{'file'.pluralize(count)}: #{filenames.join(', ')}"
+    redirect_to uploads_path, notice: "Deleted #{count} #{'file'.pluralize(count)}."
   end
 
   private
@@ -96,13 +98,22 @@ class UploadsController < ApplicationController
 
     if result.uploads.any?
       count = result.uploads.size
-      filenames = result.uploads.map { |u| u.filename.to_s }.join(", ")
-      parts << "Uploaded #{count} #{'file'.pluralize(count)}: #{filenames}"
+      names = result.uploads.map { |u| u.filename.to_s }
+      if names.size <= 5
+        parts << "Uploaded #{count} #{'file'.pluralize(count)}: #{names.join(', ')}"
+      else
+        parts << "Uploaded #{count} #{'file'.pluralize(count)}: #{names.first(5).join(', ')} and #{count - 5} more"
+      end
     end
 
     if result.failed.any?
-      failures = result.failed.map { |f| "#{f.filename} (#{f.reason})" }.join("; ")
-      parts << "Failed: #{failures}"
+      failed_count = result.failed.size
+      failed_names = result.failed.map(&:filename)
+      if failed_names.size <= 5
+        parts << "Failed to upload #{failed_count} #{'file'.pluralize(failed_count)}: #{failed_names.join(', ')}"
+      else
+        parts << "Failed to upload #{failed_count} #{'file'.pluralize(failed_count)}: #{failed_names.first(5).join(', ')} and #{failed_count - 5} more"
+      end
     end
 
     parts.join(". ")

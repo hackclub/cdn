@@ -5,13 +5,17 @@ require "open-uri"
 class Upload < ApplicationRecord
   include PgSearch::Model
 
+  # UUID v7 primary key (automatic via migration)
+
   belongs_to :user
   belongs_to :blob, class_name: "ActiveStorage::Blob"
 
   after_destroy :purge_blob
 
+  # Delegate file metadata to blob (no duplication!)
   delegate :filename, :byte_size, :content_type, :checksum, to: :blob
 
+  # Search configuration
   pg_search_scope :search_by_filename,
     associated_against: {
       blob: :filename
@@ -28,9 +32,11 @@ class Upload < ApplicationRecord
     },
     using: { tsearch: { prefix: true } }
 
+  # Aliases for consistency
   alias_method :file_size, :byte_size
   alias_method :mime_type, :content_type
 
+  # Provenance enum
   enum :provenance, {
     slack: "slack",
     web: "web",
@@ -50,11 +56,13 @@ class Upload < ApplicationRecord
     ActiveSupport::NumberHelper.number_to_human_size(byte_size)
   end
 
+  # Direct URL to public R2 bucket
   def assets_url
     host = ENV.fetch("CDN_ASSETS_HOST", "cdn.hackclub-assets.com")
     "https://#{host}/#{blob.key}"
   end
 
+  # Get CDN URL (uses external uploads controller)
   def cdn_url
     Rails.application.routes.url_helpers.external_upload_url(
       id:,
@@ -75,14 +83,18 @@ class Upload < ApplicationRecord
     blob.update!(filename: sanitized)
   end
 
+  # Create upload from URL (for API/rescue operations)
+  # Checks quota via HEAD request before downloading when possible
   def self.create_from_url(url, user:, provenance:, original_url: nil, authorization: nil, filename: nil)
     conn = build_http_client
 
     headers = {}
     headers["Authorization"] = authorization if authorization.present?
 
+    # Pre-check file size via HEAD if possible
     pre_check_quota_via_head(conn, url, headers, user)
 
+    # Download the file
     response = conn.get(url, nil, headers)
     if response.status.between?(300, 399)
       location = response.headers["location"]
@@ -96,6 +108,7 @@ class Upload < ApplicationRecord
                    response.headers["content-type"] ||
                    "application/octet-stream"
 
+    # Pre-generate upload ID for predictable storage path
     upload_id = SecureRandom.uuid_v7
     sanitized_filename = ActiveStorage::Filename.new(filename).sanitized
     storage_key = "#{upload_id}/#{sanitized_filename}"
@@ -149,6 +162,7 @@ class Upload < ApplicationRecord
 
       raise "File would exceed storage quota"
     rescue Faraday::Error
+      # HEAD request failed — proceed with GET and check after
       nil
     end
 

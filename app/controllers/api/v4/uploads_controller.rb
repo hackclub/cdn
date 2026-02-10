@@ -16,6 +16,7 @@ module API
 
         content_type = Marcel::MimeType.for(file.tempfile, name: file.original_filename) || file.content_type || "application/octet-stream"
 
+        # Pre-gen upload ID for predictable storage path
         upload_id = SecureRandom.uuid_v7
         sanitized_filename = ActiveStorage::Filename.new(file.original_filename).sanitized
         storage_key = "#{upload_id}/#{sanitized_filename}"
@@ -75,6 +76,7 @@ module API
         download_auth = request.headers["X-Download-Authorization"]
         upload = Upload.create_from_url(url, user: current_user, provenance: :api, original_url: url, authorization: download_auth)
 
+        # Check quota after download (URL upload size unknown beforehand)
         quota_service = QuotaService.new(current_user)
         unless quota_service.can_upload?(0)
           if current_user.total_storage_bytes > quota_service.current_policy.max_total_storage
@@ -133,23 +135,28 @@ module API
       private
 
       def check_quota
+        # For direct uploads, check file size before processing
         if params[:file].present?
           file_size = params[:file].size
           quota_service = QuotaService.new(current_user)
           policy = quota_service.current_policy
 
+          # Check per-file size limit
           if file_size > policy.max_file_size
             usage = quota_service.current_usage
             render json: quota_error_json(usage, "File size exceeds your limit of #{ActiveSupport::NumberHelper.number_to_human_size(policy.max_file_size)} per file"), status: :payment_required
             return
           end
 
+          # Check if upload would exceed total storage quota
           unless quota_service.can_upload?(file_size)
             usage = quota_service.current_usage
             render json: quota_error_json(usage), status: :payment_required
             nil
           end
         end
+        # For URL uploads, quota is checked after download in create_from_url
+        # For batch uploads, quota is handled by BatchUploadService
       end
 
       def quota_error_json(usage, custom_message = nil)

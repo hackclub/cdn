@@ -17,6 +17,14 @@ class BatchUploadService
     uploads = []
     failed = []
 
+    # Enforce batch size limit inside the service
+    if files.size > MAX_FILES_PER_BATCH
+      files[MAX_FILES_PER_BATCH..].each do |file|
+        failed << FailedUpload[file.original_filename, "Too many files in batch (maximum is #{MAX_FILES_PER_BATCH})"]
+      end
+      files = files.first(MAX_FILES_PER_BATCH)
+    end
+
     # Fresh read to minimize stale data window
     current_storage = @user.reload.total_storage_bytes
     max_storage = @policy.max_total_storage
@@ -58,11 +66,11 @@ class BatchUploadService
         uploads << upload
         batch_bytes_used += file_size
       rescue StandardError => e
-        failed << FailedUpload[filename, "Upload error: #{e.message}"]
+        Rails.logger.error("BatchUploadService upload failed for #{filename}: #{e.class}: #{e.message}")
+        failed << FailedUpload[filename, "Upload failed due to an internal error"]
       end
     end
 
-    # Post-upload enforcement: if concurrent requests caused overage, clean up
     enforce_quota_after_upload!(uploads, failed) if uploads.any?
 
     Result[uploads, failed]
@@ -76,40 +84,21 @@ class BatchUploadService
 
     return if actual_total <= max_storage
 
-    # Over quota due to concurrent uploads — remove newest files first until under
     overage = actual_total - max_storage
     reclaimed = 0
+    destroyed_ids = []
 
     uploads.reverse.each do |upload|
       break if reclaimed >= overage
 
       reclaimed += upload.byte_size
+      destroyed_ids << upload.id
       failed << FailedUpload[upload.filename.to_s, "Removed: concurrent uploads exceeded quota"]
       upload.destroy!
     end
 
-    def enforce_quota_after_upload!(uploads, failed)
-      actual_total = @user.reload.total_storage_bytes
-      max_storage = @policy.max_total_storage
-
-      return if actual_total <= max_storage
-
-      overage = actual_total - max_storage
-      reclaimed = 0
-      destroyed_ids = []
-
-      uploads.reverse.each do |upload|
-        break if reclaimed >= overage
-
-        reclaimed += upload.byte_size
-        destroyed_ids << upload.id
-        failed << FailedUpload[upload.filename.to_s, "Removed: concurrent uploads exceeded quota"]
-        upload.destroy!
-      end
-
-      uploads.reject! { |u| destroyed_ids.include?(u.id) }
-    end
-
+    uploads.reject! { |u| destroyed_ids.include?(u.id) }
+  end
 
   def create_upload(file)
     content_type = Marcel::MimeType.for(file.tempfile, name: file.original_filename) ||
