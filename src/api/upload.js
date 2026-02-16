@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const {uploadToStorage} = require('../storage');
 const {generateUrl} = require('./utils');
 const logger = require('../config/logger');
+const {parseCompressionCommand, compressImage, isImageSupported} = require('../compress');
 
 // Sanitize file name for storage
 function sanitizeFileName(fileName) {
@@ -14,7 +15,7 @@ function sanitizeFileName(fileName) {
 }
 
 // Handle remote file upload to S3 storage
-const uploadEndpoint = async (url, downloadAuth = null) => {
+const uploadEndpoint = async (url, downloadAuth = null, compressParam = null) => {
     try {
         logger.debug('Starting download', { url });
         const headers = {};
@@ -40,14 +41,30 @@ const uploadEndpoint = async (url, downloadAuth = null) => {
 
         // Generate unique filename using SHA1 (hash) of file contents
         const buffer = await response.buffer();
-        const sha = crypto.createHash('sha1').update(buffer).digest('hex');
+        let contentType = response.headers.get('content-type');
+        let finalData = buffer;
+
+        // Apply compression if requested
+        const compressionOptions = compressParam ? parseCompressionCommand(`compress ${compressParam}`) : null;
+        if (compressionOptions && isImageSupported(contentType, url.split('/').pop())) {
+            const result = await compressImage(buffer, compressionOptions, contentType);
+            finalData = result.buffer;
+            if (result.mimeType) contentType = result.mimeType;
+            logger.info('Compression applied via API', {
+                compressed: result.compressed,
+                originalSize: buffer.length,
+                finalSize: finalData.length
+            });
+        }
+
+        const sha = crypto.createHash('sha1').update(finalData).digest('hex');
         const originalName = url.split('/').pop();
         const sanitizedFileName = sanitizeFileName(originalName);
         const fileName = `${sha}_${sanitizedFileName}`;
 
         // Upload to S3 storage
         logger.debug(`Uploading: ${fileName}`);
-        const uploadResult = await uploadToStorage('s/v3', fileName, buffer, response.headers.get('content-type'), buffer.length);
+        const uploadResult = await uploadToStorage('s/v3', fileName, finalData, contentType, finalData.length);
         if (uploadResult.success === false) {
             throw new Error(`Storage upload failed: ${uploadResult.error}`);
         }
@@ -102,7 +119,8 @@ const handleUpload = async (req) => {
             };
         }
         
-        const result = await uploadEndpoint(url, downloadAuth);
+        const compressParam = req.query?.compress || null;
+        const result = await uploadEndpoint(url, downloadAuth, compressParam);
         return { status: 200, body: result };
     } catch (error) {
         return {

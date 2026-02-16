@@ -3,6 +3,7 @@ const { FetchHttpHandler } = require('@smithy/fetch-http-handler');
 const crypto = require('crypto');
 const logger = require('./config/logger');
 const {generateFileUrl} = require('./utils');
+const {parseCompressionCommand, compressImage, isImageSupported} = require('./compress');
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024;  // 2GB in bytes
 const CONCURRENT_UPLOADS = 3;                    // Max concurrent uploads (messages)
@@ -241,9 +242,12 @@ async function processFiles(fileMessage, client) {
     const uploadedFiles = [];
     const failedFiles = [];
 
+    const compressionOptions = parseCompressionCommand(fileMessage.text);
+    
     logger.debug('Starting file processing', {
         userId: fileMessage.user,
-        fileCount: fileMessage.files?.length || 0
+        fileCount: fileMessage.files?.length || 0,
+        compression: compressionOptions
     });
 
     const files = fileMessage.files || [];
@@ -311,12 +315,37 @@ async function processFiles(fileMessage, client) {
                 }
             }
 
-            const contentType = file.mimetype || 'application/octet-stream';
+            let contentType = file.mimetype || 'application/octet-stream';
+            let finalData = uploadData;
+            let wasCompressed = false;
+
+            if (compressionOptions && isImageSupported(contentType, file.name)) {
+                logger.debug('Applying compression', {
+                    fileName: file.name,
+                    options: compressionOptions
+                });
+                
+                const compressionResult = await compressImage(uploadData, compressionOptions, contentType);
+                finalData = compressionResult.buffer;
+                wasCompressed = compressionResult.compressed;
+                
+                if (compressionResult.mimeType) {
+                    contentType = compressionResult.mimeType;
+                }
+                
+                logger.info('Compression result', {
+                    fileName: file.name,
+                    compressed: wasCompressed,
+                    originalSize: uploadData.length,
+                    finalSize: finalData.length
+                });
+            }
+
             const uniqueFileName = generateUniqueFileName(file.name);
             const userDir = `s/${fileMessage.user}`;
 
             const uploadResult = await uploadLimit(() => 
-                uploadToStorage(userDir, uniqueFileName, uploadData, contentType, file.size)
+                uploadToStorage(userDir, uniqueFileName, finalData, contentType, finalData.length)
             );
             
             if (uploadResult.success === false) {
