@@ -1,0 +1,7 @@
+section "Yeah! Here's yo' links <@#{slack_user_id}>!", markdown: true
+
+uploads.each do |upload|
+  section "#{upload.cdn_url}", markdown: true
+end
+
+context [mrkdwn_text("(manage your files at <https://cdn.hackclub.com|cdn.hackclub.com>!)")]

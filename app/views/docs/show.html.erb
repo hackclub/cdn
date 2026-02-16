@@ -1,0 +1,4 @@
+<% content_for(:title) { "#{@doc.title} - Docs" } %>
+
+<%= render(Components::HeaderBar.new) unless signed_in? %>
+<%= render Components::Docs::Page.new(doc: @doc, docs: @docs) %>

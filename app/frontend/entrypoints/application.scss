@@ -1,0 +1,22 @@
+@use '@primer/css/dist/primer.css';
+@use '@primer/view-components/app/assets/styles/primer_view_components.css';
+@use '@primer/primitives/dist/css/primitives.css';
+@use '@primer/primitives/dist/css/functional/themes/light.css';
+@use '@primer/primitives/dist/css/functional/themes/dark.css';
+
+@use "@/styles/dark_mode";
+@use "@/styles/hca";
+@use "@/styles/admin_tool";
+@use "@/styles/file_dropzone";
+
+.app-header {
+  position: static;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: var(--base-size-12, 12px);
+  padding: var(--base-size-12, 12px) var(--base-size-16, 16px);
+  background-color: var(--bgColor-default);
+  border-bottom: 1px solid var(--borderColor-muted);
+}

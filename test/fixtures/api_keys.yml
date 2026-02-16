@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  name: Test Key 1
+  revoked: false
+
+two:
+  user: one
+  name: Test Key 2
+  revoked: false
+
+revoked:
+  user: one
+  name: Revoked Key
+  revoked: true
+  revoked_at: <%= 1.day.ago.to_s(:db) %>
