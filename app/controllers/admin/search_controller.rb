@@ -18,7 +18,10 @@ module Admin
     end
 
     def search_uploads(query)
-      Upload.search(query).includes(:blob, :user).order(created_at: :desc).limit(50)
+      by_search = Upload.search(query)
+      by_url = Upload.where("original_url ILIKE ?", "%#{Upload.sanitize_sql_like(query)}%")
+      Upload.where(id: by_search.select(:id)).or(Upload.where(id: by_url.select(:id)))
+            .includes(:blob, :user).order(created_at: :desc).limit(50)
     end
   end
 end
