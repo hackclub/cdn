@@ -2,6 +2,7 @@
 
 class ExternalUploadsController < ApplicationController
   skip_before_action :require_authentication!
+  before_action :set_cors_headers
 
   def show
     upload = Upload.includes(:blob).find(params[:id])
@@ -30,6 +31,8 @@ class ExternalUploadsController < ApplicationController
   end
 
   private
+
+  def set_cors_headers = response.set_header("Access-Control-Allow-Origin", "*")
 
   def render_not_found_response(url)
     if url.match?(/\.(png|jpe?g)$/i)
