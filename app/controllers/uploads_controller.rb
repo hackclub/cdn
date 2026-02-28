@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 class UploadsController < ApplicationController
-  before_action :set_upload, only: [ :destroy ]
-  before_action :check_quota, only: [ :create ]
+  before_action :set_upload, only: [ :update, :destroy ]
 
   def index
     @uploads = current_user.uploads.includes(:blob).recent
@@ -15,37 +14,49 @@ class UploadsController < ApplicationController
   end
 
   def create
-    uploaded_file = params[:file]
+    uploaded_files = extract_uploaded_files
 
-    if uploaded_file.blank?
-      redirect_to uploads_path, alert: "Please select a file to upload."
+    if uploaded_files.empty?
+      redirect_to uploads_path, alert: "Please select at least one file to upload."
       return
     end
 
-    content_type = Marcel::MimeType.for(uploaded_file.tempfile, name: uploaded_file.original_filename) || uploaded_file.content_type || "application/octet-stream"
+    if uploaded_files.size > BatchUploadService::MAX_FILES_PER_BATCH
+      redirect_to uploads_path, alert: "Too many files selected. Max #{BatchUploadService::MAX_FILES_PER_BATCH} files allowed per upload."
+      return
+    end
 
-    # pre-gen upload ID for predictable storage path
-    upload_id = SecureRandom.uuid_v7
-        sanitized_filename = ActiveStorage::Filename.new(uploaded_file.original_filename).sanitized
-        storage_key = "#{upload_id}/#{sanitized_filename}"
+    service = BatchUploadService.new(user: current_user, provenance: :web)
+    result = service.process_files(uploaded_files)
 
-        blob = ActiveStorage::Blob.create_and_upload!(
-          io: uploaded_file.tempfile,
-          filename: uploaded_file.original_filename,
-          content_type: content_type,
-          key: storage_key
-        )
+    flash_message = build_flash_message(result)
 
-        @upload = current_user.uploads.create!(
-          id: upload_id,
-          blob: blob,
-          provenance: :web
-        )
-
-    redirect_to uploads_path, notice: "File uploaded successfully!"
+    if result.uploads.any?
+      redirect_to uploads_path, notice: flash_message
+    else
+      redirect_to uploads_path, alert: flash_message
+    end
   rescue StandardError => e
     event = Sentry.capture_exception(e)
     redirect_to uploads_path, alert: "Upload failed: #{e.message} (Error ID: #{event&.event_id})"
+  end
+
+  def update
+    authorize @upload
+
+    new_filename = params[:filename].to_s.strip
+    if new_filename.blank?
+      redirect_to uploads_path, alert: "Filename can't be blank."
+      return
+    end
+
+    @upload.rename!(new_filename)
+    redirect_to uploads_path, notice: "Renamed to #{@upload.filename}"
+  rescue Pundit::NotAuthorizedError
+    redirect_back fallback_location: uploads_path, alert: "You are not authorized to rename this upload."
+  rescue StandardError => e
+    event = Sentry.capture_exception(e)
+    redirect_back fallback_location: uploads_path, alert: "Rename failed. (Error ID: #{event&.event_id})"
   end
 
   def destroy
@@ -57,28 +68,55 @@ class UploadsController < ApplicationController
     redirect_back fallback_location: uploads_path, alert: "You are not authorized to delete this upload."
   end
 
-  private
+  def destroy_batch
+    ids = Array(params[:ids]).reject(&:blank?)
 
-  def check_quota
-    uploaded_file = params[:file]
-    return if uploaded_file.blank? # Let create action handle missing file
-
-    quota_service = QuotaService.new(current_user)
-    file_size = uploaded_file.size
-    policy = quota_service.current_policy
-
-    # Check per-file size limit
-    if file_size > policy.max_file_size
-      redirect_to uploads_path, alert: "File size (#{ActiveSupport::NumberHelper.number_to_human_size(file_size)}) exceeds your limit of #{ActiveSupport::NumberHelper.number_to_human_size(policy.max_file_size)} per file."
+    if ids.empty?
+      redirect_to uploads_path, alert: "No files selected."
       return
     end
 
-    # Check if upload would exceed total storage quota
-    unless quota_service.can_upload?(file_size)
-      usage = quota_service.current_usage
-      redirect_to uploads_path, alert: "Uploading this file would exceed your storage quota. You're using #{ActiveSupport::NumberHelper.number_to_human_size(usage[:storage_used])} of #{ActiveSupport::NumberHelper.number_to_human_size(usage[:storage_limit])}."
-      nil
+    uploads = current_user.uploads.where(id: ids).includes(:blob)
+    count = uploads.size
+
+    uploads.destroy_all
+
+    redirect_to uploads_path, notice: "Deleted #{count} #{'file'.pluralize(count)}."
+  end
+
+  private
+
+  def extract_uploaded_files
+    files = []
+    files.concat(Array(params[:files])) if params[:files].present?
+    files << params[:file] if params[:file].present?
+    files.reject(&:blank?)
+  end
+
+  def build_flash_message(result)
+    parts = []
+
+    if result.uploads.any?
+      count = result.uploads.size
+      names = result.uploads.map { |u| u.filename.to_s }
+      if names.size <= 5
+        parts << "Uploaded #{count} #{'file'.pluralize(count)}: #{names.join(', ')}"
+      else
+        parts << "Uploaded #{count} #{'file'.pluralize(count)}: #{names.first(5).join(', ')} and #{count - 5} more"
+      end
     end
+
+    if result.failed.any?
+      failed_count = result.failed.size
+      failed_names = result.failed.map(&:filename)
+      if failed_names.size <= 5
+        parts << "Failed to upload #{failed_count} #{'file'.pluralize(failed_count)}: #{failed_names.join(', ')}"
+      else
+        parts << "Failed to upload #{failed_count} #{'file'.pluralize(failed_count)}: #{failed_names.first(5).join(', ')} and #{failed_count - 5} more"
+      end
+    end
+
+    parts.join(". ")
   end
 
   def set_upload

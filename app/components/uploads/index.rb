@@ -19,6 +19,7 @@ class Components::Uploads::Index < Components::Base
       uploads_list
       pagination_section if uploads.respond_to?(:total_pages) && uploads.total_pages > 1
     end
+    batch_delete_bar
   end
 
   private
@@ -37,7 +38,7 @@ class Components::Uploads::Index < Components::Base
 
       label(for: "dropzone-file-input", class: "btn btn-primary", style: "cursor: pointer;") do
         render Primer::Beta::Octicon.new(icon: :upload, mr: 1)
-        plain "Upload File"
+        plain "Upload Files"
       end
     end
   end
@@ -65,10 +66,34 @@ class Components::Uploads::Index < Components::Base
 
   def uploads_list
     if uploads.any?
+      div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 4px 0;") do
+        input(
+          type: "checkbox",
+          id: "select-all-uploads",
+          data: { batch_select_all: true },
+          style: "cursor: pointer;"
+        )
+        label(for: "select-all-uploads", style: "font-size: 13px; color: var(--fgColor-muted, #656d76); cursor: pointer;") do
+          plain "Select all"
+        end
+      end
+
       render Primer::Beta::BorderBox.new do |box|
         uploads.each do |upload|
           box.with_row do
-            render Components::Uploads::Row.new(upload: upload, compact: false)
+            div(style: "display: flex; align-items: flex-start; gap: 12px;") do
+              input(
+                type: "checkbox",
+                name: "ids[]",
+                value: upload.id,
+                form: "batch-delete-form",
+                data: { batch_select_item: true, upload_id: upload.id },
+                style: "margin-top: 6px; cursor: pointer;"
+              )
+              div(style: "flex: 1; min-width: 0;") do
+                render Components::Uploads::Row.new(upload: upload, compact: false)
+              end
+            end
           end
         end
       end
@@ -87,7 +112,7 @@ class Components::Uploads::Index < Components::Base
         if query.present?
           "Try a different search query"
         else
-          "Drag and drop files anywhere on this page, or use the Upload button"
+          "Drag and drop files anywhere on this page, or use the Upload button (up to 40 files at once)"
         end
       end
     end
@@ -101,7 +126,23 @@ class Components::Uploads::Index < Components::Base
 
   def dropzone_form
     form_with url: uploads_path, method: :post, multipart: true, data: { dropzone_form: true } do
-      input(type: "file", name: "file", id: "dropzone-file-input", data: { dropzone_input: true }, style: "display: none;")
+      input(type: "file", name: "files[]", id: "dropzone-file-input", multiple: true, data: { dropzone_input: true }, style: "display: none;")
+    end
+  end
+
+  def batch_delete_bar
+    div(id: "batch-delete-bar", data: { batch_bar: true }, style: "display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--bgColor-default, #fff); border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 12px; padding: 12px 20px; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 320px; max-width: 600px;") do
+      div(style: "display: flex; align-items: center; gap: 16px;") do
+        span(data: { batch_count: true }, style: "font-size: 14px; font-weight: 600; white-space: nowrap;") { "0 selected" }
+        div(style: "flex: 1;")
+        button(type: "button", data: { batch_deselect: true }, class: "btn btn-sm", style: "white-space: nowrap;") { "Deselect" }
+        form_with url: destroy_batch_uploads_path, method: :delete, id: "batch-delete-form", data: { batch_delete_form: true } do
+          button(type: "submit", class: "btn btn-sm btn-danger", style: "white-space: nowrap;") do
+            render Primer::Beta::Octicon.new(icon: :trash, mr: 1)
+            plain "Delete"
+          end
+        end
+      end
     end
   end
 end

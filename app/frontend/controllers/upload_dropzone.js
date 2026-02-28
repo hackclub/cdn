@@ -1,4 +1,4 @@
-(function() {
+(function () {
   let dropzone;
   let counter = 0;
   let fileInput, form;
@@ -22,10 +22,10 @@
 
     initialized = true;
 
-    // Handle file input change
+    // Handle file input change (supports multiple files)
     fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) {
+      const files = e.target.files;
+      if (files && files.length > 0) {
         form.requestSubmit();
       }
     });
@@ -56,7 +56,7 @@
     }
   });
 
-  // Handle file drop
+  // Handle file drop (supports multiple files)
   document.addEventListener("drop", (e) => {
     if (!fileInput) return;
     e.preventDefault();
@@ -77,8 +77,14 @@
       dropzone.classList.add("file-dropzone");
 
       const title = document.createElement("h1");
-      title.innerText = "Drop your file here";
+      title.innerText = "Drop your files here";
       dropzone.appendChild(title);
+
+      const subtitle = document.createElement("p");
+      subtitle.innerText = "Up to 40 files at once";
+      subtitle.style.marginTop = "8px";
+      subtitle.style.opacity = "0.7";
+      dropzone.appendChild(subtitle);
 
       document.body.appendChild(dropzone);
       document.body.style.overflow = "hidden";

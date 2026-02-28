@@ -35,6 +35,35 @@ module API
         render json: { error: "Upload failed: #{e.message}" }, status: :unprocessable_entity
       end
 
+      # POST /api/v4/uploads (batch)
+      def create_batch
+        files = params[:files]
+
+        unless files.present? && files.is_a?(Array)
+          render json: { error: "Missing files[] parameter" }, status: :bad_request
+          return
+        end
+
+        if files.size > BatchUploadService::MAX_FILES_PER_BATCH
+          render json: {
+            error: "Too many files",
+            detail: "Maximum #{BatchUploadService::MAX_FILES_PER_BATCH} files per batch, got #{files.size}"
+          }, status: :bad_request
+          return
+        end
+
+        service = BatchUploadService.new(user: current_user, provenance: :api)
+        result = service.process_files(files)
+
+        response = {
+          uploads: result.uploads.map { |u| upload_json(u) },
+          failed: result.failed.map { |f| { filename: f.filename, reason: f.reason } }
+        }
+
+        status = result.uploads.any? ? :created : :unprocessable_entity
+        render json: response, status: status
+      end
+
       # POST /api/v4/upload_from_url
       def create_from_url
         url = params[:url]
@@ -49,7 +78,7 @@ module API
 
         # Check quota after download (URL upload size unknown beforehand)
         quota_service = QuotaService.new(current_user)
-        unless quota_service.can_upload?(0) # Already uploaded, check if now over quota
+        unless quota_service.can_upload?(0)
           if current_user.total_storage_bytes > quota_service.current_policy.max_total_storage
             upload.destroy!
             usage = quota_service.current_usage
@@ -61,6 +90,46 @@ module API
         render json: upload_json(upload), status: :created
       rescue => e
         render json: { error: "Upload failed: #{e.message}" }, status: :unprocessable_entity
+      end
+
+      # PATCH /api/v4/uploads/:id/rename
+      def rename
+        upload = current_user.uploads.find(params[:id])
+        new_filename = params[:filename].to_s.strip
+
+        if new_filename.blank?
+          render json: { error: "Missing filename parameter" }, status: :bad_request
+          return
+        end
+
+        upload.rename!(new_filename)
+        render json: upload_json(upload)
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: "Upload not found" }, status: :not_found
+      rescue => e
+        render json: { error: "Rename failed: #{e.message}" }, status: :unprocessable_entity
+      end
+
+      # DELETE /api/v4/uploads/batch
+      def destroy_batch
+        ids = Array(params[:ids]).reject(&:blank?)
+
+        if ids.empty?
+          render json: { error: "Missing ids[] parameter" }, status: :bad_request
+          return
+        end
+
+        uploads = current_user.uploads.where(id: ids).includes(:blob)
+        found_ids = uploads.map(&:id)
+        not_found_ids = ids - found_ids
+
+        deleted = uploads.map { |u| { id: u.id, filename: u.filename.to_s } }
+        uploads.destroy_all
+
+        response = { deleted: deleted }
+        response[:not_found] = not_found_ids if not_found_ids.any?
+
+        render json: response, status: :ok
       end
 
       private
@@ -87,6 +156,7 @@ module API
           end
         end
         # For URL uploads, quota is checked after download in create_from_url
+        # For batch uploads, quota is handled by BatchUploadService
       end
 
       def quota_error_json(usage, custom_message = nil)
