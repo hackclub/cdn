@@ -10,7 +10,7 @@ namespace :import do
     ActiveStorage::Current.url_options = { host: ENV.fetch("CDN_HOST", "cdn.hackclub.com"), protocol: "https" }
     csv_path = ENV.fetch("CSV_PATH", "files_with_slack_url.csv")
     slack_token = ENV.fetch("SLACK_TOKEN") { raise "SLACK_TOKEN (xoxp-...) is required" }
-    thread_count = ENV.fetch("THREADS", 10).to_i
+    thread_count = ENV.fetch("THREADS", 67).to_i
     dry_run = ENV["DRY_RUN"] == "true"
 
     unless File.exist?(csv_path)
