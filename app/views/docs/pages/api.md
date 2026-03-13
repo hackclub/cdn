@@ -92,6 +92,36 @@ const response = await fetch('https://cdn.hackclub.com/api/v4/upload_from_url', 
 const { url } = await response.json();
 ```
 
+## DELETE /api/v4/upload/:id
+
+Delete an uploaded file by its ID.
+
+```bash
+curl -X DELETE \
+  -H "Authorization: Bearer sk_cdn_your_key_here" \
+  https://cdn.hackclub.com/api/v4/upload/01234567-89ab-cdef-0123-456789abcdef
+```
+
+```javascript
+const response = await fetch('https://cdn.hackclub.com/api/v4/upload/01234567-89ab-cdef-0123-456789abcdef', {
+  method: 'DELETE',
+  headers: { 'Authorization': 'Bearer sk_cdn_your_key_here' }
+});
+
+const result = await response.json();
+```
+
+**Response:**
+
+```json
+{
+  "id": "01234567-89ab-cdef-0123-456789abcdef",
+  "deleted": true
+}
+```
+
+Returns 404 if the upload doesn't exist or doesn't belong to you.
+
 ## GET /api/v4/me
 
 Get the authenticated user and quota information.

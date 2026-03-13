@@ -22,6 +22,7 @@ Rails.application.routes.draw do
       get "me", to: "users#show"
       post "upload", to: "uploads#create"
       post "upload_from_url", to: "uploads#create_from_url"
+      delete "upload/:id", to: "uploads#destroy"
       post "revoke", to: "api_keys#revoke"
     end
   end
