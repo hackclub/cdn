@@ -6,6 +6,10 @@ class UploadPolicy < ApplicationPolicy
     user.is_admin? || record.user_id == user.id
   end
 
+  def update?
+    user.is_admin? || record.user_id == user.id
+  end
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       if user.is_admin?
