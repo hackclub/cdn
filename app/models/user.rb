@@ -25,24 +25,31 @@ class User < ApplicationRecord
     raise "Missing HCA user ID from authentication" if hca_id.blank?
 
     user = find_by(hca_id:)
-    user ||= find_by(slack_id:) if slack_id.present?
+
+    if slack_id.present?
+      slack_user = find_by(slack_id:)
+      if slack_user && user && slack_user.id != user.id
+        # same person, two records — merge into the slack user
+        user.uploads.update_all(user_id: slack_user.id)
+        user.destroy!
+        user = slack_user
+      elsif slack_user
+        user = slack_user
+      end
+    end
+
+    attrs = {
+      hca_id:,
+      email: auth.info.email,
+      name: auth.info.name,
+      hca_access_token: auth.credentials.token
+    }
+    attrs[:slack_id] = slack_id if slack_id.present?
 
     if user
-      user.update(
-        hca_id:,
-        slack_id:,
-        email: auth.info.email,
-        name: auth.info.name,
-        hca_access_token: auth.credentials.token
-      )
+      user.update!(attrs)
     else
-      user = create!(
-        hca_id:,
-        slack_id:,
-        email: auth.info.email,
-        name: auth.info.name,
-        hca_access_token: auth.credentials.token
-      )
+      user = create!(attrs)
     end
 
     user

@@ -34,6 +34,10 @@ Requests are 301 redirected to the underlying storage bucket.
 ![](https://cdn.hackclub.com/019505e2-e7f3-7d40-a156-9c4e8b2d1f03/screenshot.png)
 ```
 
+## Security
+
+Upload IDs contain 74 bits of cryptographic randomness (UUID v7, via the OS CSPRNG). There's no file listing or directory index. URLs are safe to use for unreleased programs.
+
 ## Hotlinking
 
 Supported. URLs can be embedded in GitHub, Notion, Discord, Slack, etc.
