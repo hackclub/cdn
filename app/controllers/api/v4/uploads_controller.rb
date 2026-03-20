@@ -15,6 +15,7 @@ module API
         end
 
         content_type = Marcel::MimeType.for(file.tempfile, name: file.original_filename) || file.content_type || "application/octet-stream"
+        content_type = Upload.normalize_content_type(content_type)
 
         # Pre-gen upload ID for predictable storage path
         upload_id = SecureRandom.uuid_v7

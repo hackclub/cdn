@@ -36,6 +36,16 @@ class Upload < ApplicationRecord
   alias_method :file_size, :byte_size
   alias_method :mime_type, :content_type
 
+  # Ensure text content types include charset=utf-8 so browsers
+  # don't fall back to ISO-8859-1 and mangle unicode
+  def self.normalize_content_type(content_type)
+    if content_type&.start_with?("text/") && !content_type.include?("charset")
+      "#{content_type}; charset=utf-8"
+    else
+      content_type
+    end
+  end
+
   # Provenance enum
   enum :provenance, {
     slack: "slack",
@@ -93,6 +103,7 @@ class Upload < ApplicationRecord
     filename ||= File.basename(URI.parse(url).path)
     body = response.body
     content_type = Marcel::MimeType.for(StringIO.new(body), name: filename) || response.headers["content-type"] || "application/octet-stream"
+    content_type = normalize_content_type(content_type)
 
     # Pre-generate upload ID for predictable storage path
     upload_id = SecureRandom.uuid_v7
