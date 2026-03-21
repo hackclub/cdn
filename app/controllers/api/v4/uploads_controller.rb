@@ -64,6 +64,14 @@ module API
         render json: { error: "Upload failed: #{e.message}" }, status: :unprocessable_entity
       end
 
+      # DELETE /api/v4/upload/:id
+      def destroy
+        upload = current_user.uploads.find(params[:id])
+        upload.destroy!
+
+        render json: { id: upload.id, deleted: true }, status: :ok
+      end
+
       private
 
       def check_quota
