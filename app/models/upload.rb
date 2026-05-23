@@ -92,12 +92,24 @@ class Upload < ApplicationRecord
       raise ArgumentError, "URL scheme must be http or https."
     end
 
-    addrs = Resolv.getaddresses(uri.host)
+    host = uri.host
+    raise ArgumentError, "Invalid host" if host.nil? || host.empty?
+
+    begin
+      addrs = Resolv.getaddresses(host)
+    rescue Resolv::ResolvError
+      begin
+        IPAddr.new(host)
+        addrs = [ host ]
+      rescue IPAddr::InvalidAddressError
+        raise ArgumentError, "Couldn't resolve host."
+      end
+    end
     raise ArgumentError, "Couldn't resolve host." if addrs.empty?
 
     addrs.each do |addr_str|
       ip = IPAddr.new(addr_str)
-      raise ArgumentError, "Couldn't resolve host." if ip.loopback? || ip.private? || ip.link_local?
+      raise ArgumentError, "IP address not allowed" if ip.loopback? || ip.private? || ip.link_local?
     end
   end
 
