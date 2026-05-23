@@ -20,7 +20,7 @@ A Rails 8 application for hosting and managing CDN uploads, with OAuth authentic
 
 ## Prerequisites
 
-- Ruby 3.4.4 (see `.ruby-version`)
+- Ruby 7 (see `.ruby-version`)
 - PostgreSQL
 - Node.js + Yarn (for Vite frontend)
 - A Cloudflare R2 bucket (or S3-compatible storage)
