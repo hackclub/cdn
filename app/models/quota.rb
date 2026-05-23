@@ -9,5 +9,7 @@ class Quota
 
   ADMIN_ASSIGNABLE = %i[verified functionally_unlimited].freeze
 
-  def self.policy(slug) = ALL_POLICIES.fetch slug
+  def self.policy(slug)
+    ALL_POLICIES.fetch slug
+  end
 end
