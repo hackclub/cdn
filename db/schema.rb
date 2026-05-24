@@ -10,29 +10,29 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_30_161152) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_30_161152) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "active_storage_attachments", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "record_type", null: false
-    t.bigint "record_id", null: false
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.bigint "record_id", null: false
+    t.string "record_type", null: false
     t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
   create_table "active_storage_blobs", force: :cascade do |t|
-    t.string "key", null: false
-    t.string "filename", null: false
-    t.string "content_type"
-    t.text "metadata"
-    t.string "service_name", null: false
     t.bigint "byte_size", null: false
     t.string "checksum"
+    t.string "content_type"
     t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.string "key", null: false
+    t.text "metadata"
+    t.string "service_name", null: false
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
@@ -43,26 +43,26 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_30_161152) do
   end
 
   create_table "api_keys", force: :cascade do |t|
-    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
     t.string "name", null: false
-    t.text "token_ciphertext", null: false
-    t.string "token_bidx", null: false
     t.boolean "revoked", default: false, null: false
     t.datetime "revoked_at"
-    t.datetime "created_at", null: false
+    t.string "token_bidx", null: false
+    t.text "token_ciphertext", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
     t.index ["token_bidx"], name: "index_api_keys_on_token_bidx", unique: true
     t.index ["user_id", "revoked"], name: "index_api_keys_on_user_id_and_revoked"
     t.index ["user_id"], name: "index_api_keys_on_user_id"
   end
 
   create_table "uploads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.bigint "user_id", null: false
     t.bigint "blob_id", null: false
-    t.string "provenance", null: false
-    t.string "original_url"
     t.datetime "created_at", null: false
+    t.string "original_url"
+    t.string "provenance", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
     t.index ["blob_id"], name: "index_uploads_on_blob_id"
     t.index ["created_at"], name: "index_uploads_on_created_at"
     t.index ["provenance"], name: "index_uploads_on_provenance"
@@ -71,15 +71,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_30_161152) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "hca_id"
-    t.text "hca_access_token"
-    t.string "email"
-    t.string "name"
-    t.boolean "is_admin", default: false, null: false
     t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "slack_id"
+    t.string "email"
+    t.text "hca_access_token"
+    t.string "hca_id"
+    t.boolean "is_admin", default: false, null: false
+    t.string "name"
     t.string "quota_policy"
+    t.string "slack_id"
+    t.datetime "updated_at", null: false
     t.index ["hca_id"], name: "index_users_on_hca_id", unique: true
     t.index ["slack_id"], name: "index_users_on_slack_id", unique: true
   end

@@ -44,7 +44,7 @@ class APIKeyTest < ActiveSupport::TestCase
   end
 
   test "revoke! marks key as revoked" do
-    api_key = api_keys(:one)
+    api_key = users(:one).api_keys.create!(name: "Test Key")
     assert api_key.active?
 
     api_key.revoke!
