@@ -46,9 +46,18 @@ class API::V4::UploadsControllerTest < ActionDispatch::IntegrationTest
   test "should upload from URL with valid token" do
     url = "https://example.com/test.jpg"
 
-    # Stub the URI.open call
-    file_double = StringIO.new("fake image data")
-    URI.stub :open, file_double do
+    fake_response = Struct.new(:status, :body, :headers) { def success? = true }
+                          .new(200, "fake image data", { "content-type" => "image/jpeg" })
+    fake_opts = Object.new.tap { |o| o.define_singleton_method(:open_timeout=) { |_| }
+                                     o.define_singleton_method(:timeout=) { |_| } }
+    fake_conn = Object.new.tap { |c| c.define_singleton_method(:options) { fake_opts }
+                                     c.define_singleton_method(:get) { |*| fake_response } }
+
+    original_faraday_new = Faraday.method(:new)
+    original_assert_public_url = Upload.method(:assert_public_url!)
+    Faraday.define_singleton_method(:new) { |*, **, &_block| fake_conn }
+    Upload.define_singleton_method(:assert_public_url!) { |_url| nil }
+    begin
       assert_difference("Upload.count", 1) do
         post api_v4_upload_from_url_url,
           params: { url: url }.to_json,
@@ -57,6 +66,9 @@ class API::V4::UploadsControllerTest < ActionDispatch::IntegrationTest
             "Content-Type" => "application/json"
           }
       end
+    ensure
+      Faraday.define_singleton_method(:new, original_faraday_new)
+      Upload.define_singleton_method(:assert_public_url!, original_assert_public_url)
     end
 
     assert_response :created
@@ -81,14 +93,25 @@ class API::V4::UploadsControllerTest < ActionDispatch::IntegrationTest
   test "should handle upload errors gracefully" do
     url = "https://example.com/broken.jpg"
 
-    # Simulate an error
-    URI.stub :open, ->(_) { raise StandardError, "Network error" } do
+    fake_opts = Object.new.tap { |o| o.define_singleton_method(:open_timeout=) { |_| }
+                                     o.define_singleton_method(:timeout=) { |_| } }
+    fake_conn = Object.new.tap { |c| c.define_singleton_method(:options) { fake_opts }
+                                     c.define_singleton_method(:get) { |*| raise StandardError, "Network error" } }
+
+    original_faraday_new = Faraday.method(:new)
+    original_assert_public_url = Upload.method(:assert_public_url!)
+    Faraday.define_singleton_method(:new) { |*, **, &_block| fake_conn }
+    Upload.define_singleton_method(:assert_public_url!) { |_url| nil }
+    begin
       post api_v4_upload_from_url_url,
         params: { url: url }.to_json,
         headers: {
           "Authorization" => "Bearer #{@token}",
           "Content-Type" => "application/json"
         }
+    ensure
+      Faraday.define_singleton_method(:new, original_faraday_new)
+      Upload.define_singleton_method(:assert_public_url!, original_assert_public_url)
     end
 
     assert_response :unprocessable_entity

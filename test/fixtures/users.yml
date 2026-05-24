@@ -1,15 +1,15 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  hca_id: MyString
-  hca_access_token: MyString
-  email: MyString
-  name: MyString
+  hca_id: "user_one_hca"
+  hca_access_token: null
+  email: one@example.com
+  name: User One
   is_admin: false
 
 two:
-  hca_id: MyString
-  hca_access_token: MyString
-  email: MyString
-  name: MyString
+  hca_id: "user_two_hca"
+  hca_access_token: null
+  email: two@example.com
+  name: User Two
   is_admin: false
