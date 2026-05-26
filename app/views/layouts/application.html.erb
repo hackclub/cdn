@@ -49,5 +49,12 @@
       </div>
     <% end %>
     <%= yield %>
+    <footer style="text-align:center; padding:8px; font-size:11px; color:#656d76;">
+      <a href="https://github.com/hackclub/cdn/commit/<%= GIT_COMMIT_SHA %>"
+         title="<%= GIT_COMMIT_SHA %>"
+         style="color:#656d76; text-decoration:none;">
+        <%= GIT_COMMIT_SHA[0, 7] %>
+      </a>
+    </footer>
   </body>
 </html>

@@ -546,7 +546,7 @@ DEPENDENCIES
   sentry-ruby
   slack-ruby-client
   slocks!
-  solid_cable (~> 4.0)
+  solid_cable
   solid_cache
   solid_queue
   thruster
