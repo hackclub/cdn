@@ -1,11 +1,8 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t cdn .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name cdn cdn
-
-# For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
+# Coolify Dockerfile deploy. Commit hash via SOURCE_COMMIT
+# (Advanced → "Include Source Commit in Build").
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.4.7
@@ -51,12 +48,20 @@ RUN yarn install --frozen-lockfile
 # Copy application code
 COPY . .
 
+# Coolify: SOURCE_COMMIT when "Include Source Commit in Build" is enabled.
+ARG SOURCE_COMMIT=""
+RUN set -eu; \
+    if [ -n "$SOURCE_COMMIT" ] && [ "$SOURCE_COMMIT" != "unknown" ]; then \
+      printf '%s\n' "$SOURCE_COMMIT" > REVISION; \
+    else \
+      printf 'unknown\n' > REVISION; \
+    fi
+
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
 # Build Vite assets and precompile Rails assets
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
-
 
 
 
@@ -67,8 +72,8 @@ FROM base
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
 
-ARG GIT_COMMIT_SHA="unknown"
-ENV GIT_COMMIT_SHA=$GIT_COMMIT_SHA
+ARG SOURCE_COMMIT="unknown"
+ENV SOURCE_COMMIT=$SOURCE_COMMIT
 
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
