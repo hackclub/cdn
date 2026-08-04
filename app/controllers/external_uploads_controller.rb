@@ -4,6 +4,13 @@ class ExternalUploadsController < ApplicationController
   skip_before_action :require_authentication!
   before_action :set_cors_headers
 
+  def preflight
+    response.set_header("Access-Control-Allow-Headers", "*")
+    response.set_header("Access-Control-Allow-Methods", "GET, HEAD")
+    response.set_header("Access-Control-Max-Age", "86400")
+    head :no_content
+  end
+
   def show
     upload = Upload.includes(:blob).find(params[:id])
     expires_in 1.year, public: true
