@@ -51,5 +51,6 @@ Rails.application.routes.draw do
   end
 
   # External upload redirects (must be last to avoid conflicts)
+  match "/:id/*filename", to: "external_uploads#preflight", via: :options, constraints: { id: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/ }
   get "/:id/*filename", to: "external_uploads#show", constraints: { id: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/ }, as: :external_upload
 end
