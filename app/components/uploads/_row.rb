@@ -26,12 +26,14 @@ class Components::Uploads::Row < Components::Base
 
   def compact_content
     div(style: "flex: 1; min-width: 0;") do
-      div(style: "font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;") do
-        render Primer::Beta::Octicon.new(icon: file_icon_for(upload.content_type), size: :small, mr: 1)
-        plain upload.filename.to_s
-      end
-      div(style: "font-size: 12px; color: var(--fgColor-muted, #656d76); margin-top: 4px;") do
-        plain "#{upload.human_file_size} • #{time_ago_in_words(upload.created_at)} ago"
+      div(style: "display: inline-block; cursor: pointer; max-width: 100%;", data: { batch_select_toggle: upload.id }) do
+        div(style: "font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;") do
+          render Primer::Beta::Octicon.new(icon: file_icon_for(upload.content_type), size: :small, mr: 1)
+          plain upload.filename.to_s
+        end
+        div(style: "font-size: 12px; color: var(--fgColor-muted, #656d76); margin-top: 4px;") do
+          plain "#{upload.human_file_size} • #{time_ago_in_words(upload.created_at)} ago"
+        end
       end
     end
 
@@ -48,15 +50,17 @@ class Components::Uploads::Row < Components::Base
 
   def full_content
     div(style: "flex: 1; min-width: 0;") do
-      div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 8px; min-width: 0;") do
-        render Primer::Beta::Octicon.new(icon: file_icon_for(upload.content_type), size: :small)
-        div(style: "flex: 1; min-width: 0; font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;") do
-          plain upload.filename.to_s
+      div(style: "display: inline-block; cursor: pointer; max-width: 100%;", data: { batch_select_toggle: upload.id }) do
+        div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 8px; min-width: 0;") do
+          render Primer::Beta::Octicon.new(icon: file_icon_for(upload.content_type), size: :small)
+          div(style: "font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;") do
+            plain upload.filename.to_s
+          end
+          render(Primer::Beta::Label.new(scheme: :secondary)) { plain upload.provenance.titleize }
         end
-        render(Primer::Beta::Label.new(scheme: :secondary)) { plain upload.provenance.titleize }
-      end
-      div(style: "font-size: 12px; color: var(--fgColor-muted, #656d76);") do
-        plain "#{upload.human_file_size} • #{upload.content_type} • #{time_ago_in_words(upload.created_at)} ago"
+        div(style: "font-size: 12px; color: var(--fgColor-muted, #656d76);") do
+          plain "#{upload.human_file_size} • #{upload.content_type} • #{time_ago_in_words(upload.created_at)} ago"
+        end
       end
     end
 
@@ -99,20 +103,13 @@ class Components::Uploads::Row < Components::Base
 
   def file_icon_for(content_type)
     case content_type
-    when /image/
-      :image
-    when /video/
-      :video
-    when /audio/
-      :unmute
-    when /pdf/
-      :file
-    when /zip|rar|tar|gz/
-      :"file-zip"
-    when /text|json|xml/
-      :code
-    else
-      :file
+    when /image/ then :image
+    when /video/ then :video
+    when /audio/ then :unmute
+    when /pdf/ then :file
+    when /zip|rar|tar|gz/ then :"file-zip"
+    when /text|json|xml/ then :code
+    else :file
     end
   end
 end
