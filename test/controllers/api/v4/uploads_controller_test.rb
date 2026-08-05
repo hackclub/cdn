@@ -50,8 +50,11 @@ class API::V4::UploadsControllerTest < ActionDispatch::IntegrationTest
                           .new(200, "fake image data", { "content-type" => "image/jpeg" })
     fake_opts = Object.new.tap { |o| o.define_singleton_method(:open_timeout=) { |_| }
                                      o.define_singleton_method(:timeout=) { |_| } }
+    fake_head_response = Struct.new(:status, :body, :headers) { def success? = false }
+                               .new(405, "", {})
     fake_conn = Object.new.tap { |c| c.define_singleton_method(:options) { fake_opts }
-                                     c.define_singleton_method(:get) { |*| fake_response } }
+                                     c.define_singleton_method(:get) { |*| fake_response }
+                                     c.define_singleton_method(:head) { |*| fake_head_response } }
 
     original_faraday_new = Faraday.method(:new)
     original_assert_public_url = Upload.method(:assert_public_url!)
