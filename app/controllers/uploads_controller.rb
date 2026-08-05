@@ -76,12 +76,23 @@ class UploadsController < ApplicationController
       return
     end
 
+    # Resolve ownership for every id before deleting anything, so a selection
+    # containing ids the user doesn't own can't delete half the batch silently.
     uploads = current_user.uploads.where(id: ids).includes(:blob)
-    count = uploads.size
+    missing = ids - uploads.map(&:id)
 
+    if uploads.empty?
+      redirect_to uploads_path, alert: "None of the selected files could be found."
+      return
+    end
+
+    count = uploads.size
     uploads.destroy_all
 
-    redirect_to uploads_path, notice: "Deleted #{count} #{'file'.pluralize(count)}."
+    notice = "Deleted #{count} #{'file'.pluralize(count)}."
+    notice += " #{missing.size} #{'file'.pluralize(missing.size)} could not be found and #{missing.size == 1 ? 'was' : 'were'} skipped." if missing.any?
+
+    redirect_to uploads_path, notice: notice
   end
 
   private

@@ -13,17 +13,41 @@ class BatchUploadService
     @policy = @quota_service.current_policy
   end
 
+  # Validates the whole batch against quota BEFORE writing anything, so a batch
+  # that doesn't fit is reported up front instead of failing part-way through
+  # with files already persisted.
   def process_files(files)
-    uploads = []
-    failed = []
+    files, failed = enforce_batch_limit(files)
 
-    # Enforce batch size limit inside the service
-    if files.size > MAX_FILES_PER_BATCH
-      files[MAX_FILES_PER_BATCH..].each do |file|
-        failed << FailedUpload[file.original_filename, "Too many files in batch (maximum is #{MAX_FILES_PER_BATCH})"]
-      end
-      files = files.first(MAX_FILES_PER_BATCH)
+    accepted, rejected = validate_against_quota(files)
+    failed.concat(rejected)
+
+    uploads = perform_uploads(accepted, failed)
+
+    # Concurrent uploads from another request may still have pushed the user
+    # over between validation and here, so re-check and reclaim.
+    enforce_quota_after_upload!(uploads, failed) if uploads.any?
+
+    Result[uploads, failed]
+  end
+
+  private
+
+  def enforce_batch_limit(files)
+    return [ files, [] ] if files.size <= MAX_FILES_PER_BATCH
+
+    rejected = files[MAX_FILES_PER_BATCH..].map do |file|
+      FailedUpload[file.original_filename, "Too many files in batch (maximum is #{MAX_FILES_PER_BATCH})"]
     end
+
+    [ files.first(MAX_FILES_PER_BATCH), rejected ]
+  end
+
+  # Pure decision pass — performs no writes. Returns the files that fit within
+  # quota and a failure for every file that does not.
+  def validate_against_quota(files)
+    accepted = []
+    rejected = []
 
     # Fresh read to minimize stale data window
     current_storage = @user.reload.total_storage_bytes
@@ -31,10 +55,8 @@ class BatchUploadService
 
     # Reject early if already over quota
     if current_storage >= max_storage
-      files.each do |file|
-        failed << FailedUpload[file.original_filename, "Storage quota already exceeded"]
-      end
-      return Result[uploads, failed]
+      rejected = files.map { |file| FailedUpload[file.original_filename, "Storage quota already exceeded"] }
+      return [ accepted, rejected ]
     end
 
     batch_bytes_used = 0
@@ -44,7 +66,7 @@ class BatchUploadService
       file_size = file.size
 
       if file_size > @policy.max_file_size
-        failed << FailedUpload[
+        rejected << FailedUpload[
           filename,
           "File size (#{human_size(file_size)}) exceeds limit of #{human_size(@policy.max_file_size)}"
         ]
@@ -54,29 +76,28 @@ class BatchUploadService
       projected_total = current_storage + batch_bytes_used + file_size
       if projected_total > max_storage
         remaining = [ max_storage - current_storage - batch_bytes_used, 0 ].max
-        failed << FailedUpload[
+        rejected << FailedUpload[
           filename,
           "Would exceed storage quota (#{human_size(remaining)} remaining)"
         ]
         next
       end
 
-      begin
-        upload = create_upload(file)
-        uploads << upload
-        batch_bytes_used += file_size
-      rescue StandardError => e
-        Rails.logger.error("BatchUploadService upload failed for #{filename}: #{e.class}: #{e.message}")
-        failed << FailedUpload[filename, "Upload failed due to an internal error"]
-      end
+      accepted << file
+      batch_bytes_used += file_size
     end
 
-    enforce_quota_after_upload!(uploads, failed) if uploads.any?
-
-    Result[uploads, failed]
+    [ accepted, rejected ]
   end
 
-  private
+  def perform_uploads(accepted, failed)
+    accepted.each_with_object([]) do |file, uploads|
+      uploads << create_upload(file)
+    rescue StandardError => e
+      Rails.logger.error("BatchUploadService upload failed for #{file.original_filename}: #{e.class}: #{e.message}")
+      failed << FailedUpload[file.original_filename, "Upload failed due to an internal error"]
+    end
+  end
 
   def enforce_quota_after_upload!(uploads, failed)
     actual_total = @user.reload.total_storage_bytes
