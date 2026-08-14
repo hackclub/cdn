@@ -303,7 +303,7 @@ GEM
     pp (0.6.4)
       prettyprint
     prettyprint (0.2.0)
-    primer_view_components (0.53.1)
+    primer_view_components (0.53.2)
       actionview (>= 7.2.0)
       activesupport (>= 7.2.0)
       octicons (>= 18.0.0)
