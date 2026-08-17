@@ -2,6 +2,7 @@
 
 class ExternalUploadsController < ApplicationController
   skip_before_action :require_authentication!
+  skip_forgery_protection
   before_action :set_cors_headers
 
   def preflight
