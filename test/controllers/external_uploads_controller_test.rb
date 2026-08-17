@@ -6,6 +6,9 @@ class ExternalUploadsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "preflight permits range requests" do
+    original_forgery_protection = ActionController::Base.allow_forgery_protection
+    ActionController::Base.allow_forgery_protection = true
+
     options @file_path, headers: {
       "Origin" => "https://example.com",
       "Access-Control-Request-Method" => "GET",
@@ -17,5 +20,7 @@ class ExternalUploadsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "*", response.headers["Access-Control-Allow-Headers"]
     assert_equal "GET, HEAD", response.headers["Access-Control-Allow-Methods"]
     assert_equal "86400", response.headers["Access-Control-Max-Age"]
+  ensure
+    ActionController::Base.allow_forgery_protection = original_forgery_protection
   end
 end
