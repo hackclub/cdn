@@ -6,6 +6,7 @@ class SessionsController < ApplicationController
   def create
     auth = request.env["omniauth.auth"]
     user = User.find_or_create_from_omniauth(auth)
+    reset_session
     session[:user_id] = user.id
 
     # Check and upgrade verification status if needed
