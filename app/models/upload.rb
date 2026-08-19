@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "open-uri"
-require "resolv"
 require "ipaddr"
+require "net/http"
+require "socket"
 
 class Upload < ApplicationRecord
   include PgSearch::Model
@@ -96,64 +96,80 @@ class Upload < ApplicationRecord
     blob.update!(filename: sanitized)
   end
 
-  # Validate that a URL is safe to fetch (not targeting internal networks)
-  def self.assert_public_url!(url)
-    uri = URI.parse(url)
+  MAX_FETCH_REDIRECTS = 5
+  FETCH_OPEN_TIMEOUT = 5
+  FETCH_READ_TIMEOUT = 30
+  FETCH_DEADLINE = 60
 
+  BLOCKED_FETCH_RANGES = %w[
+    0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12
+    192.0.0.0/24 192.168.0.0/16 198.18.0.0/15 224.0.0.0/4 240.0.0.0/4
+    ::/128 ::1/128 64:ff9b::/96 fc00::/7 fe80::/10
+  ].map { |range| IPAddr.new(range) }.freeze
+
+  def self.resolve_fetchable_addresses!(uri)
     unless %w[http https].include?(uri.scheme&.downcase)
       raise ArgumentError, "URL scheme must be http or https."
     end
 
-    host = uri.host
-    raise ArgumentError, "Invalid host" if host.nil? || host.empty?
+    host = uri.hostname
+    raise ArgumentError, "Invalid host" if host.blank?
 
-    begin
-      addrs = Resolv.getaddresses(host)
-    rescue Resolv::ResolvError
+    port = uri.port || uri.default_port
+
+    addresses =
       begin
-        IPAddr.new(host)
-        addrs = [ host ]
-      rescue IPAddr::InvalidAddressError
-        raise ArgumentError, "Couldn't resolve host."
+        Addrinfo.getaddrinfo(host, port, nil, :STREAM).map(&:ip_address).uniq
+      rescue SocketError
+        []
       end
-    end
-    raise ArgumentError, "Couldn't resolve host." if addrs.empty?
+    raise ArgumentError, "Couldn't resolve host." if addresses.empty?
 
-    addrs.each do |addr_str|
-      ip = IPAddr.new(addr_str)
-      raise ArgumentError, "IP address not allowed" if ip.loopback? || ip.private? || ip.link_local?
+    addresses.each do |address|
+      raise ArgumentError, "IP address not allowed" if blocked_fetch_address?(address)
+    end
+
+    addresses
+  end
+
+  def self.fetch_public_url!(url, max_bytes:, authorization: nil)
+    uri = URI.parse(url)
+    token = authorization
+    hops = 0
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + FETCH_DEADLINE
+
+    loop do
+      address = resolve_fetchable_addresses!(uri).first
+      result = perform_fetch(uri, address, token, max_bytes, deadline)
+      return result unless result.key?(:location)
+
+      hops += 1
+      raise "Failed to download: too many redirects" if hops > MAX_FETCH_REDIRECTS
+      raise "Failed to download: redirect without a location" if result[:location].blank?
+
+      following = uri.merge(result[:location])
+      token = nil unless same_fetch_origin?(uri, following)
+      uri = following
     end
   end
 
   # Create upload from URL (for API/rescue operations)
-  # Checks quota via HEAD request before downloading when possible
   def self.create_from_url(url, user:, provenance:, original_url: nil, authorization: nil, filename: nil)
-    assert_public_url!(url)
+    quota_service = QuotaService.new(user)
+    policy = quota_service.current_policy
+    remaining_storage = policy.max_total_storage - user.total_storage_bytes
+    raise "File would exceed storage quota" if remaining_storage <= 0
 
-    redirect_validator = proc do |_response_env, new_request_env|
-      assert_public_url!(new_request_env[:url].to_s)
-    end
-
-    conn = build_http_client(redirect_validator)
-
-    headers = {}
-    headers["Authorization"] = authorization if authorization.present?
-
-    # Pre-check file size via HEAD if possible
-    pre_check_quota_via_head(conn, url, headers, user)
-
-    # Download the file
-    response = conn.get(url, nil, headers)
-    if response.status.between?(300, 399)
-      location = response.headers["location"]
-      raise "Failed to download: #{response.status} redirect to #{location}"
-    end
-    raise "Failed to download: #{response.status}" unless response.success?
+    fetched = fetch_public_url!(
+      url,
+      max_bytes: [ policy.max_file_size, remaining_storage ].min,
+      authorization: authorization
+    )
 
     filename ||= extract_filename_from_url(url)
-    body = response.body
+    body = fetched[:body]
     content_type = Marcel::MimeType.for(StringIO.new(body), name: filename) ||
-                   response.headers["content-type"] ||
+                   fetched[:content_type] ||
                    "application/octet-stream"
     content_type = normalize_content_type(content_type)
 
@@ -182,37 +198,49 @@ class Upload < ApplicationRecord
   class << self
     private
 
-    def build_http_client(redirect_validator = nil)
-      Faraday.new(ssl: { verify: true, verify_mode: OpenSSL::SSL::VERIFY_PEER }) do |f|
-        f.response :follow_redirects, limit: 5, callback: redirect_validator
-        f.adapter Faraday.default_adapter
-      end.tap do |conn|
-        conn.options.open_timeout = 30
-        conn.options.timeout = 120
+    def blocked_fetch_address?(address)
+      ip = IPAddr.new(address.split("%").first)
+      ip = ip.native if ip.ipv6? && ip.ipv4_mapped?
+      BLOCKED_FETCH_RANGES.any? { |range| range.family == ip.family && range.include?(ip) }
+    rescue IPAddr::InvalidAddressError
+      true
+    end
+
+    def perform_fetch(uri, address, authorization, max_bytes, deadline)
+      http = Net::HTTP.new(uri.hostname, uri.port)
+      http.ipaddr = address
+      http.use_ssl = uri.scheme == "https"
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      http.open_timeout = FETCH_OPEN_TIMEOUT
+      http.read_timeout = FETCH_READ_TIMEOUT
+
+      request = Net::HTTP::Get.new(uri.request_uri)
+      request["Authorization"] = authorization if authorization.present?
+
+      http.start do |connection|
+        connection.request(request) do |response|
+          return { location: response["location"] } if response.is_a?(Net::HTTPRedirection)
+          raise "Failed to download: #{response.code}" unless response.is_a?(Net::HTTPSuccess)
+
+          body = +""
+          response.read_body do |chunk|
+            body << chunk
+            if body.bytesize > max_bytes
+              raise "File too large: exceeds limit of " \
+                    "#{ActiveSupport::NumberHelper.number_to_human_size(max_bytes)}"
+            end
+            if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+              raise "Failed to download: timed out"
+            end
+          end
+
+          return { body: body, content_type: response["content-type"] }
+        end
       end
     end
 
-    def pre_check_quota_via_head(conn, url, headers, user)
-      head_response = conn.head(url, nil, headers)
-      return unless head_response.success?
-
-      content_length = head_response.headers["content-length"]&.to_i
-      return unless content_length && content_length > 0
-
-      quota_service = QuotaService.new(user)
-      policy = quota_service.current_policy
-
-      if content_length > policy.max_file_size
-        raise "File too large: #{ActiveSupport::NumberHelper.number_to_human_size(content_length)} " \
-              "exceeds limit of #{ActiveSupport::NumberHelper.number_to_human_size(policy.max_file_size)}"
-      end
-
-      return if quota_service.can_upload?(content_length)
-
-      raise "File would exceed storage quota"
-    rescue Faraday::Error
-      # HEAD request failed — proceed with GET and check after
-      nil
+    def same_fetch_origin?(from, to)
+      [ from.scheme, from.hostname, from.port ] == [ to.scheme, to.hostname, to.port ]
     end
 
     def extract_filename_from_url(url)

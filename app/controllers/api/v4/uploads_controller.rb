@@ -5,6 +5,10 @@ module API
     class UploadsController < ApplicationController
       before_action :check_quota, only: [ :create, :create_from_url ]
 
+      rate_limit to: 10, within: 1.minute, only: :create_from_url,
+        by: -> { current_token&.id },
+        with: -> { render json: { error: "Too many requests" }, status: :too_many_requests }
+
       # POST /api/v4/upload
       def create
         file = params[:file]
