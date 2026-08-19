@@ -97,6 +97,9 @@ class Upload < ApplicationRecord
   end
 
   MAX_FETCH_REDIRECTS = 5
+  FETCH_OPEN_TIMEOUT = 5
+  FETCH_READ_TIMEOUT = 30
+  FETCH_DEADLINE = 60
 
   BLOCKED_FETCH_RANGES = %w[
     0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12
@@ -133,10 +136,11 @@ class Upload < ApplicationRecord
     uri = URI.parse(url)
     token = authorization
     hops = 0
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + FETCH_DEADLINE
 
     loop do
       address = resolve_fetchable_addresses!(uri).first
-      result = perform_fetch(uri, address, token, max_bytes)
+      result = perform_fetch(uri, address, token, max_bytes, deadline)
       return result unless result.key?(:location)
 
       hops += 1
@@ -202,13 +206,13 @@ class Upload < ApplicationRecord
       true
     end
 
-    def perform_fetch(uri, address, authorization, max_bytes)
+    def perform_fetch(uri, address, authorization, max_bytes, deadline)
       http = Net::HTTP.new(uri.hostname, uri.port)
       http.ipaddr = address
       http.use_ssl = uri.scheme == "https"
       http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      http.open_timeout = 30
-      http.read_timeout = 120
+      http.open_timeout = FETCH_OPEN_TIMEOUT
+      http.read_timeout = FETCH_READ_TIMEOUT
 
       request = Net::HTTP::Get.new(uri.request_uri)
       request["Authorization"] = authorization if authorization.present?
@@ -224,6 +228,9 @@ class Upload < ApplicationRecord
             if body.bytesize > max_bytes
               raise "File too large: exceeds limit of " \
                     "#{ActiveSupport::NumberHelper.number_to_human_size(max_bytes)}"
+            end
+            if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+              raise "Failed to download: timed out"
             end
           end
 
