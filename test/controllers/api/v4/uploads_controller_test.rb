@@ -105,6 +105,47 @@ class API::V4::UploadsControllerTest < ActionDispatch::IntegrationTest
     assert json["error"].include?("Upload failed")
   end
 
+  test "should rate limit URL uploads per user across API keys" do
+    second_token = @user.api_keys.create!(name: "Second Test Key").token
+    upload = create_upload("rate-limit.jpg")
+    requests_by_key = Hash.new(0)
+    rate_limit_store = API::V4::UploadsController.cache_store
+    original_create_from_url = Upload.method(:create_from_url)
+    original_increment = rate_limit_store.method(:increment)
+
+    Upload.define_singleton_method(:create_from_url) { |_url, **_options| upload }
+    rate_limit_store.define_singleton_method(:increment) do |key, amount, **_options|
+      requests_by_key[key] += amount
+    end
+
+    begin
+      10.times do |index|
+        post api_v4_upload_from_url_url,
+          params: { url: "https://example.com/rate-limit.jpg" }.to_json,
+          headers: {
+            "Authorization" => "Bearer #{index.even? ? @token : second_token}",
+            "Content-Type" => "application/json"
+          }
+
+        assert_response :created
+      end
+
+      post api_v4_upload_from_url_url,
+        params: { url: "https://example.com/rate-limit.jpg" }.to_json,
+        headers: {
+          "Authorization" => "Bearer #{second_token}",
+          "Content-Type" => "application/json"
+        }
+    ensure
+      Upload.define_singleton_method(:create_from_url, original_create_from_url)
+      rate_limit_store.define_singleton_method(:increment, original_increment)
+    end
+
+    assert_response :too_many_requests
+    assert_equal({ "error" => "Too many requests" }, JSON.parse(response.body))
+    assert_equal [ "rate-limit:api/v4/uploads:#{@user.id}" ], requests_by_key.keys
+  end
+
   # --- batch upload ---
 
   test "should upload a batch of files" do
