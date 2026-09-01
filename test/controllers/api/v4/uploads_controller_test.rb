@@ -144,7 +144,20 @@ class API::V4::UploadsControllerTest < ActionDispatch::IntegrationTest
     post api_v4_uploads_url, headers: { "Authorization" => "Bearer #{@token}" }
 
     assert_response :bad_request
-    assert_equal "Missing files[] parameter", JSON.parse(response.body)["error"]
+    assert_equal "Missing files parameter", JSON.parse(response.body)["error"]
+  end
+
+  test "should accept a single unbracketed files part" do
+    assert_difference("Upload.count", 1) do
+      post api_v4_uploads_url,
+        params: { files: fixture_file_upload("test.png", "image/png") },
+        headers: { "Authorization" => "Bearer #{@token}" }
+    end
+
+    assert_response :created
+    json = JSON.parse(response.body)
+    assert_equal 1, json["uploads"].size
+    assert_empty json["failed"]
   end
 
   test "should reject a batch over the file count limit before uploading anything" do

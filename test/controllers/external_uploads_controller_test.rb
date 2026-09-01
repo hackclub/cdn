@@ -72,7 +72,7 @@ class ExternalUploadsControllerTest < ActionDispatch::IntegrationTest
   test "rescue still renders the placeholder image for unknown image URLs" do
     get rescue_upload_path(url: "https://example.com/gone.png")
 
-    assert_response :success
+    assert_response :not_found
     assert_equal "image/svg+xml", response.media_type
     assert_includes response.body, "Original URL not found in CDN"
   end

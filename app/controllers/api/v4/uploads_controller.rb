@@ -48,13 +48,13 @@ module API
 
       # POST /api/v4/uploads (batch)
       def create_batch
-        files = params[:files]
+        files = batch_files
 
-        unless files.present? && files.is_a?(Array)
+        if files.empty?
           render_missing_parameter(
-            "files[]",
-            error: "Missing files[] parameter",
-            hint: "Send each file as multipart/form-data under the repeated `files[]` field, e.g. `curl -F \"files[]=@a.png\" -F \"files[]=@b.png\"`."
+            "files",
+            error: "Missing files parameter",
+            hint: "Send each file as multipart/form-data under a repeated `files` (or `files[]`) field, e.g. `curl -F \"files=@a.png\" -F \"files=@b.png\"`."
           )
           return
         end
@@ -190,6 +190,17 @@ module API
       end
 
       private
+
+      # Accepts every shape a multipart client might use for the batch field:
+      # repeated `files`, repeated `files[]`, or a single `files` part. Generated
+      # OpenAPI clients send the property name verbatim, so `files` must work.
+      def batch_files
+        raw = params[:files]
+        raw = params["files[]"] if raw.blank?
+
+        files = raw.is_a?(Array) ? raw : [ raw ]
+        files.reject(&:blank?)
+      end
 
       def render_missing_parameter(name, error:, hint:)
         render_json_error(

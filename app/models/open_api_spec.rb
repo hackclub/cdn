@@ -115,22 +115,25 @@ class OpenAPISpec
             operationId: "createUploadsBatch",
             tags: [ "Uploads" ],
             summary: "Upload up to 40 files in one request",
-            description: "Uploads several files as multipart/form-data. Partial success is normal: successful files are listed in `uploads`, rejected ones in `failed`. Returns 201 when at least one file succeeded, otherwise 422.",
+            description: "Uploads several files as multipart/form-data under the repeated field `files[]`. The bracketed name is what the server parses as an array, so it is the schema property name too. Partial success is normal: successful files are listed in `uploads`, rejected ones in `failed`. Returns 201 when at least one file succeeded, otherwise 422.",
             requestBody: {
               required: true,
               content: {
                 "multipart/form-data": {
                   schema: {
                     type: "object",
-                    required: [ "files" ],
+                    required: [ "files[]" ],
                     properties: {
-                      files: {
+                      "files[]": {
                         type: "array",
                         maxItems: BatchUploadService::MAX_FILES_PER_BATCH,
-                        description: "Repeated `files[]` fields, at most #{BatchUploadService::MAX_FILES_PER_BATCH} per request.",
+                        description: "Repeated `files[]` fields, at most #{BatchUploadService::MAX_FILES_PER_BATCH} per request. A single unbracketed `files` part is also accepted.",
                         items: { type: "string", format: "binary" }
                       }
                     }
+                  },
+                  encoding: {
+                    "files[]": { contentType: "application/octet-stream" }
                   }
                 }
               }

@@ -99,6 +99,6 @@ class ExternalUploadsController < ApplicationController
       </svg>
     SVG
 
-    render inline: svg, content_type: "image/svg+xml"
+    render inline: svg, content_type: "image/svg+xml", status: :not_found
   end
 end

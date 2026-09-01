@@ -46,12 +46,23 @@ class API::V4::ErrorResponsesTest < ActionDispatch::IntegrationTest
     assert_equal "url", json["parameter"]
   end
 
-  test "missing files[] parameter produces a structured 400" do
+  test "missing files parameter produces a structured 400" do
     post api_v4_uploads_url, headers: @auth
 
     assert_response :bad_request
     json = assert_error_envelope(code: "missing_parameter", status: 400)
-    assert_equal "Missing files[] parameter", json["error"]
+    assert_equal "Missing files parameter", json["error"]
+    assert_equal "files", json["parameter"]
+  end
+
+  test "a malformed JSON body produces a structured 400 instead of a 500" do
+    post api_v4_upload_from_url_url,
+      params: '{"url": ',
+      headers: @auth.merge("Content-Type" => "application/json")
+
+    assert_response :bad_request
+    json = assert_error_envelope(code: "malformed_request", status: 400)
+    assert_equal "Malformed request body", json["error"]
   end
 
   test "missing ids[] parameter produces a structured 400" do

@@ -12,6 +12,7 @@ module API
       rescue_from StandardError, with: :handle_error
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
+      rescue_from ActionDispatch::Http::Parameters::ParseError, with: :malformed_body
 
       private
 
@@ -44,6 +45,16 @@ module API
           status: :not_found,
           message: "No resource matched the requested path or identifier.",
           hint: "Check the ID. Uploads are scoped to the API key's owner, so another user's upload reads as missing."
+        )
+      end
+
+      def malformed_body(exception)
+        render_json_error(
+          error: "Malformed request body",
+          code: :malformed_request,
+          status: :bad_request,
+          message: "The request body could not be parsed as #{request.media_type.presence || 'the declared content type'}: #{exception.message}",
+          hint: "Send valid JSON with `Content-Type: application/json`, or drop the header if the request has no body."
         )
       end
 
