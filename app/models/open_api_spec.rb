@@ -321,7 +321,7 @@ class OpenAPISpec
                 }
               },
               "400": {
-                description: "The `url` parameter is missing.",
+                description: "The `url` parameter is missing. Clients that accept JSON receive an error object; other clients receive an empty response body.",
                 content: { "application/json": { schema: { "$ref": "#/components/schemas/Error" } } }
               },
               "404": {

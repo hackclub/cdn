@@ -81,6 +81,17 @@ class OpenAPIControllerTest < ActionDispatch::IntegrationTest
       unauthorized.dig("content", "application/json", "schema", "$ref")
   end
 
+  test "documents both rescue missing-parameter response variants" do
+    get "/openapi.json"
+    spec = JSON.parse(response.body)
+
+    bad_request = spec.dig("paths", "/rescue", "get", "responses", "400")
+    assert_includes bad_request["description"], "accept JSON"
+    assert_includes bad_request["description"], "empty response body"
+    assert_equal "#/components/schemas/Error",
+      bad_request.dig("content", "application/json", "schema", "$ref")
+  end
+
   test "serves the spec as YAML" do
     get "/openapi.yaml"
 

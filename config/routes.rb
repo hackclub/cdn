@@ -64,7 +64,7 @@ Rails.application.routes.draw do
   match "/:id/*filename", to: "external_uploads#preflight", via: :options, constraints: { id: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/ }
   get "/:id/*filename", to: "external_uploads#show", constraints: { id: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/ }, as: :external_upload
 
-  match "/api/*path", to: "errors#not_found", via: :all, format: false
+  match "/api(/*path)", to: "errors#not_found", via: :all, format: false
   match "*path", to: "errors#not_found", via: :all, format: false,
     constraints: ->(request) { request.format == :json && !request.path.start_with?("/rails/") }
 end
