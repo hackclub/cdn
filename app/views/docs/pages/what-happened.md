@@ -2,6 +2,7 @@
 title: What happened?
 icon: question
 order: 99
+summary: "History of the Hack Club CDN and why this version replaced the previous ones."
 ---
 
 # what happened?
@@ -50,7 +51,9 @@ here are stats on the recovery, keeping in mind that these are only the files we
 | Vc/hel1 via Scrapbook | 21,773 files | 1,067 files                |
 
 (h/t @msw for the [original pass](https://github.com/maxwofford/cdn-bucketer) at the scraper script!)
+
 ## why should i trust that this one will last?
+
 very fair question given we've lost 2 CDNs and counting so far...
 this time is different because it's on a domain Hack Club owns - even if Cloudflare R2 disappears one day, we can restore a backup and redirect the `https://cdn.hackclub.com/<id>` URLs somewhere else without you changing everywhere they're linked from. and, at least as long as i'm here......we're gonna pay the bill this time.
 

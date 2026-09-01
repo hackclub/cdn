@@ -37,6 +37,10 @@ Rails.application.routes.draw do
   get "/openapi", to: "open_api#show", as: :openapi, defaults: { format: :json }
   get "/api/openapi", to: "open_api#show", as: :api_openapi, defaults: { format: :json }
 
+  # Machine-readable discovery files for agents and crawlers.
+  get "/llms.txt", to: "llms#show", as: :llms_txt, format: false
+  get "/sitemap.xml", to: "sitemaps#show", as: :sitemap, format: false
+
   get "/docs", to: redirect("/docs/getting-started")
   get "/docs/:id", to: "docs#show", as: :doc
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

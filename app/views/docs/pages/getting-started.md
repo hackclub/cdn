@@ -2,6 +2,7 @@
 title: Getting Started
 icon: rocket
 order: 1
+summary: "Sign in with Hack Club, upload your first file from the dashboard, and embed the URL in HTML or Markdown."
 ---
 
 # Getting Started

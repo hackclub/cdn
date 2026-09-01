@@ -2,6 +2,7 @@
 title: API Documentation
 icon: code
 order: 3
+summary: "Full /api/v4 reference: authentication, single and batch uploads, upload from URL, rename, delete, key revocation, and the JSON error contract."
 ---
 
 # API Documentation
@@ -21,6 +22,11 @@ It is also served at `/api/openapi.json` and `/api/openapi.yaml`, needs no
 authentication, and is linked from every page as
 `<link rel="service-desc" href="/openapi.json">`. Point your client generator,
 agent, or API console at it rather than scraping this page.
+
+Agents should start at [https://cdn.hackclub.com/llms.txt](/llms.txt), which
+says when this service is the right tool, when it is not, and how to
+authenticate and call it. Every indexable page is listed in
+[https://cdn.hackclub.com/sitemap.xml](/sitemap.xml).
 
 ## Authentication
 
@@ -236,6 +242,7 @@ curl -H "Authorization: Bearer sk_cdn_your_key_here" \
 ```
 
 **Quota fields:**
+
 - `storage_used` — bytes used
 - `storage_limit` — bytes allowed
 - `quota_tier` — `"unverified"`, `"verified"`, or `"functionally_unlimited"`

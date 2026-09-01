@@ -2,13 +2,14 @@
 title: Using CDN URLs
 icon: link
 order: 2
+summary: "URL structure, hotlinking, content types, and the /rescue lookup for files migrated from older Hack Club CDNs."
 ---
 
 # Using CDN URLs
 
 ## URL Structure
 
-```
+```url
 https://cdn.hackclub.com/{id}/{filename}
 ```
 
@@ -50,13 +51,13 @@ Served based on file extension.
 
 Lookup endpoint for files migrated from legacy CDNs:
 
-```
+```curl
 GET /rescue?url={original_url}
 ```
 
 Examples:
 
-```
+```url
 /rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/sdhfksdjfhskdjf.png
 /rescue?url=https://cloud-xxxx-hack-club-bot.vercel.app/0awawawa.png
 ```

@@ -117,6 +117,21 @@ curl -X POST https://cdn.hackclub.com/api/v4/upload_from_url \
 
 See `/docs` in the running app for full API documentation.
 
+## Machine-readable files
+
+| Path | Source | Purpose |
+|------|--------|---------|
+| `/openapi.json`, `/openapi.yaml` | `app/models/open_api_spec.rb` | Full API description (OpenAPI 3.2) |
+| `/llms.txt` | `app/models/llms_txt.rb` | Agent instructions: when to use the CDN, when not to, and how to call it |
+| `/sitemap.xml` | `app/models/sitemap.rb` | Indexable pages (homepage + docs), with `lastmod` |
+| `/robots.txt` | `public/robots.txt` | Crawl rules; points at the sitemap |
+
+`/llms.txt` and `/sitemap.xml` derive their content from the code (routes,
+`Quota`, `BatchUploadService::MAX_FILES_PER_BATCH`, `DocPage`), so adding a doc
+page or changing a quota updates them automatically. New doc pages need a
+`summary:` in their frontmatter — it becomes the link description in
+`/llms.txt`, and a test enforces it.
+
 ## Architecture
 
 - **Rails 8** with **Vite** for frontend assets

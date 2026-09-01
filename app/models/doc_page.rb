@@ -3,15 +3,20 @@
 class DocPage
   DOCS_PATH = Rails.root.join("app/views/docs/pages")
 
-  attr_reader :id, :title, :icon, :order, :content
+  attr_reader :id, :title, :icon, :order, :summary, :content, :updated_at
 
-  def initialize(id:, title:, icon:, order:, content:)
+  def initialize(id:, title:, icon:, order:, content:, summary: nil, updated_at: nil)
     @id = id
     @title = title
     @icon = icon
     @order = order
+    @summary = summary
     @content = content
+    @updated_at = updated_at
   end
+
+  # Path this page is served at, used by /sitemap.xml and /llms.txt.
+  def path = "/docs/#{id}"
 
   class << self
     def all
@@ -44,7 +49,9 @@ class DocPage
         title: frontmatter["title"] || id.titleize,
         icon: (frontmatter["icon"] || "file").to_sym,
         order: frontmatter["order"] || 999,
-        content: render_markdown(content)
+        summary: frontmatter["summary"].presence,
+        content: render_markdown(content),
+        updated_at: File.mtime(file)
       )
     end
 

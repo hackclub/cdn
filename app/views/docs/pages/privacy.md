@@ -2,6 +2,7 @@
 title: Privacy Policy
 icon: shield
 order: 5
+summary: "What Hack Club CDN stores about you and your uploads, and who can see it."
 ---
 
 # Privacy Policy

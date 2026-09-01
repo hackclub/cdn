@@ -2,6 +2,7 @@
 title: Storage Quotas
 icon: database
 order: 4
+summary: "Per-file and total storage limits for each account tier, and how to raise them by verifying with Hack Club."
 ---
 
 # Storage Quotas
@@ -11,10 +12,10 @@ CDN provides free storage for the Hack Club community. Your quota depends on whe
 ## What's My Quota?
 
 | Tier | Per File | Total Storage |
-|------|----------|---------------|
-| **Unverified** | 10 MB    | 50 MB |
-| **Verified** | 100 MB   | 50 GB |
-| **"Unlimited"** | 200 MB   | 300 GB |
+| ---- | -------- | ------------- |
+| **Unverified** | 10 MB | 50 MB |
+| **Verified** | 100 MB | 50 GB |
+| **"Unlimited"** | 200 MB | 300 GB |
 
 **New users start unverified.** Once you verify with Hack Club, you automatically get 50GB.
 

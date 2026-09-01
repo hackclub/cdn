@@ -1,1 +1,14 @@
 # See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+
+User-agent: *
+Allow: /
+# Signed-in-only pages. Crawling them just redirects to the homepage.
+Disallow: /admin/
+Disallow: /api_keys
+Disallow: /uploads
+Disallow: /auth/
+Disallow: /login
+
+# Agent instructions and when-to-use guidance: /llms.txt
+# Machine-readable API description: /openapi.json
+Sitemap: https://cdn.hackclub.com/sitemap.xml

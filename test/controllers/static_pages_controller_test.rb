@@ -27,6 +27,13 @@ class StaticPagesControllerTest < ActionDispatch::IntegrationTest
     assert_select "link[rel='service-doc'][href=?]", "/docs/api"
   end
 
+  test "homepage links to the sitemap and the agent instruction file" do
+    get root_url
+
+    assert_select "link[rel=sitemap][href=?]", "/sitemap.xml"
+    assert_select "link[rel=alternate][type='text/plain'][href=?]", "/llms.txt"
+  end
+
   test "homepage publishes JSON-LD identifying the app and its publisher" do
     get root_url
 
