@@ -1,3 +1,7 @@
+<% content_for :head do %>
+  <%= json_ld_tag(home_structured_data) %>
+<% end %>
+
 <% if signed_in? %>
   <%= render Components::StaticPages::Home.new(stats: @user_stats, user: current_user, flavor_text: @flavor_text) %>
 <% else %>

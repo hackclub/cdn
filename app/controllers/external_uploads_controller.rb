@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ExternalUploadsController < ApplicationController
+  include JSONErrorResponses
+
   skip_before_action :require_authentication!
   skip_forgery_protection
   before_action :set_cors_headers
@@ -17,14 +19,25 @@ class ExternalUploadsController < ApplicationController
     expires_in 1.year, public: true
     redirect_to upload.assets_url, allow_other_host: true
   rescue ActiveRecord::RecordNotFound
-    head :not_found
+    respond_with_error(
+      code: :not_found,
+      status: :not_found,
+      message: "No upload exists with ID #{params[:id]}.",
+      hint: "The file may have been deleted. Files are addressed as /<id>/<filename>; the ID comes from the upload response."
+    )
   end
 
   def rescue
     url = params[:url]
 
     if url.blank?
-      head :bad_request
+      respond_with_error(
+        code: :missing_parameter,
+        status: :bad_request,
+        message: "Required parameter `url` is missing.",
+        hint: "Call /rescue?url=<the original URL the file was imported from>.",
+        parameter: "url"
+      )
       return
     end
 
@@ -43,10 +56,26 @@ class ExternalUploadsController < ApplicationController
   def set_cors_headers = response.set_header("Access-Control-Allow-Origin", "*")
 
   def render_not_found_response(url)
-    if url.match?(/\.(png|jpe?g)$/i)
+    if request.format == :json
+      render_json_error(
+        code: :original_url_not_found,
+        status: :not_found,
+        message: "No file on the CDN was imported from #{url}.",
+        hint: "Upload it at https://#{JSONErrorResponses.canonical_host} to give it a CDN URL.",
+        original_url: url
+      )
+    elsif url.match?(/\.(png|jpe?g)$/i)
       render_error_image
     else
       head :not_found
+    end
+  end
+
+  def respond_with_error(code:, status:, message:, hint:, **extra)
+    if request.format == :json
+      render_json_error(code: code, status: status, message: message, hint: hint, **extra)
+    else
+      head status
     end
   end
 
