@@ -62,4 +62,4 @@ Examples:
 /rescue?url=https://cloud-xxxx-hack-club-bot.vercel.app/0awawawa.png
 ```
 
-Returns 301 redirect to the new CDN URL if found. For image URLs (`.png`, `.jpg`, `.jpeg`), returns an SVG 404 placeholder if not found. Otherwise returns HTTP 404.
+Returns 302 redirect to the new CDN URL if found. For image URLs (`.png`, `.jpg`, `.jpeg`), returns an SVG 404 placeholder if not found. Otherwise returns HTTP 404.
