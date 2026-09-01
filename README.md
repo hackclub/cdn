@@ -95,6 +95,11 @@ See `.env.example` for the full list. Key variables:
 
 The API uses bearer token authentication. Create an API key from the web dashboard after logging in.
 
+The API surface is published as an OpenAPI 3.2 document at `/openapi.json` and
+`/openapi.yaml` (also `/api/openapi.json` / `/api/openapi.yaml`), generated from
+`app/models/open_api_spec.rb`. Update that file alongside any change to the
+`/api/v4` controllers or `app/views/docs/pages/api.md`.
+
 **Upload a file:**
 ```bash
 curl -X POST https://cdn.hackclub.com/api/v4/upload \

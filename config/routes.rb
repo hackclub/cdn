@@ -34,6 +34,9 @@ Rails.application.routes.draw do
     end
   end
 
+  get "/openapi", to: "open_api#show", as: :openapi, defaults: { format: :json }
+  get "/api/openapi", to: "open_api#show", as: :api_openapi, defaults: { format: :json }
+
   get "/docs", to: redirect("/docs/getting-started")
   get "/docs/:id", to: "docs#show", as: :doc
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -60,4 +63,8 @@ Rails.application.routes.draw do
   # External upload redirects (must be last to avoid conflicts)
   match "/:id/*filename", to: "external_uploads#preflight", via: :options, constraints: { id: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/ }
   get "/:id/*filename", to: "external_uploads#show", constraints: { id: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/ }, as: :external_upload
+
+  match "/api(/*path)", to: "errors#not_found", via: :all, format: false
+  match "*path", to: "errors#not_found", via: :all, format: false,
+    constraints: ->(request) { request.format == :json && !request.path.start_with?("/rails/") }
 end

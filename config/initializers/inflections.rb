@@ -19,4 +19,5 @@ ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.acronym "CDN"
   inflect.acronym "HCA"
   inflect.acronym "API"
+  inflect.acronym "JSON"
 end

@@ -10,7 +10,11 @@ module API
         file = params[:file]
 
         unless file.present?
-          render json: { error: "Missing file parameter" }, status: :bad_request
+          render_missing_parameter(
+            "file",
+            error: "Missing file parameter",
+            hint: "Send the file as multipart/form-data under the `file` field, e.g. `curl -F \"file=@photo.jpg\"`."
+          )
           return
         end
 
@@ -33,23 +37,37 @@ module API
 
         render json: upload_json(upload), status: :created
       rescue => e
-        render json: { error: "Upload failed: #{e.message}" }, status: :unprocessable_entity
+        render_json_error(
+          error: "Upload failed: #{e.message}",
+          code: :upload_failed,
+          status: :unprocessable_entity,
+          message: "The file could not be stored: #{e.message}",
+          hint: "Check the file is readable and under your per-file size limit, then retry. See https://#{JSONErrorResponses.canonical_host}/docs/quotas."
+        )
       end
 
       # POST /api/v4/uploads (batch)
       def create_batch
-        files = params[:files]
+        files = batch_files
 
-        unless files.present? && files.is_a?(Array)
-          render json: { error: "Missing files[] parameter" }, status: :bad_request
+        if files.empty?
+          render_missing_parameter(
+            "files",
+            error: "Missing files parameter",
+            hint: "Send each file as multipart/form-data under a repeated `files` (or `files[]`) field, e.g. `curl -F \"files=@a.png\" -F \"files=@b.png\"`."
+          )
           return
         end
 
         if files.size > BatchUploadService::MAX_FILES_PER_BATCH
-          render json: {
+          render_json_error(
             error: "Too many files",
+            code: :too_many_files,
+            status: :bad_request,
+            message: "Maximum #{BatchUploadService::MAX_FILES_PER_BATCH} files per batch, got #{files.size}.",
+            hint: "Split the request into batches of #{BatchUploadService::MAX_FILES_PER_BATCH} files or fewer.",
             detail: "Maximum #{BatchUploadService::MAX_FILES_PER_BATCH} files per batch, got #{files.size}"
-          }, status: :bad_request
+          )
           return
         end
 
@@ -70,7 +88,11 @@ module API
         url = params[:url]
 
         unless url.present?
-          render json: { error: "Missing url parameter" }, status: :bad_request
+          render_missing_parameter(
+            "url",
+            error: "Missing url parameter",
+            hint: "POST JSON like {\"url\":\"https://example.com/image.jpg\"} with `Content-Type: application/json`."
+          )
           return
         end
 
@@ -83,14 +105,20 @@ module API
           if current_user.total_storage_bytes > quota_service.current_policy.max_total_storage
             upload.destroy!
             usage = quota_service.current_usage
-            render json: quota_error_json(usage), status: :payment_required
+            render_quota_error(usage)
             return
           end
         end
 
         render json: upload_json(upload), status: :created
       rescue => e
-        render json: { error: "Upload failed: #{e.message}" }, status: :unprocessable_entity
+        render_json_error(
+          error: "Upload failed: #{e.message}",
+          code: :upload_failed,
+          status: :unprocessable_entity,
+          message: "The source URL could not be fetched or stored: #{e.message}",
+          hint: "Confirm the URL is publicly reachable (or pass `X-Download-Authorization`), returns a file, and is under your per-file size limit."
+        )
       end
 
       # DELETE /api/v4/upload/:id
@@ -107,16 +135,32 @@ module API
         new_filename = params[:filename].to_s.strip
 
         if new_filename.blank?
-          render json: { error: "Missing filename parameter" }, status: :bad_request
+          render_missing_parameter(
+            "filename",
+            error: "Missing filename parameter",
+            hint: "Send JSON like {\"filename\":\"new-name.png\"}. Keep the extension so the CDN serves the right content type."
+          )
           return
         end
 
         upload.rename!(new_filename)
         render json: upload_json(upload)
       rescue ActiveRecord::RecordNotFound
-        render json: { error: "Upload not found" }, status: :not_found
+        render_json_error(
+          error: "Upload not found",
+          code: :upload_not_found,
+          status: :not_found,
+          message: "No upload with that ID belongs to this API key's owner.",
+          hint: "List your uploads in the dashboard, or check the ID from the original upload response."
+        )
       rescue => e
-        render json: { error: "Rename failed: #{e.message}" }, status: :unprocessable_entity
+        render_json_error(
+          error: "Rename failed: #{e.message}",
+          code: :rename_failed,
+          status: :unprocessable_entity,
+          message: "The upload could not be renamed: #{e.message}",
+          hint: "Filenames must be non-blank and are sanitized before storage. Renaming changes the CDN URL."
+        )
       end
 
       # DELETE /api/v4/uploads/batch
@@ -124,7 +168,11 @@ module API
         ids = Array(params[:ids]).reject(&:blank?)
 
         if ids.empty?
-          render json: { error: "Missing ids[] parameter" }, status: :bad_request
+          render_missing_parameter(
+            "ids[]",
+            error: "Missing ids[] parameter",
+            hint: "Send JSON like {\"ids\":[\"<upload-id>\",\"<upload-id>\"]}."
+          )
           return
         end
 
@@ -143,6 +191,28 @@ module API
 
       private
 
+      # Accepts every shape a multipart client might use for the batch field:
+      # repeated `files`, repeated `files[]`, or a single `files` part. Generated
+      # OpenAPI clients send the property name verbatim, so `files` must work.
+      def batch_files
+        raw = params[:files]
+        raw = params["files[]"] if raw.blank?
+
+        files = raw.is_a?(Array) ? raw : [ raw ]
+        files.reject(&:blank?)
+      end
+
+      def render_missing_parameter(name, error:, hint:)
+        render_json_error(
+          error: error,
+          code: :missing_parameter,
+          status: :bad_request,
+          message: "Required parameter `#{name}` is missing or blank.",
+          hint: hint,
+          parameter: name
+        )
+      end
+
       def check_quota
         # For direct uploads, check file size before processing
         if params[:file].present?
@@ -153,14 +223,18 @@ module API
           # Check per-file size limit
           if file_size > policy.max_file_size
             usage = quota_service.current_usage
-            render json: quota_error_json(usage, "File size exceeds your limit of #{ActiveSupport::NumberHelper.number_to_human_size(policy.max_file_size)} per file"), status: :payment_required
+            render_quota_error(
+              usage,
+              "File size exceeds your limit of #{ActiveSupport::NumberHelper.number_to_human_size(policy.max_file_size)} per file",
+              code: :file_too_large
+            )
             return
           end
 
           # Check if upload would exceed total storage quota
           unless quota_service.can_upload?(file_size)
             usage = quota_service.current_usage
-            render json: quota_error_json(usage), status: :payment_required
+            render_quota_error(usage)
             nil
           end
         end
@@ -168,16 +242,20 @@ module API
         # For batch uploads, quota is handled by BatchUploadService
       end
 
-      def quota_error_json(usage, custom_message = nil)
-        {
+      def render_quota_error(usage, custom_message = nil, code: :quota_exceeded)
+        render_json_error(
           error: custom_message || "Storage quota exceeded",
+          code: code,
+          status: :payment_required,
+          message: custom_message || "This upload would exceed the storage quota for your account (#{usage[:policy]} tier).",
+          hint: "Delete files you no longer need, or ask for a higher tier. See https://#{JSONErrorResponses.canonical_host}/docs/quotas.",
           quota: {
             storage_used: usage[:storage_used],
             storage_limit: usage[:storage_limit],
             quota_tier: usage[:policy],
             percentage_used: usage[:percentage_used]
           }
-        }
+        )
       end
 
       def upload_json(upload)
