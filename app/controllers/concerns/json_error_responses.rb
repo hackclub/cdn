@@ -17,9 +17,9 @@ module JSONErrorResponses
 
   STATUS_ALIASES = { unprocessable_entity: :unprocessable_content }.freeze
 
-  def self.canonical_host = ENV["CDN_HOST"].presence || "cdn.hackclub.com"
+  def self.canonical_host = CDNHost.host
 
-  def self.documentation_url = "https://#{canonical_host}#{DOCUMENTATION_PATH}"
+  def self.documentation_url = "#{CDNHost.base_url}#{DOCUMENTATION_PATH}"
 
   def self.payload(code:, status:, message:, hint: nil, error: nil, **extra)
     body = {

@@ -17,9 +17,9 @@ class LlmsTxt
   AUTH_URL = "https://auth.hackclub.com"
 
   class << self
-    def host = ENV["CDN_HOST"].presence || "cdn.hackclub.com"
+    def host = CDNHost.host
 
-    def base_url = "https://#{host}"
+    def base_url = CDNHost.base_url
 
     def to_s
       [ header, guidance, when_to_use, api, docs, optional ].join("\n")

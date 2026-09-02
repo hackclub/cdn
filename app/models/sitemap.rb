@@ -11,9 +11,9 @@ class Sitemap
   Entry = Data.define(:loc, :lastmod, :changefreq)
 
   class << self
-    def host = ENV["CDN_HOST"].presence || "cdn.hackclub.com"
+    def host = CDNHost.host
 
-    def base_url = "https://#{host}"
+    def base_url = CDNHost.base_url
 
     def entries = [ home_entry, *doc_entries ]
 

@@ -7,7 +7,7 @@ namespace :import do
   desc "Import files from Slack using a CSV with slack_file_url and slack_user_id"
   task slack_files: :environment do
     # Set URL options for ActiveStorage in rake context
-    ActiveStorage::Current.url_options = { host: ENV.fetch("CDN_HOST", "cdn.hackclub.com"), protocol: "https" }
+    ActiveStorage::Current.url_options = { host: CDNHost.host, protocol: "https" }
     csv_path = ENV.fetch("CSV_PATH", "files_with_slack_url.csv")
     slack_token = ENV.fetch("SLACK_TOKEN") { raise "SLACK_TOKEN (xoxp-...) is required" }
     thread_count = ENV.fetch("THREADS", 67).to_i

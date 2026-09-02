@@ -5,9 +5,9 @@ class OpenAPISpec
   API_VERSION = "4.0.0"
 
   class << self
-    def host = ENV["CDN_HOST"].presence || "cdn.hackclub.com"
+    def host = CDNHost.host
 
-    def base_url = "https://#{host}"
+    def base_url = CDNHost.base_url
 
     def as_json(*) = document
 

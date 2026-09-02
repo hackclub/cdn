@@ -80,7 +80,7 @@ class Upload < ApplicationRecord
     Rails.application.routes.url_helpers.external_upload_url(
       id:,
       filename:,
-      host: ENV["CDN_HOST"] || "cdn.hackclub.com"
+      host: CDNHost.host
     )
   end
 
