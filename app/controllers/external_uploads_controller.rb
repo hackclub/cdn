@@ -7,6 +7,11 @@ class ExternalUploadsController < ApplicationController
   skip_forgery_protection
   before_action :set_cors_headers
 
+  rate_limit to: 60,
+             within: 1.minute,
+             only: :rescue,
+             with: -> { render_rate_limited }
+
   def preflight
     response.set_header("Access-Control-Allow-Headers", "*")
     response.set_header("Access-Control-Allow-Methods", "GET, HEAD")
@@ -56,6 +61,8 @@ class ExternalUploadsController < ApplicationController
   def set_cors_headers = response.set_header("Access-Control-Allow-Origin", "*")
 
   def render_not_found_response(url)
+    expires_in 5.minutes, public: true
+
     if request.format == :json
       render_json_error(
         code: :original_url_not_found,
@@ -77,6 +84,15 @@ class ExternalUploadsController < ApplicationController
     else
       head status
     end
+  end
+
+  def render_rate_limited
+    respond_with_error(
+      code: :rate_limited,
+      status: :too_many_requests,
+      message: "Too many /rescue lookups from your address.",
+      hint: "Retry in a minute. If you need to resolve many URLs, batch them or use an API key."
+    )
   end
 
   def render_error_image

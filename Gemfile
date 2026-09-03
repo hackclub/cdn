@@ -40,6 +40,11 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 end
 
+group :production do
+  # cdn.hackclub.com sits behind Cloudflare
+  gem "cloudflare-rails"
+end
+
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
