@@ -194,7 +194,7 @@ GEM
       reline (>= 0.4.2)
     jb (0.8.2)
     jmespath (1.6.2)
-    json (2.21.2)
+    json (3.0.0)
     jwt (3.2.0)
       base64
     kaminari (1.2.2)
@@ -272,7 +272,7 @@ GEM
       rack (>= 1.2, < 4)
       snaky_hash (~> 2.0, >= 2.0.7)
       version_gem (~> 1.1, >= 1.1.14)
-    octicons (19.33.0)
+    octicons (19.34.0)
     omniauth (2.1.4)
       hashie (>= 3.4.6)
       logger
@@ -308,7 +308,7 @@ GEM
     pp (0.6.4)
       prettyprint
     prettyprint (0.2.0)
-    primer_view_components (0.53.3)
+    primer_view_components (0.53.4)
       actionview (>= 7.2.0)
       activesupport (>= 7.2.0)
       octicons (>= 18.0.0)
@@ -394,8 +394,8 @@ GEM
     reline (0.7.0)
       io-console (~> 0.5)
     rexml (3.4.4)
-    rubocop (1.89.0)
-      json (~> 2.3)
+    rubocop (1.90.0)
+      json (>= 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
       parallel (>= 1.10)
