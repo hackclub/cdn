@@ -6,13 +6,21 @@
 # "https://https://cdn.hackclub.com".
 module CDNHost
   DEFAULT_HOST = "cdn.hackclub.com"
+  DEFAULT_ASSETS_HOST = "user-cdn.hackclub-assets.com"
 
   module_function
 
   def host
-    raw = ENV["CDN_HOST"].presence || DEFAULT_HOST
-    raw.sub(%r{\Ahttps?://}i, "").sub(%r{/+\z}, "")
+    normalize(ENV["CDN_HOST"].presence || DEFAULT_HOST)
+  end
+
+  def assets_host
+    normalize(ENV["CDN_ASSETS_HOST"].presence || DEFAULT_ASSETS_HOST)
   end
 
   def base_url = "https://#{host}"
+
+  def assets_base_url = "https://#{assets_host}"
+
+  def normalize(raw) = raw.to_s.sub(%r{\Ahttps?://}i, "").sub(%r{/+\z}, "")
 end
