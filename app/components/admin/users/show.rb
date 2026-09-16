@@ -165,6 +165,13 @@ class Components::Admin::Users::Show < Components::Base
       div do
         div(style: "font-weight: 500;") { api_key.name }
         code(style: "font-size: 12px; color: var(--fgColor-muted);") { api_key.masked_token }
+        div(style: "font-size: 12px; color: var(--fgColor-muted);") do
+          if api_key.last_used_at
+            plain "Last used #{api_key.last_used_at.strftime('%b %d, %Y')}"
+          else
+            plain "Never used"
+          end
+        end
       end
       div(style: "display: flex; align-items: center; gap: 12px;") do
         if api_key.revoked?

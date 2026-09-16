@@ -54,6 +54,39 @@ class APIKeyTest < ActiveSupport::TestCase
     assert api_key.revoked_at.present?
   end
 
+  test "touch_last_used! records first use" do
+    api_key = users(:one).api_keys.create!(name: "Test Key")
+    assert_nil api_key.last_used_at
+
+    api_key.touch_last_used!
+
+    assert api_key.reload.last_used_at.present?
+  end
+
+  test "touch_last_used! skips writes within the tracking precision window" do
+    api_key = users(:one).api_keys.create!(name: "Test Key")
+    api_key.touch_last_used!
+    first_use = api_key.reload.last_used_at
+
+    travel 1.minute do
+      api_key.touch_last_used!
+    end
+
+    assert_equal first_use, api_key.reload.last_used_at
+  end
+
+  test "touch_last_used! writes again once last_used_at is stale" do
+    api_key = users(:one).api_keys.create!(name: "Test Key")
+    api_key.touch_last_used!
+    first_use = api_key.reload.last_used_at
+
+    travel APIKey::USAGE_TRACKING_PRECISION + 1.minute do
+      api_key.touch_last_used!
+    end
+
+    assert api_key.reload.last_used_at > first_use
+  end
+
   test "masked_token shows prefix and suffix" do
     user = users(:one)
     api_key = user.api_keys.create!(name: "Test Key")

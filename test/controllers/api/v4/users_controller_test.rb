@@ -19,6 +19,15 @@ class API::V4::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal @user.name, json["name"]
   end
 
+  test "authenticated request records last used at on the key" do
+    assert_nil @api_key.last_used_at
+
+    get api_v4_me_url, headers: { "Authorization" => "Bearer #{@token}" }
+
+    assert_response :success
+    assert @api_key.reload.last_used_at.present?
+  end
+
   test "should reject request without token" do
     get api_v4_me_url
 

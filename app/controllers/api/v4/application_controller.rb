@@ -31,6 +31,7 @@ module API
         end
 
         @current_user = @current_token.user
+        @current_token.touch_last_used!
       end
 
       def set_sentry_context
