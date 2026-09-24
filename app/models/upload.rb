@@ -97,6 +97,10 @@ class Upload < ApplicationRecord
   end
 
   # Validate that a URL is safe to fetch (not targeting internal networks)
+  def self.slack_host?(host)
+    host&.downcase&.then { _1 == "slack.com" || _1.end_with?(".slack.com") } || false
+  end
+
   def self.assert_public_url!(url)
     uri = URI.parse(url)
 
@@ -130,14 +134,22 @@ class Upload < ApplicationRecord
   def self.create_from_url(url, user:, provenance:, original_url: nil, authorization: nil, filename: nil)
     assert_public_url!(url)
 
+    initial_host = URI.parse(url).host
+
     redirect_validator = proc do |_response_env, new_request_env|
-      assert_public_url!(new_request_env[:url].to_s)
+      new_url = new_request_env[:url].to_s
+      assert_public_url!(new_url)
+      unless URI.parse(new_url).host == initial_host
+        new_request_env[:request_headers].delete("Authorization")
+      end
     end
 
     conn = build_http_client(redirect_validator)
 
     headers = {}
-    headers["Authorization"] = authorization if authorization.present?
+    if authorization.present? && slack_host?(initial_host)
+      headers["Authorization"] = authorization
+    end
 
     # Pre-check file size via HEAD if possible
     pre_check_quota_via_head(conn, url, headers, user)
