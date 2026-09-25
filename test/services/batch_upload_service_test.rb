@@ -24,8 +24,12 @@ class BatchUploadServiceTest < ActiveSupport::TestCase
     )
   end
 
-  def service
-    BatchUploadService.new(user: @user, provenance: :web)
+  def service(convert_to_avif: false)
+    BatchUploadService.new(
+      user: @user,
+      provenance: :web,
+      convert_to_avif: convert_to_avif
+    )
   end
 
   test "uploads every file when the whole batch fits in quota" do
@@ -38,6 +42,26 @@ class BatchUploadServiceTest < ActiveSupport::TestCase
 
     assert_equal 3, result.uploads.size
     assert_empty result.failed
+  end
+
+  test "converts supported images to AVIF when requested" do
+    image = Rack::Test::UploadedFile.new(file_fixture("test.png").to_path, "image/png", true)
+    result = service(convert_to_avif: true).process_files([ image ])
+    upload = result.uploads.sole
+
+    assert_empty result.failed
+    assert_equal "test.avif", upload.filename.to_s
+    assert_equal "image/avif", upload.content_type
+  end
+
+  test "leaves images unchanged when AVIF conversion is disabled" do
+    image = Rack::Test::UploadedFile.new(file_fixture("test.png").to_path, "image/png", true)
+    result = service.process_files([ image ])
+    upload = result.uploads.sole
+
+    assert_empty result.failed
+    assert_equal "test.png", upload.filename.to_s
+    assert_equal "image/png", upload.content_type
   end
 
   test "rejects a file larger than the per-file limit without uploading it" do

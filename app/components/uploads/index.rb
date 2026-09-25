@@ -36,9 +36,24 @@ class Components::Uploads::Index < Components::Base
         end
       end
 
-      label(for: "dropzone-file-input", class: "btn btn-primary", style: "cursor: pointer;") do
-        render Primer::Beta::Octicon.new(icon: :upload, mr: 1)
-        plain "Upload Files"
+      div(style: "display: flex; flex-direction: column; align-items: flex-end; gap: 6px;") do
+        label(for: "dropzone-file-input", class: "btn btn-primary", style: "cursor: pointer;") do
+          render Primer::Beta::Octicon.new(icon: :upload, mr: 1)
+          plain "Upload Files"
+        end
+
+        label(for: "auto-convert-avif", style: "display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fgColor-muted, #656d76); cursor: pointer;") do
+          input(
+            type: "checkbox",
+            name: "convert_to_avif",
+            value: "1",
+            id: "auto-convert-avif",
+            form: "dropzone-upload-form",
+            checked: true,
+            style: "cursor: pointer;"
+          )
+          plain "Auto-convert images to AVIF"
+        end
       end
     end
   end
@@ -125,7 +140,7 @@ class Components::Uploads::Index < Components::Base
   end
 
   def dropzone_form
-    form_with url: uploads_path, method: :post, multipart: true, data: { dropzone_form: true } do
+    form_with url: uploads_path, method: :post, multipart: true, id: "dropzone-upload-form", data: { dropzone_form: true } do
       input(type: "file", name: "files[]", id: "dropzone-file-input", multiple: true, data: { dropzone_input: true }, style: "display: none;")
     end
   end
