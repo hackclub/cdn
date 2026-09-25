@@ -131,6 +131,7 @@ class BatchUploadService
 
     if @convert_to_avif && content_type.start_with?("image/") && content_type != "image/avif"
       converted_file = convert_to_avif(file)
+      converted_file = nil if converted_file.size > @policy.max_file_size
     end
 
     filename = converted_file ? avif_filename(file.original_filename) : file.original_filename
@@ -162,7 +163,7 @@ class BatchUploadService
     ImageProcessing::Vips
       .source(file.tempfile.path)
       .convert(:avif)
-      .saver(Q: 100)
+      .saver(Q: 80)
       .call
   end
 
