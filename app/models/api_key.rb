@@ -21,8 +21,25 @@ class APIKey < ApplicationRecord
     find_by(token: token)  # Blind index handles lookup
   end
 
+  # How stale last_used_at is allowed to get before we write to the database.
+  # Keeps hot keys from issuing an UPDATE on every single API request.
+  USAGE_TRACKING_PRECISION = 5.minutes
+
   def revoke!
     update!(revoked: true, revoked_at: Time.current)
+  end
+
+  def touch_last_used!
+    now = Time.current
+    cutoff = now - USAGE_TRACKING_PRECISION
+    return if last_used_at.present? && last_used_at > cutoff
+
+    # The condition must be checked in the UPDATE: another request may have
+    # refreshed this key after we loaded it.
+    updated = self.class.where(id: id)
+      .where("last_used_at IS NULL OR last_used_at <= ?", cutoff)
+      .update_all(last_used_at: now)
+    self.last_used_at = now if updated == 1
   end
 
   def active?

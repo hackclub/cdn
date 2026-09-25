@@ -13,6 +13,17 @@ class APIKeysControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "index shows last used for used keys and flags unused ones" do
+    @user.api_keys.create!(name: "Unused Key")
+    @user.api_keys.create!(name: "Used Key", last_used_at: 2.days.ago)
+
+    get api_keys_url
+
+    assert_response :success
+    assert_match "Never used", response.body
+    assert_match "Last used 2 days ago", response.body
+  end
+
   test "should create api key" do
     assert_difference("APIKey.count", 1) do
       post api_keys_url, params: { api_key: { name: "New Key" } }

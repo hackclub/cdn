@@ -17,6 +17,12 @@ class Components::APIKeys::Row < Components::Base
         code(style: "font-size: 12px; color: var(--fgColor-muted, #656d76);") { api_key.masked_token }
         div(style: "font-size: 12px; color: var(--fgColor-muted, #656d76); margin-top: 4px;") do
           plain "Created #{time_ago_in_words(api_key.created_at)} ago"
+          plain " · "
+          if api_key.last_used_at
+            plain "Last used #{time_ago_in_words(api_key.last_used_at)} ago"
+          else
+            span(style: "color: var(--fgColor-attention, #9a6700);") { "Never used" }
+          end
         end
       end
 
