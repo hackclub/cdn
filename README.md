@@ -79,6 +79,9 @@ See `.env.example` for the full list. Key variables:
 | `R2_ENDPOINT` | R2 endpoint URL |
 | `CDN_HOST` | Public hostname for CDN URLs |
 | `CDN_ASSETS_HOST` | Public R2 bucket hostname |
+| `CLOUDFLARE_ZONE_ID` | Zone containing `CDN_HOST`, for cache purging on delete |
+| `CLOUDFLARE_ASSETS_ZONE_ID` | Zone containing `CDN_ASSETS_HOST` (a *different* zone) |
+| `CLOUDFLARE_API_TOKEN` | Token with cache-purge permission on both zones |
 | `HACKCLUB_CLIENT_ID` | OAuth client ID from Hack Club Auth |
 | `HACKCLUB_CLIENT_SECRET` | OAuth client secret |
 | `LOCKBOX_MASTER_KEY` | 64-char hex key for encrypting API keys |
@@ -89,7 +92,10 @@ See `.env.example` for the full list. Key variables:
 | Domain | Points to |
 |--------|-----------|
 | `cdn.hackclub.com` | Rails app (Heroku/Fly/etc.) |
-| `cdn.hackclub-assets.com` | R2 bucket (custom domain in R2 settings) |
+| `user-cdn.hackclub-assets.com` | R2 bucket (custom domain in R2 settings) |
+
+The two hostnames are in separate Cloudflare zones. Deleting an upload purges
+the edge cache in both; see `app/jobs/purge_cloudflare_cache_job.rb`.
 
 ## API
 
