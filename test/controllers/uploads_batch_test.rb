@@ -21,6 +21,13 @@ class UploadsBatchTest < ActionDispatch::IntegrationTest
 
   # --- batch upload ---
 
+  test "shows the AVIF conversion checkbox enabled by default" do
+    get uploads_url
+
+    assert_response :success
+    assert_select 'input[name="convert_to_avif"][checked]'
+  end
+
   test "uploads multiple files in one request" do
     files = [ fixture_file_upload("test.png", "image/png"), fixture_file_upload("test.png", "image/png") ]
 
@@ -30,6 +37,18 @@ class UploadsBatchTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to uploads_path
     assert_match(/Uploaded 2 files/, flash[:notice])
+  end
+
+  test "passes the AVIF conversion choice for an uploaded image" do
+    post uploads_url, params: {
+      files: [ fixture_file_upload("test.png", "image/png") ],
+      convert_to_avif: "1"
+    }
+
+    assert_redirected_to uploads_path
+    upload = Upload.order(:created_at).last
+    assert_equal "test.avif", upload.filename.to_s
+    assert_equal "image/avif", upload.content_type
   end
 
   test "still accepts a single legacy file param" do

@@ -6,9 +6,10 @@ class BatchUploadService
   Result = Data.define(:uploads, :failed)
   FailedUpload = Data.define(:filename, :reason)
 
-  def initialize(user:, provenance:)
+  def initialize(user:, provenance:, convert_to_avif: false)
     @user = user
     @provenance = provenance
+    @convert_to_avif = convert_to_avif
     @quota_service = QuotaService.new(user)
     @policy = @quota_service.current_policy
   end
@@ -126,16 +127,27 @@ class BatchUploadService
                    file.content_type ||
                    "application/octet-stream"
     content_type = Upload.normalize_content_type(content_type)
+    converted_file = nil
+
+    if @convert_to_avif && content_type.start_with?("image/") && content_type != "image/avif"
+      converted_file = convert_to_avif(file)
+      converted_file = nil if converted_file.size > @policy.max_file_size
+    end
+
+    filename = converted_file ? avif_filename(file.original_filename) : file.original_filename
+    io = converted_file || file.tempfile
+    content_type = "image/avif" if converted_file
 
     upload_id = SecureRandom.uuid_v7
-    sanitized_filename = ActiveStorage::Filename.new(file.original_filename).sanitized
+    sanitized_filename = ActiveStorage::Filename.new(filename).sanitized
     storage_key = "#{upload_id}/#{sanitized_filename}"
 
     blob = ActiveStorage::Blob.create_and_upload!(
-      io: file.tempfile,
-      filename: file.original_filename,
+      io: io,
+      filename: filename,
       content_type: content_type,
-      key: storage_key
+      key: storage_key,
+      identify: false
     )
 
     @user.uploads.create!(
@@ -143,6 +155,21 @@ class BatchUploadService
       blob: blob,
       provenance: @provenance
     )
+  ensure
+    converted_file&.close!
+  end
+
+  def convert_to_avif(file)
+    ImageProcessing::Vips
+      .source(file.tempfile.path)
+      .convert(:avif)
+      .saver(Q: 80)
+      .call
+  end
+
+  def avif_filename(filename)
+    extension = File.extname(filename)
+    extension.present? ? "#{filename.delete_suffix(extension)}.avif" : "#{filename}.avif"
   end
 
   def human_size(bytes)

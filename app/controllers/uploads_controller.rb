@@ -26,7 +26,11 @@ class UploadsController < ApplicationController
       return
     end
 
-    service = BatchUploadService.new(user: current_user, provenance: :web)
+    service = BatchUploadService.new(
+      user: current_user,
+      provenance: :web,
+      convert_to_avif: params[:convert_to_avif] == "1"
+    )
     result = service.process_files(uploaded_files)
 
     flash_message = build_flash_message(result)
