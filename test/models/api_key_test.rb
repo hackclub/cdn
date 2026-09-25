@@ -75,6 +75,20 @@ class APIKeyTest < ActiveSupport::TestCase
     assert_equal first_use, api_key.reload.last_used_at
   end
 
+  test "touch_last_used! does not overwrite a recent use from another request" do
+    api_key = users(:one).api_keys.create!(name: "Test Key")
+    other_request_key = APIKey.find(api_key.id)
+
+    api_key.touch_last_used!
+    first_use = api_key.reload.last_used_at
+
+    travel 1.minute do
+      other_request_key.touch_last_used!
+    end
+
+    assert_equal first_use, api_key.reload.last_used_at
+  end
+
   test "touch_last_used! writes again once last_used_at is stale" do
     api_key = users(:one).api_keys.create!(name: "Test Key")
     api_key.touch_last_used!

@@ -31,9 +31,15 @@ class APIKey < ApplicationRecord
 
   def touch_last_used!
     now = Time.current
-    return if last_used_at.present? && last_used_at > now - USAGE_TRACKING_PRECISION
+    cutoff = now - USAGE_TRACKING_PRECISION
+    return if last_used_at.present? && last_used_at > cutoff
 
-    update_column(:last_used_at, now)
+    # The condition must be checked in the UPDATE: another request may have
+    # refreshed this key after we loaded it.
+    updated = self.class.where(id: id)
+      .where("last_used_at IS NULL OR last_used_at <= ?", cutoff)
+      .update_all(last_used_at: now)
+    self.last_used_at = now if updated == 1
   end
 
   def active?
