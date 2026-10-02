@@ -17,13 +17,16 @@ module QuotaHelper
     elsif quota_service.at_warning?
       # Warning banner when >= 80% used
       render Primer::Beta::Flash.new(scheme: :warning, full: true) do
-        plain "You're using #{usage[:percentage_used]}% of your storage quota "
-        plain "(#{number_to_human_size(usage[:storage_used])} of #{number_to_human_size(usage[:storage_limit])}). "
+        parts = [
+          "You're using #{usage[:percentage_used]}% of your storage quota ",
+          "(#{number_to_human_size(usage[:storage_used])} of #{number_to_human_size(usage[:storage_limit])}). "
+        ]
         if usage[:policy] == "unverified"
-          plain "Get verified at "
-          a(href: "https://auth.hackclub.com", target: "_blank", rel: "noopener") { "auth.hackclub.com" }
-          plain " to unlock 50GB of storage."
+          parts << "Get verified at "
+          parts << link_to("auth.hackclub.com", "https://auth.hackclub.com", target: "_blank", rel: "noopener")
+          parts << " to unlock 50GB of storage."
         end
+        safe_join(parts)
       end
     end
     # Return nil if no warning needed
