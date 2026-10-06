@@ -76,4 +76,23 @@ class ExternalUploadsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "image/svg+xml", response.media_type
     assert_includes response.body, "Original URL not found in CDN"
   end
+
+  test "redirect Location is percent-encoded so node/Bun clients don't mangle non-ASCII filenames" do
+    id = SecureRandom.uuid_v7
+    filename = "Screenshot 2026-08-30 at 6.42.35\u202FPM.png"
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: file_fixture("test.png").open,
+      filename: filename,
+      content_type: "image/png",
+      key: "#{id}/#{filename}"
+    )
+    users(:one).uploads.create!(id: id, blob: blob, provenance: :web)
+
+    get external_upload_path(id: id, filename: filename)
+
+    assert_response :redirect
+    location = response.headers["Location"]
+    assert location.ascii_only?, "Location must be ASCII, got #{location.inspect}"
+    assert location.end_with?("/#{id}/Screenshot%202026-08-30%20at%206.42.35%E2%80%AFPM.png"), location
+  end
 end

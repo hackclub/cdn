@@ -70,9 +70,12 @@ class Upload < ApplicationRecord
   end
 
   # Direct URL to public R2 bucket
+  # Keys embed the raw filename (spaces, U+202F in macOS screenshot names, accents), so each segment is
+  # percent-encoded. A raw UTF-8 Location header is read as Latin-1 by node/Bun fetch and 404s on the mangled path.
   def assets_url
     host = ENV.fetch("CDN_ASSETS_HOST", "cdn.hackclub-assets.com")
-    "https://#{host}/#{blob.key}"
+    path = blob.key.split("/").map { |segment| ERB::Util.url_encode(segment) }.join("/")
+    "https://#{host}/#{path}"
   end
 
   # Get CDN URL (uses external uploads controller)
