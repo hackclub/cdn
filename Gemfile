@@ -77,7 +77,7 @@ gem "redcarpet"
 gem "lockbox"
 gem "blind_index"
 gem "sentry-ruby", "~> 7.0"
-gem "sentry-rails", "~> 7.0"
+gem "sentry-rails", "~> 7.1"
 gem "aws-sdk-s3", require: false
 gem "slack-ruby-client"
 gem "slocks", git: "https://github.com/24c02/slocks"
