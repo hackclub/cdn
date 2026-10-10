@@ -195,7 +195,7 @@ GEM
       reline (>= 0.4.2)
     jb (0.8.2)
     jmespath (1.6.2)
-    json (2.21.2)
+    json (3.0.2)
     jwt (3.3.0)
       base64
     kaminari (1.2.2)
@@ -536,7 +536,7 @@ DEPENDENCIES
   hashid-rails
   high_voltage
   jb
-  json (~> 2.21)
+  json (~> 3.0)
   kaminari
   lockbox
   omniauth

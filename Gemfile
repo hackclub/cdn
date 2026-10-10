@@ -67,7 +67,7 @@ gem "omniauth-hack_club"
 gem "faraday"
 gem "faraday-follow_redirects"
 # Phlex 2.4.1 calls JSON.fast_generate, which was removed in JSON 3.
-gem "json", "~> 2.21"
+gem "json", "~> 3.0"
 gem "pundit"
 gem "primer_view_components"
 gem "pg_search"
