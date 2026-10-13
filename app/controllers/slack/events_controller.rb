@@ -16,7 +16,10 @@ module Slack
 
         # Filter to message events with files in monitored channels
         if event[:type] == "message" && event[:files].present? && monitored_channel?(event[:channel])
-          ProcessSlackFileUploadJob.perform_later(event.to_unsafe_h)
+          User.transaction do
+            Privacy::SubjectLock.acquire!([ event[:user] ], wait: true)
+            ProcessSlackFileUploadJob.perform_later(event.to_unsafe_h)
+          end
         end
       end
 

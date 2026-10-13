@@ -131,18 +131,22 @@ class BatchUploadService
     sanitized_filename = ActiveStorage::Filename.new(file.original_filename).sanitized
     storage_key = "#{upload_id}/#{sanitized_filename}"
 
-    blob = ActiveStorage::Blob.create_and_upload!(
-      io: file.tempfile,
-      filename: file.original_filename,
-      content_type: content_type,
-      key: storage_key
-    )
+    # Erasure locks the same account row. Finish and link the file first, or
+    # discover that the account is gone before writing anything to storage.
+    @user.with_lock do
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: file.tempfile,
+        filename: file.original_filename,
+        content_type: content_type,
+        key: storage_key
+      )
 
-    @user.uploads.create!(
-      id: upload_id,
-      blob: blob,
-      provenance: @provenance
-    )
+      @user.uploads.create!(
+        id: upload_id,
+        blob: blob,
+        provenance: @provenance
+      )
+    end
   end
 
   def human_size(bytes)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_16_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_13_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -55,6 +55,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_16_000000) do
     t.index ["token_bidx"], name: "index_api_keys_on_token_bidx", unique: true
     t.index ["user_id", "revoked"], name: "index_api_keys_on_user_id_and_revoked"
     t.index ["user_id"], name: "index_api_keys_on_user_id"
+  end
+
+  create_table "privacy_token_uses", primary_key: "jti", id: :string, force: :cascade do |t|
+    t.datetime "used_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["used_at"], name: "index_privacy_token_uses_on_used_at"
   end
 
   create_table "uploads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

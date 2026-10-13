@@ -22,6 +22,8 @@ Rails.application.routes.draw do
   resources :api_keys, only: [ :index, :create, :destroy ]
 
   namespace :api do
+    post "privacy/delete", to: "privacy#delete"
+    post "privacy/export", to: "privacy#export"
     namespace :v4 do
       get "me", to: "users#show"
       post "upload", to: "uploads#create"
