@@ -177,21 +177,23 @@ class Upload < ApplicationRecord
     sanitized_filename = ActiveStorage::Filename.new(filename).sanitized
     storage_key = "#{upload_id}/#{sanitized_filename}"
 
-    blob = ActiveStorage::Blob.create_and_upload!(
-      io: StringIO.new(body),
-      filename: filename,
-      content_type: content_type,
-      identify: false,
-      key: storage_key
-    )
+    user.with_lock do
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: StringIO.new(body),
+        filename: filename,
+        content_type: content_type,
+        identify: false,
+        key: storage_key
+      )
 
-    create!(
-      id: upload_id,
-      user: user,
-      blob: blob,
-      provenance: provenance,
-      original_url: original_url
-    )
+      create!(
+        id: upload_id,
+        user: user,
+        blob: blob,
+        provenance: provenance,
+        original_url: original_url
+      )
+    end
   end
 
   class << self

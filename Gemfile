@@ -84,5 +84,6 @@ gem "slocks", git: "https://github.com/24c02/slocks"
 gem "ruby-progressbar"
 gem "concurrent-ruby"
 gem "csv"
+gem "jwt", "~> 3.3"
 
 # gem "openssl", "~> 4.0"

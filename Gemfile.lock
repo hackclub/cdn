@@ -537,6 +537,7 @@ DEPENDENCIES
   high_voltage
   jb
   json (~> 2.21)
+  jwt (~> 3.3)
   kaminari
   lockbox
   omniauth

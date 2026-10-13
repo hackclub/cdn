@@ -16,6 +16,19 @@ class ProcessSlackFileUploadJob < ApplicationJob
   end
 
   def perform(event)
+    User.transaction do
+      Privacy::SubjectLock.acquire!([ event["user"] ], wait: true)
+      # A worker may have loaded a job just before privacy cleanup removed it.
+      if provider_job_id && Rails.application.config.active_job.queue_adapter == :solid_queue
+        return unless SolidQueue::Job.exists?(provider_job_id)
+      end
+      process_event(event)
+    end
+  end
+
+  private
+
+  def process_event(event)
     @channel_id = event["channel"]
     @message_ts = event["ts"]
     @slack_user_id = event["user"]
@@ -40,8 +53,6 @@ class ProcessSlackFileUploadJob < ApplicationJob
       notify_error(e)
     end
   end
-
-  private
 
   def find_or_create_user
     user = User.find_by(slack_id: @slack_user_id)
