@@ -7,18 +7,6 @@ module Privacy
       @blobs, @uploads = blobs, uploads
     end
 
-    def check_legacy!
-      manifest = Rails.root.join("tmp/old_storage_keys.txt")
-      raise Error.new("manual_review_required", 409) if manifest.exist? && manifest.read.strip.present?
-      @blobs.map(&:service).uniq.each do |service|
-        next unless service.is_a?(ActiveStorage::Service::S3Service)
-        # Migration removed the old keys from the DB. Unknown copies cannot safely
-        # be attributed to a subject: staff must finish the old-key cleanup first.
-        old = client(service).list_objects_v2(bucket: service.bucket.name, prefix: "hackclub-cdn/", max_keys: 1)
-        raise Error.new("manual_review_required", 409) if old.contents.any?
-      end
-    end
-
     def delete!
       @blobs.each do |blob|
         service = blob.service

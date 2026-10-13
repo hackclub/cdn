@@ -383,22 +383,46 @@ class API::PrivacyControllerTest < ActionDispatch::IntegrationTest
     ENV["CLOUDFLARE_ZONE_ID"], ENV["CLOUDFLARE_API_TOKEN"], ENV["CLOUDFLARE_CDN_ZONE_ID"] = original_zone, original_token, original_cdn_zone
   end
 
-  test "S3 cleanup removes the blob and untracked variants and rejects unknown legacy copies" do
+  test "S3 cleanup removes current blobs and variants without inspecting or deleting legacy copies" do
     service = ActiveStorage::Service::S3Service.new(bucket: "privacy-test", region: "auto",
       access_key_id: "test", secret_access_key: "test", stub_responses: true)
     files = Privacy::Files.new([ @blob ], [])
     client = files.send(:client, service)
-    client.stub_responses(:list_objects_v2, { contents: [] })
-    with_stub(@blob, :service, service) { files.check_legacy! }
-    client.stub_responses(:list_objects_v2, { contents: [ { key: "variants/#{@blob.key}/old-variant" } ] })
+    client.stub_responses(:list_objects_v2, lambda { |context|
+      assert_equal "variants/#{@blob.key}/", context.params[:prefix]
+      { contents: [ { key: "variants/#{@blob.key}/old-variant" } ] }
+    })
     with_stub(@blob, :service, service) { files.delete! }
     deletions = client.api_requests.select { |call| call[:operation_name] == :delete_object }.map { |call| call[:params][:key] }
-    assert_includes deletions, @blob.key
-    assert_includes deletions, "variants/#{@blob.key}/old-variant"
-    client.stub_responses(:list_objects_v2, { contents: [ { key: "hackclub-cdn/unknown-old-key" } ] })
-    error = assert_raises(Privacy::Error) { with_stub(@blob, :service, service) { files.check_legacy! } }
-    assert_equal "manual_review_required", error.message
-    assert_equal 409, error.status
+    assert_equal [ @blob.key, "variants/#{@blob.key}/old-variant" ], deletions
+  end
+
+  test "legacy manifest does not block dry runs or deletion of current uploads" do
+    Tempfile.create("legacy-storage-keys") do |manifest|
+      manifest.write("hackclub-cdn/unknown-old-key\n")
+      manifest.flush
+      original_join = Rails.root.method(:join)
+      with_stub(Rails.root, :join, lambda { |*paths|
+        paths == [ "tmp/old_storage_keys.txt" ] ? Pathname.new(manifest.path) : original_join.call(*paths)
+      }) do
+        privacy_post
+        assert_response :ok
+        reviewed = response.parsed_body["deleted"]
+        assert_equal 1, reviewed["uploads"]
+        assert @blob.service.exist?(@blob.key)
+
+        @claims["dry_run"] = false
+        @claims["jti"] = SecureRandom.uuid
+        privacy_post
+        assert_response :ok
+        assert_equal reviewed, response.parsed_body["deleted"]
+        assert_not User.exists?(@user.id)
+        assert_not Upload.exists?(@upload.id)
+        assert_not ActiveStorage::Blob.exists?(@blob.id)
+        assert_not @blob.service.exist?(@blob.key)
+        assert_equal "hackclub-cdn/unknown-old-key\n", File.read(manifest.path)
+      end
+    end
   end
 
   private

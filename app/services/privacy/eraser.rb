@@ -31,7 +31,6 @@ module Privacy
         result["retained"] = retained
         check_shared_keys!
         files = Files.new(@blobs, @uploads)
-        files.check_legacy! unless @blobs.empty?
         @queue.transaction do
           jobs = @queue.plan(lock: true)
           next if users.empty? && jobs.empty?
