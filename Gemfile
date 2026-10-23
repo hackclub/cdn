@@ -76,7 +76,7 @@ gem "high_voltage"
 gem "redcarpet"
 gem "lockbox"
 gem "blind_index"
-gem "sentry-ruby", "~> 7.0"
+gem "sentry-ruby", "~> 7.1"
 gem "sentry-rails", "~> 7.0"
 gem "aws-sdk-s3", require: false
 gem "slack-ruby-client"
