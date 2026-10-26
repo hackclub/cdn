@@ -69,13 +69,8 @@ class Upload < ApplicationRecord
     ActiveSupport::NumberHelper.number_to_human_size(byte_size)
   end
 
-  # Direct URL to public R2 bucket
-  # Keys embed the raw filename (spaces, U+202F in macOS screenshot names, accents), so each segment is
-  # percent-encoded. A raw UTF-8 Location header is read as Latin-1 by node/Bun fetch and 404s on the mangled path.
   def assets_url
-    host = ENV.fetch("CDN_ASSETS_HOST", "cdn.hackclub-assets.com")
-    path = blob.key.split("/").map { |segment| ERB::Util.url_encode(segment) }.join("/")
-    "https://#{host}/#{path}"
+    "#{CDNHost.assets_base_url}/#{ActionDispatch::Journey::Router::Utils.escape_path(blob.key)}"
   end
 
   # Get CDN URL (uses external uploads controller)
@@ -245,5 +240,7 @@ class Upload < ApplicationRecord
     Rails.logger.info("Blob #{blob.key} already deleted from S3, skipping purge")
   end
 
-  def purge_cdn_cache = PurgeCloudflareCacheJob.perform_later(assets_url)
+  # Both hosts cache the file: the assets host caches the bytes and the CDN host
+  # caches the redirect that points at them. Purge both or the delete is partial.
+  def purge_cdn_cache = PurgeCloudflareCacheJob.perform_later([ assets_url, cdn_url ])
 end
