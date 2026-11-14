@@ -81,20 +81,9 @@
     });
   }
 
-  let cachedStageRect = null;
   let rafId = null;
   let lastClientX = 0;
   let lastClientY = 0;
-
-  function updateCachedStageRect() {
-    if (orphStage) {
-      cachedStageRect = orphStage.getBoundingClientRect();
-    }
-  }
-
-  window.addEventListener("resize", () => {
-    cachedStageRect = null;
-  });
 
   // Prevent default drag behaviors and update eye tracking with rAF throttle
   document.addEventListener("dragover", (e) => {
@@ -123,10 +112,7 @@
   function updateEyeTracking(mouseX, mouseY) {
     if (!orphStage || !leftPupil || !rightPupil) return;
 
-    if (!cachedStageRect || cachedStageRect.width === 0) {
-      updateCachedStageRect();
-    }
-    const stageRect = cachedStageRect;
+    const stageRect = orphStage.getBoundingClientRect();
     if (!stageRect || stageRect.width === 0 || stageRect.height === 0) return;
 
     // Calibrated eye base centers inside Orph stage
@@ -334,7 +320,6 @@
       subtitleEl = null;
       isDropping = false;
       counter = 0;
-      cachedStageRect = null;
 
       // if upload is still left in progress, show background upload toast
       if (!isUploadDone) {
