@@ -176,36 +176,10 @@
     }
 
     if (isDropping) return;
-    isDropping = true;
-
-    // Trigger upload immediately in async - NOT blocked by animation!
-    const dt = new DataTransfer();
-    files.forEach((f) => dt.items.add(f));
-    fileInput.files = dt.files;
-    form.requestSubmit();
-
     showDropzone();
     if (orphStage) orphStage.classList.add("mouth-open");
 
-    const dropX = window.innerWidth / 2;
-    const dropY = window.innerHeight / 2;
-
-    playDesktopDropEffect(files, dropX, dropY, () => {
-      if (orphStage) {
-        orphStage.classList.remove("mouth-open");
-        orphStage.classList.add("gulping");
-      }
-      if (titleEl) titleEl.textContent = "Gulp! Uploading...";
-      if (subtitleEl) subtitleEl.textContent = "Nomming your files...";
-
-      setTimeout(() => {
-        if (orphStage) orphStage.classList.add("sliding-out");
-        setTimeout(() => {
-          isDropping = false;
-          hideDropzone();
-        }, 360);
-      }, 480);
-    });
+    executeUploadWithAnimation(files, window.innerWidth / 2, window.innerHeight / 2);
   });
 
   // Handle file drop
@@ -228,44 +202,92 @@
       return;
     }
 
-    // Desktop (> 768px): Among Us eject drift effect
+    // Desktop (> 768px): Among Us eject drift effect with synchronized background upload
     if (isDropping) return;
-    isDropping = true;
-
-    // Trigger upload immediately in async - NOT blocked by animation!
-    fileInput.files = files;
-    form.requestSubmit();
 
     const dropX = e.clientX || window.innerWidth / 2;
     const dropY = e.clientY || window.innerHeight / 2;
 
-    playDesktopDropEffect(files, dropX, dropY, () => {
-      // Once in mouth: snap mouth shut with scale bounce, say "Gulp! Uploading..."
+    executeUploadWithAnimation(files, dropX, dropY);
+  });
+
+  // Execute upload in background and ensure animation finishes before page refresh
+  async function executeUploadWithAnimation(files, dropX, dropY) {
+    if (!form) return;
+    isDropping = true;
+
+    // 1. Prepare FormData for immediate background upload
+    const formData = new FormData();
+    const csrfToken =
+      form.querySelector('input[name="authenticity_token"]')?.value ||
+      document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+    if (csrfToken) {
+      formData.append("authenticity_token", csrfToken);
+    }
+    for (let i = 0; i < files.length; i++) {
+      formData.append("files[]", files[i]);
+    }
+
+    // 2. Start upload immediately in background
+    const uploadPromise = fetch(form.action || "/uploads", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRF-Token": csrfToken || "",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+      }
+    });
+
+    // 3. Start Among Us zero-G eject trajectory animation in parallel
+    const animationPromise = new Promise((resolve) => {
+      playDesktopDropEffect(files, dropX, dropY, resolve);
+    });
+
+    try {
+      // 4. Wait for the animation to finish drifting into Orph's mouth
+      await animationPromise;
+
+      // File icons entered mouth! Orph starts gulping
       if (orphStage) {
         orphStage.classList.remove("mouth-open");
         orphStage.classList.add("gulping");
       }
+      if (titleEl) titleEl.textContent = "Gulp! Uploading...";
+      if (subtitleEl) subtitleEl.textContent = "Nomming your files...";
 
-      if (titleEl) {
-        titleEl.textContent = "Gulp! Uploading...";
-      }
-      if (subtitleEl) {
-        subtitleEl.textContent = "Nomming your files...";
+      // 5. Wait for the background upload to complete (if not already done)
+      const response = await uploadPromise;
+
+      if (!response.ok && response.status !== 302) {
+        throw new Error(`Upload returned status ${response.status}`);
       }
 
-      // Slide away to the left
+      const html = await response.text();
+
+      // 6. Slide Orph away to the left smoothly
+      if (orphStage) {
+        orphStage.classList.add("sliding-out");
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 360));
+
+      // 7. Update document to display flash message & updated file list
+      if (html && html.includes("<body")) {
+        document.open();
+        document.write(html);
+        document.close();
+      } else {
+        window.location.reload();
+      }
+    } catch (err) {
+      if (titleEl) titleEl.textContent = "Upload failed";
+      if (subtitleEl) subtitleEl.textContent = err.message || "Please try again";
       setTimeout(() => {
-        if (orphStage) {
-          orphStage.classList.add("sliding-out");
-        }
-
-        setTimeout(() => {
-          isDropping = false;
-          hideDropzone();
-        }, 360);
-      }, 480);
-    });
-  });
+        isDropping = false;
+        hideDropzone();
+      }, 1800);
+    }
+  }
 
   // Desktop drop effect: Among Us imposter kicked zero-gravity drift into mouth
   function playDesktopDropEffect(files, dropX, dropY, onComplete) {
