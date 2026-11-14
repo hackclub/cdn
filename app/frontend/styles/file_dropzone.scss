@@ -1,99 +1,368 @@
-
+// File Dropzone Overlay Styles
 .file-dropzone {
-  background-color: rgba(255, 255, 255, 0.95);
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
+  inset: 0;
+  z-index: 9999;
   pointer-events: none;
-
+  opacity: 0;
+  transition: opacity 300ms ease-out;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 
-  // Animated dashed border using gradient technique
-  background-image:
-    linear-gradient(90deg, #0969da 50%, transparent 50%),
-    linear-gradient(90deg, #0969da 50%, transparent 50%),
-    linear-gradient(0deg, #0969da 50%, transparent 50%),
-    linear-gradient(0deg, #0969da 50%, transparent 50%);
-  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-  background-size:
-    50px 8px,
-    50px 8px,
-    8px 50px,
-    8px 50px;
-  background-position:
-    0 0,
-    0 100%,
-    0 100%,
-    100% 20px;
-  animation: border-dance 1s infinite linear;
+  // Desktop default (> 768px): Dark background with blur
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 
-  opacity: 0;
+  &.visible {
+    opacity: 1;
+    pointer-events: auto;
 
-  transition-property: opacity;
-  transition-duration: 300ms;
-  transition-timing-function: ease-out;
-
-  padding: 3rem;
-  text-align: center;
-
-  h1 {
-    padding-bottom: 0;
-    border: none;
-    color: #0969da;
-    font-size: 2.5rem;
-    font-weight: 600;
-
-    transition-property: transform;
-    transition-duration: 300ms;
-    transition-timing-function: ease-out;
-
-    transform: scale(1.08);
-  }
-}
-
-.file-dropzone.visible {
-  opacity: 1;
-
-  h1 {
-    transform: none;
-  }
-}
-
-@keyframes border-dance {
-  0% {
-    background-position:
-      0 0,
-      0 100%,
-      0 100%,
-      100% 20px;
-  }
-  100% {
-    background-position:
-      -50px 0,
-      50px 100%,
-      0 calc(100% + 50px),
-      100% -30px;
-  }
-}
-
-// Dark mode support
-@media (prefers-color-scheme: dark) {
-  .file-dropzone {
-    background-color: rgba(13, 17, 23, 0.95);
-
-    h1 {
-      color: #58a6ff;
+    .orph-stage {
+      transform: translateX(0);
     }
 
-    background-image:
-      linear-gradient(90deg, #58a6ff 50%, transparent 50%),
-      linear-gradient(90deg, #58a6ff 50%, transparent 50%),
-      linear-gradient(0deg, #58a6ff 50%, transparent 50%),
-      linear-gradient(0deg, #58a6ff 50%, transparent 50%);
+    .dropzone-content {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  &.exiting {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 300ms ease-in;
+
+    .orph-stage {
+      transform: translateX(-120vw);
+      transition: transform 300ms cubic-bezier(0.4, 0, 1, 1);
+    }
+
+    .dropzone-content {
+      opacity: 0;
+      transform: translateX(40px);
+      transition: opacity 250ms ease-in, transform 250ms ease-in;
+    }
+  }
+}
+
+// Layout Container
+.dropzone-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  height: 100%;
+  padding: 2rem 4rem;
+  box-sizing: border-box;
+  gap: 3rem;
+  user-select: none;
+}
+
+// Left side: Orph Stage (max 40-45% screen width)
+.orph-stage {
+  position: relative;
+  width: min(44vw, 520px);
+  max-width: 45%;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  transform: translateX(-120vw);
+  transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+
+  &.sliding-out {
+    transform: translateX(-120vw) !important;
+    transition: transform 350ms cubic-bezier(0.4, 0, 0.7, 0.2) !important;
+  }
+
+  &.gulping {
+    animation: orph-gulp-bounce 450ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+}
+
+.orph-character {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.orph-graphic {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.5));
+
+  &.orph-closed {
+    display: block;
+  }
+
+  &.orph-open {
+    display: none;
+  }
+}
+
+// Snapping mouth state
+.orph-stage.mouth-open {
+  .orph-graphic.orph-closed {
+    display: none;
+  }
+  .orph-graphic.orph-open {
+    display: block;
+  }
+}
+
+// Orph eye pupils with calibrated bounds
+.orph-pupil {
+  position: absolute;
+  width: 2.2%;
+  height: 2.2%;
+  background-color: #080808;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+  transition: transform 50ms linear;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+  will-change: transform;
+
+  &.orph-pupil-left {
+    left: 53.4%;
+    top: 12.8%;
+  }
+
+  &.orph-pupil-right {
+    left: 68.8%;
+    top: 8.7%;
+  }
+}
+
+// Orph speech bubble
+.orph-speech-bubble {
+  position: absolute;
+  top: 18%;
+  left: 78%;
+  background: #ffffff;
+  color: #0d1117;
+  padding: 0.65rem 1.25rem;
+  border-radius: 18px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: scale(0.5) translate(-10px, 10px);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 20;
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 10px;
+    left: -8px;
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-right: 9px solid #ffffff;
+  }
+}
+
+.orph-stage.gulping .orph-speech-bubble {
+  opacity: 1;
+  transform: scale(1) translate(0, 0);
+}
+
+// Right side: Content
+.dropzone-content {
+  flex: 1;
+  max-width: 540px;
+  text-align: left;
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 400ms ease, transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  .dropzone-upload-icon {
+    display: none;
+  }
+
+  .dropzone-title {
+    font-size: clamp(2.2rem, 4vw, 3.8rem);
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.15;
+    margin: 0 0 1rem 0;
+    padding: 0;
+    border: none;
+    letter-spacing: -0.02em;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .dropzone-subtitle {
+    font-size: clamp(1rem, 1.6vw, 1.35rem);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.5;
+    margin: 0;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// Animated black hole sucked-in retro broken file icons
+.orph-sucked-file {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  pointer-events: none;
+  width: 44px;
+  height: 52.8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+  will-change: transform, opacity;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+}
+
+// Scale bounce keyframes for gulping
+@keyframes orph-gulp-bounce {
+  0% { transform: scale(1, 1); }
+  25% { transform: scale(1.18, 0.82); }
+  50% { transform: scale(0.92, 1.15); }
+  75% { transform: scale(1.05, 0.97); }
+  100% { transform: scale(1, 1); }
+}
+
+// Mobile and responsive fallback (<= 768px)
+@media (max-width: 768px) {
+  .file-dropzone {
+    background-color: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 1.5rem;
+    box-sizing: border-box;
+
+    .dropzone-container {
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+      gap: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    // Completely hide Orph character, pupil eyes, speech bubble, and suction icons
+    .orph-stage,
+    .orph-character,
+    .orph-pupil,
+    .orph-speech-bubble,
+    .orph-sucked-file {
+      display: none !important;
+    }
+
+    // Clean, standard, modern dropzone card centered
+    .dropzone-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      width: calc(100% - 2rem);
+      max-width: 440px;
+      margin: auto;
+      padding: 3rem 2rem;
+      border-radius: 24px;
+      box-sizing: border-box;
+      opacity: 1;
+      transform: none;
+      background-color: #ffffff;
+      border: 2.5px dashed #ec3750;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12), 0 0 0 6px rgba(236, 55, 80, 0.05);
+
+      // Modern SVG upload icon badge
+      .dropzone-upload-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+        color: #ec3750;
+        background: rgba(236, 55, 80, 0.1);
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+
+        svg {
+          width: 32px;
+          height: 32px;
+          stroke: currentColor;
+        }
+      }
+
+      .dropzone-title {
+        color: #ec3750;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
+        text-shadow: none;
+      }
+
+      .dropzone-subtitle {
+        color: #656d76;
+        font-size: 0.95rem;
+        font-weight: 500;
+        line-height: 1.4;
+        margin: 0;
+        text-shadow: none;
+        opacity: 0.9;
+      }
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .file-dropzone {
+      background-color: rgba(13, 17, 23, 0.94);
+
+      .dropzone-content {
+        background-color: #161b22;
+        border: 2.5px dashed #ec3750;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 0 6px rgba(236, 55, 80, 0.12);
+
+        .dropzone-upload-icon {
+          color: #ec3750;
+          background: rgba(236, 55, 80, 0.18);
+        }
+
+        .dropzone-title {
+          color: #ffffff;
+        }
+
+        .dropzone-subtitle {
+          color: #8b949e;
+        }
+      }
+    }
   }
 }
