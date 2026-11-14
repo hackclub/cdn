@@ -1,8 +1,33 @@
 (function () {
-  let dropzone;
+  const DESKTOP_TITLES = [
+    "Feed me, mortal",
+    "Drop 'em like it's hot",
+    "Your files look delicious",
+    "Sacrifice your assets to Orph",
+    "Nom nom nom...",
+    "Down the hatch",
+    "Mmm, fresh uploads"
+  ];
+  const DESKTOP_SUBTITLE = "Drop anywhere to feed Orph • Up to 40 files at once";
+
+  let dropzone = null;
+  let orphStage = null;
+  let leftPupil = null;
+  let rightPupil = null;
+  let titleEl = null;
+  let subtitleEl = null;
+
   let counter = 0;
-  let fileInput, form;
+  let fileInput = null;
+  let form = null;
   let initialized = false;
+  let mouthTimer = null;
+  let isDropping = false;
+  let hideTimer = null;
+
+  function getRandomTitle() {
+    return DESKTOP_TITLES[Math.floor(Math.random() * DESKTOP_TITLES.length)];
+  }
 
   function init() {
     const formElement = document.querySelector("[data-dropzone-form]");
@@ -22,23 +47,112 @@
 
     initialized = true;
 
-    // Handle file input change (supports multiple files)
+    // Handle manual file input change
     fileInput.addEventListener("change", (e) => {
       const files = e.target.files;
       if (files && files.length > 0) {
         form.requestSubmit();
       }
     });
+
+    // prefetch svg assets on load
+    prefetchSvgAssets();
   }
 
-  // Prevent default drag behaviors
+  // prefetch svg assets so orph and file icons appear immediately on drag
+  const PREFETCH_SVGS = [
+    "/orph-closed-mouth.svg",
+    "/orph-open-mouth.svg",
+    "/file-icon.svg"
+  ];
+
+  function prefetchSvgAssets() {
+    if (!document.head) return;
+
+    PREFETCH_SVGS.forEach((url) => {
+      if (!document.querySelector(`link[rel="prefetch"][href="${url}"]`)) {
+        const link = document.createElement("link");
+        link.rel = "prefetch";
+        link.as = "image";
+        link.type = "image/svg+xml";
+        link.href = url;
+        document.head.appendChild(link);
+      }
+    });
+  }
+
+  let rafId = null;
+  let lastClientX = 0;
+  let lastClientY = 0;
+
+  // Prevent default drag behaviors and update eye tracking with rAF throttle
   document.addEventListener("dragover", (e) => {
     e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "copy";
+    }
+
+    // Return early on small screens (no eye tracking, animations, or pupil calculations)
+    if (window.innerWidth <= 768) return;
+
+    if (dropzone && orphStage) {
+      lastClientX = e.clientX;
+      lastClientY = e.clientY;
+
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          rafId = null;
+          updateEyeTracking(lastClientX, lastClientY);
+        });
+      }
+    }
   });
+
+  // Calculate pupil positions smoothly inside Orph eye cutouts with strict elliptical clamp
+  function updateEyeTracking(mouseX, mouseY) {
+    if (!orphStage || !leftPupil || !rightPupil) return;
+
+    const stageRect = orphStage.getBoundingClientRect();
+    if (!stageRect || stageRect.width === 0 || stageRect.height === 0) return;
+
+    // Calibrated eye base centers inside Orph stage
+    const leftEyeBaseX = stageRect.left + stageRect.width * 0.534;
+    const leftEyeBaseY = stageRect.top + stageRect.height * 0.128;
+    const rightEyeBaseX = stageRect.left + stageRect.width * 0.688;
+    const rightEyeBaseY = stageRect.top + stageRect.height * 0.087;
+
+    // Strict elliptical boundary limits in pixels to guarantee pupils never escape eye cutouts
+    const leftMaxX = stageRect.width * 0.011;
+    const leftMaxY = stageRect.height * 0.0050;
+
+    const rightMaxX = stageRect.width * 0.0095;
+    const rightMaxY = stageRect.height * 0.0042;
+
+    // Left eye vector and exact ellipse clamp
+    const rawLx = (mouseX - leftEyeBaseX) * 0.035;
+    const rawLy = (mouseY - leftEyeBaseY) * 0.035;
+    const scaleL = Math.max(1, Math.hypot(rawLx / leftMaxX, rawLy / leftMaxY));
+    const offLx = rawLx / scaleL;
+    const offLy = rawLy / scaleL;
+
+    // Right eye vector and exact ellipse clamp
+    const rawRx = (mouseX - rightEyeBaseX) * 0.035;
+    const rawRy = (mouseY - rightEyeBaseY) * 0.035;
+    const scaleR = Math.max(1, Math.hypot(rawRx / rightMaxX, rawRy / rightMaxY));
+    const offRx = rawRx / scaleR;
+    const offRy = rawRy / scaleR;
+
+    leftPupil.style.transform = `translate(-50%, -50%) translate3d(${offLx.toFixed(2)}px, ${offLy.toFixed(2)}px, 0)`;
+    rightPupil.style.transform = `translate(-50%, -50%) translate3d(${offRx.toFixed(2)}px, ${offRy.toFixed(2)}px, 0)`;
+  }
 
   // Show overlay when dragging enters window
   document.addEventListener("dragenter", (e) => {
     if (!fileInput) return;
+    if (e.dataTransfer && e.dataTransfer.types) {
+      const types = Array.from(e.dataTransfer.types);
+      if (!types.includes("Files")) return;
+    }
     e.preventDefault();
     if (counter === 0) {
       showDropzone();
@@ -51,62 +165,480 @@
     if (!fileInput) return;
     e.preventDefault();
     counter--;
-    if (counter === 0) {
+    if (counter <= 0) {
+      counter = 0;
       hideDropzone();
     }
   });
 
-  // Handle file drop (supports multiple files)
+  // Cancel on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && dropzone) {
+      e.preventDefault();
+      counter = 0;
+      hideDropzone();
+    }
+  });
+
+  // Clipboard Paste file support
+  document.addEventListener("paste", async (e) => {
+    if (!fileInput) return;
+    const items = e.clipboardData ? e.clipboardData.items : null;
+    if (!items || items.length === 0) return;
+
+    const files = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind === "file") {
+        const file = items[i].getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length === 0) return;
+
+    e.preventDefault();
+    if (window.innerWidth <= 768) {
+      const dt = new DataTransfer();
+      files.forEach((f) => dt.items.add(f));
+      fileInput.files = dt.files;
+      form.requestSubmit();
+      return;
+    }
+
+    if (isDropping) return;
+    showDropzone();
+    if (orphStage) orphStage.classList.add("mouth-open");
+
+    executeUploadWithAnimation(files, window.innerWidth / 2, window.innerHeight / 2);
+  });
+
+  // Handle file drop
   document.addEventListener("drop", (e) => {
     if (!fileInput) return;
     e.preventDefault();
     counter = 0;
-    hideDropzone();
 
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
+    const files = e.dataTransfer ? e.dataTransfer.files : null;
+    if (!files || files.length === 0) {
+      hideDropzone();
+      return;
+    }
+
+    // Small screens (<= 768px): instant submission without mascot animation
+    if (window.innerWidth <= 768) {
+      hideDropzone();
       fileInput.files = files;
       form.requestSubmit();
+      return;
     }
+
+    // Desktop (> 768px): Among Us eject drift effect with synchronized background upload
+    if (isDropping) return;
+
+    const dropX = e.clientX || window.innerWidth / 2;
+    const dropY = e.clientY || window.innerHeight / 2;
+
+    executeUploadWithAnimation(files, dropX, dropY);
   });
+
+  // Execute upload in background and ensure animation finishes before page refresh
+  async function executeUploadWithAnimation(files, dropX, dropY) {
+    if (!form) return;
+    isDropping = true;
+    let uploadToast = null;
+
+    // 1. Prepare FormData for immediate background upload
+    const formData = new FormData();
+    const csrfToken =
+      form.querySelector('input[name="authenticity_token"]')?.value ||
+      document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+    if (csrfToken) {
+      formData.append("authenticity_token", csrfToken);
+    }
+    for (let i = 0; i < files.length; i++) {
+      formData.append("files[]", files[i]);
+    }
+
+    // start upload immediately in the background and track completion
+    let isUploadDone = false;
+    const uploadPromise = fetch(form.action || "/uploads", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRF-Token": csrfToken || "",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+      }
+    });
+
+    uploadPromise.then(() => { isUploadDone = true; }).catch(() => { isUploadDone = true; });
+
+    // wait until orph finishes entering before starting trajectory
+    await ensureOrphReady();
+
+    // run drift animation in parallel
+    const animationPromise = new Promise((resolve) => {
+      playDesktopDropEffect(files, dropX, dropY, resolve);
+    });
+
+    try {
+      // wait until icons enter the mouth
+      await animationPromise;
+
+      if (orphStage) {
+        orphStage.classList.remove("mouth-open");
+        orphStage.classList.add("gulping");
+      }
+      if (titleEl) titleEl.textContent = "Gulp! Uploading...";
+      if (subtitleEl) subtitleEl.textContent = "Nomming your files...";
+
+      // wait 800ms so user sees the gulp and reads what orph says
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // smooth exit animation: orph finishes animation and exits regardless of upload speed
+      if (orphStage) {
+        orphStage.classList.remove("gulping", "mouth-open");
+      }
+      if (dropzone) {
+        dropzone.classList.remove("visible");
+        dropzone.classList.add("exiting");
+      }
+
+      // wait for exit transition to complete
+      await new Promise((resolve) => setTimeout(resolve, 450));
+
+      // restore scroll
+      document.body.style.overflow = "";
+
+      // remove dropzone overlay from DOM and reset drop state
+      if (dropzone && dropzone.parentNode) {
+        dropzone.parentNode.removeChild(dropzone);
+      }
+      dropzone = null;
+      orphStage = null;
+      leftPupil = null;
+      rightPupil = null;
+      titleEl = null;
+      subtitleEl = null;
+      isDropping = false;
+      counter = 0;
+
+      // if upload is still left in progress, show background upload toast
+      if (!isUploadDone) {
+        uploadToast = document.createElement("div");
+        uploadToast.className = "upload-progress-toast";
+        uploadToast.innerHTML = `
+          <span class="upload-toast-spinner"></span>
+          <span>Uploading ${files.length} file${files.length > 1 ? "s" : ""}...</span>
+        `;
+        document.body.appendChild(uploadToast);
+      }
+
+      // wait for upload to complete
+      const response = await uploadPromise;
+      if (uploadToast) uploadToast.remove();
+      uploadToast = null;
+
+      if (!response.ok && response.status !== 302) {
+        throw new Error(`Upload returned status ${response.status}`);
+      }
+
+      const html = await response.text();
+
+      // update page content with uploaded files & flash notice
+      if (html && html.includes("<body")) {
+        const parser = new DOMParser();
+        const newDoc = parser.parseFromString(html, "text/html");
+
+        document.title = newDoc.title;
+        if (newDoc.body) {
+          document.body.innerHTML = newDoc.body.innerHTML;
+        }
+
+        // re-initialize controllers on updated DOM
+        init();
+        document.dispatchEvent(new Event("turbo:load"));
+      } else {
+        window.location.reload();
+      }
+    } catch (err) {
+      if (uploadToast) {
+        uploadToast.innerHTML = `<span>Upload failed: ${err.message || "Please try again"}</span>`;
+        uploadToast.style.borderColor = "#ec3750";
+        setTimeout(() => {
+          if (uploadToast) uploadToast.remove();
+        }, 4000);
+      }
+      if (orphStage) {
+        orphStage.classList.remove("mouth-open", "gulping");
+      }
+      if (titleEl) titleEl.textContent = "Upload failed";
+      if (subtitleEl) subtitleEl.textContent = err.message || "Please try again";
+      setTimeout(() => {
+        isDropping = false;
+        hideDropzone();
+      }, 1800);
+    }
+  }
+
+  // wait until orph finishes entering and comes to a complete rest
+  async function ensureOrphReady() {
+    if (!orphStage) return;
+    const start = performance.now();
+    while (performance.now() - start < 600) {
+      const rect = orphStage.getBoundingClientRect();
+      if (rect.left > 10 && rect.width > 0) {
+        await new Promise((r) => requestAnimationFrame(r));
+        const rect2 = orphStage.getBoundingClientRect();
+        if (Math.abs(rect2.left - rect.left) < 1) {
+          break;
+        }
+      } else {
+        await new Promise((r) => setTimeout(r, 20));
+      }
+    }
+  }
+
+  // among us style zero-g eject drift into orph mouth
+  function playDesktopDropEffect(files, dropX, dropY, onComplete) {
+    if (!orphStage) {
+      onComplete();
+      return;
+    }
+
+    const stageRect = orphStage.getBoundingClientRect();
+    const mouthX = stageRect.left + stageRect.width * 0.6305;
+    const mouthY = stageRect.top + stageRect.height * 0.2896;
+
+    const fileList = Array.from(files);
+    const displayCount = Math.min(Math.max(fileList.length, 1), 10);
+    let finishedCount = 0;
+
+    // scale icon relative to orph stage
+    const iconWidth = Math.round(stageRect.width * 0.115);
+    const iconHeight = Math.round(iconWidth * 1.2);
+
+    for (let i = 0; i < displayCount; i++) {
+      const fileIcon = document.createElement("div");
+      fileIcon.className = "orph-sucked-file";
+      fileIcon.style.width = `${iconWidth}px`;
+      fileIcon.style.height = `${iconHeight}px`;
+      fileIcon.innerHTML = `<img src="/file-icon.svg" alt="file" draggable="false">`;
+
+      document.body.appendChild(fileIcon);
+
+      const spreadAngle = (i / displayCount) * Math.PI * 2;
+      const spreadRadius = displayCount > 1 ? (10 + (i % 3) * 8) : 0;
+      const startX = dropX + Math.cos(spreadAngle) * spreadRadius;
+      const startY = dropY + Math.sin(spreadAngle) * spreadRadius;
+
+      const dx = mouthX - startX;
+      const dy = mouthY - startY;
+
+      // constant velocity drift with steady 360 tumble
+      const frames = [];
+      const steps = 30;
+      // Gentle tumble: continuous 360deg spin at uniform angular velocity across entire drift
+      const spinDirection = (i % 2 === 0 ? 1 : -1);
+      const totalRotation = spinDirection * 360;
+
+      for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        // Constant velocity drift through space straight to mouth center
+        const posX = startX + dx * t;
+        const posY = startY + dy * t;
+
+        // Steady end-over-end tumble at constant speed (Among Us eject style)
+        const rotation = (totalRotation * t).toFixed(1);
+
+        // Gradually scales down into the distance/void (from 1.0 down to 0 at mouth entry)
+        const scale = Math.max(0, 1 - Math.pow(t, 1.3));
+
+        // Fade out right as it enters the mouth aperture
+        const opacity = t > 0.94 ? Math.max(0, (1 - t) / 0.06) : 1;
+
+        frames.push({
+          transform: `translate3d(${posX.toFixed(1)}px, ${posY.toFixed(1)}px, 0) translate(-50%, -50%) scale(${scale.toFixed(3)}) rotate(${rotation}deg)`,
+          opacity: opacity
+        });
+      }
+
+      // Calm Among Us drift speed (1050ms)
+      const duration = 1050;
+      const delay = i * 75;
+
+      const animation = fileIcon.animate(frames, {
+        duration: duration,
+        delay: delay,
+        easing: "linear",
+        fill: "forwards"
+      });
+
+      animation.onfinish = () => {
+        fileIcon.remove();
+        finishedCount++;
+        if (finishedCount === displayCount) {
+          onComplete();
+        }
+      };
+    }
+  }
 
   // Show full-screen dropzone overlay
   function showDropzone() {
-    if (!dropzone) {
-      dropzone = document.createElement("div");
-      dropzone.classList.add("file-dropzone");
-
-      const title = document.createElement("h1");
-      title.innerText = "Drop your files here";
-      dropzone.appendChild(title);
-
-      const subtitle = document.createElement("p");
-      subtitle.innerText = "Up to 40 files at once";
-      subtitle.style.marginTop = "8px";
-      subtitle.style.opacity = "0.7";
-      dropzone.appendChild(subtitle);
-
-      document.body.appendChild(dropzone);
-      document.body.style.overflow = "hidden";
-
-      // Force reflow for transition
-      void dropzone.offsetWidth;
-
-      dropzone.classList.add("visible");
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = null;
     }
-  }
 
-  // Hide full-screen dropzone overlay
-  function hideDropzone() {
+    const isDesktop = window.innerWidth > 768;
+
     if (dropzone) {
-      dropzone.remove();
-      dropzone = null;
-      document.body.style.overflow = "auto";
-      counter = 0;
+      dropzone.classList.remove("exiting");
+      dropzone.classList.add("visible");
+
+      if (orphStage) {
+        orphStage.classList.remove("sliding-out", "gulping");
+      }
+
+      if (titleEl) {
+        titleEl.textContent = isDesktop ? getRandomTitle() : "Drop your files here";
+      }
+      if (subtitleEl) {
+        subtitleEl.textContent = isDesktop ? DESKTOP_SUBTITLE : "Up to 40 files at once";
+      }
+
+      // Re-arm mouth opening timer on repeated entry
+      if (isDesktop && orphStage) {
+        if (mouthTimer) clearTimeout(mouthTimer);
+        if (!orphStage.classList.contains("mouth-open")) {
+          mouthTimer = setTimeout(() => {
+            if (orphStage && dropzone && !isDropping) {
+              orphStage.classList.add("mouth-open");
+            }
+          }, 200);
+        }
+      }
+      return;
+    }
+
+    dropzone = document.createElement("div");
+    dropzone.className = "file-dropzone";
+
+    const container = document.createElement("div");
+    container.className = "dropzone-container";
+
+    // Left side: Orph Stage
+    orphStage = document.createElement("div");
+    orphStage.className = "orph-stage";
+
+    const character = document.createElement("div");
+    character.className = "orph-character";
+
+    const imgClosed = document.createElement("img");
+    imgClosed.src = "/orph-closed-mouth.svg";
+    imgClosed.className = "orph-graphic orph-closed";
+    imgClosed.alt = "Orph closed mouth";
+
+    const imgOpen = document.createElement("img");
+    imgOpen.src = "/orph-open-mouth.svg";
+    imgOpen.className = "orph-graphic orph-open";
+    imgOpen.alt = "Orph open mouth";
+
+    leftPupil = document.createElement("div");
+    leftPupil.className = "orph-pupil orph-pupil-left";
+
+    rightPupil = document.createElement("div");
+    rightPupil.className = "orph-pupil orph-pupil-right";
+
+    character.appendChild(imgClosed);
+    character.appendChild(imgOpen);
+    character.appendChild(leftPupil);
+    character.appendChild(rightPupil);
+
+    const speechBubble = document.createElement("div");
+    speechBubble.className = "orph-speech-bubble";
+    speechBubble.textContent = "Gulp! Uploading...";
+
+    orphStage.appendChild(character);
+    orphStage.appendChild(speechBubble);
+    container.appendChild(orphStage);
+
+    // Right side: Content
+    const content = document.createElement("div");
+    content.className = "dropzone-content";
+
+    // Modern upload SVG icon for mobile fallback
+    const uploadIcon = document.createElement("div");
+    uploadIcon.className = "dropzone-upload-icon";
+    uploadIcon.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`;
+
+    titleEl = document.createElement("h1");
+    titleEl.className = "dropzone-title";
+    titleEl.textContent = isDesktop ? getRandomTitle() : "Drop your files here";
+
+    subtitleEl = document.createElement("p");
+    subtitleEl.className = "dropzone-subtitle";
+    subtitleEl.textContent = isDesktop ? DESKTOP_SUBTITLE : "Up to 40 files at once";
+
+    content.appendChild(uploadIcon);
+    content.appendChild(titleEl);
+    content.appendChild(subtitleEl);
+    container.appendChild(content);
+
+    dropzone.appendChild(container);
+    document.body.appendChild(dropzone);
+    document.body.style.overflow = "hidden";
+
+    // Trigger reflow to start slide-in transition
+    void dropzone.offsetWidth;
+    dropzone.classList.add("visible");
+
+    // Mouth state: starts with closed mouth, snaps to open mouth after ~200ms
+    if (isDesktop) {
+      if (mouthTimer) clearTimeout(mouthTimer);
+      mouthTimer = setTimeout(() => {
+        if (orphStage && dropzone && !isDropping) {
+          orphStage.classList.add("mouth-open");
+        }
+      }, 200);
     }
   }
 
-  // Initialize on first load
+  // Hide full-screen dropzone overlay cleanly
+  function hideDropzone() {
+    if (!dropzone || isDropping) return;
+
+    if (mouthTimer) {
+      clearTimeout(mouthTimer);
+      mouthTimer = null;
+    }
+
+    // Cleanly snap mouth shut and slide Orph out
+    if (orphStage) {
+      orphStage.classList.remove("mouth-open");
+    }
+
+    dropzone.classList.remove("visible");
+    dropzone.classList.add("exiting");
+
+    hideTimer = setTimeout(() => {
+      if (dropzone) {
+        dropzone.remove();
+        dropzone = null;
+        orphStage = null;
+        leftPupil = null;
+        rightPupil = null;
+        titleEl = null;
+        subtitleEl = null;
+        document.body.style.overflow = "auto";
+        counter = 0;
+        hideTimer = null;
+      }
+    }, 320);
+  }
+
+  // Initialize on first load and prefetch assets immediately
+  prefetchSvgAssets();
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
@@ -114,5 +646,8 @@
   }
 
   // Re-initialize on Turbo navigations
-  document.addEventListener("turbo:load", init);
+  document.addEventListener("turbo:load", () => {
+    init();
+    prefetchSvgAssets();
+  });
 })();
