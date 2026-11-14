@@ -55,13 +55,30 @@
       }
     });
 
-    // Preload Orph SVGs and broken file icon for instant, lag-free display
-    const preloadClosed = new Image();
-    preloadClosed.src = "/orph-closed-mouth.svg";
-    const preloadOpen = new Image();
-    preloadOpen.src = "/orph-open-mouth.svg";
-    const preloadFile = new Image();
-    preloadFile.src = "/file-icon.svg";
+    // prefetch svg assets on load
+    prefetchSvgAssets();
+  }
+
+  // prefetch svg assets so orph and file icons appear immediately on drag
+  const PREFETCH_SVGS = [
+    "/orph-closed-mouth.svg",
+    "/orph-open-mouth.svg",
+    "/file-icon.svg"
+  ];
+
+  function prefetchSvgAssets() {
+    if (!document.head) return;
+
+    PREFETCH_SVGS.forEach((url) => {
+      if (!document.querySelector(`link[rel="prefetch"][href="${url}"]`)) {
+        const link = document.createElement("link");
+        link.rel = "prefetch";
+        link.as = "image";
+        link.type = "image/svg+xml";
+        link.href = url;
+        document.head.appendChild(link);
+      }
+    });
   }
 
   // Prevent default drag behaviors and update eye tracking
@@ -228,7 +245,7 @@
       formData.append("files[]", files[i]);
     }
 
-    // 2. Start upload immediately in background
+    // start upload immediately in the background
     const uploadPromise = fetch(form.action || "/uploads", {
       method: "POST",
       body: formData,
@@ -238,16 +255,15 @@
       }
     });
 
-    // 3. Start Among Us zero-G eject trajectory animation in parallel
+    // run drift animation in parallel
     const animationPromise = new Promise((resolve) => {
       playDesktopDropEffect(files, dropX, dropY, resolve);
     });
 
     try {
-      // 4. Wait for the animation to finish drifting into Orph's mouth
+      // wait until icons enter the mouth
       await animationPromise;
 
-      // File icons entered mouth! Orph starts gulping
       if (orphStage) {
         orphStage.classList.remove("mouth-open");
         orphStage.classList.add("gulping");
@@ -255,7 +271,7 @@
       if (titleEl) titleEl.textContent = "Gulp! Uploading...";
       if (subtitleEl) subtitleEl.textContent = "Nomming your files...";
 
-      // 5. Wait for the background upload to complete (if not already done)
+      // wait for upload to complete
       const response = await uploadPromise;
 
       if (!response.ok && response.status !== 302) {
@@ -264,14 +280,14 @@
 
       const html = await response.text();
 
-      // 6. Slide Orph away to the left smoothly
+      // slide away
       if (orphStage) {
         orphStage.classList.add("sliding-out");
       }
 
       await new Promise((resolve) => setTimeout(resolve, 360));
 
-      // 7. Update document to display flash message & updated file list
+      // update page with newly uploaded files and flash notice
       if (html && html.includes("<body")) {
         document.open();
         document.write(html);
@@ -289,7 +305,7 @@
     }
   }
 
-  // Desktop drop effect: Among Us imposter kicked zero-gravity drift into mouth
+  // among us style zero-g eject drift into orph mouth
   function playDesktopDropEffect(files, dropX, dropY, onComplete) {
     if (!orphStage) {
       onComplete();
@@ -297,16 +313,14 @@
     }
 
     const stageRect = orphStage.getBoundingClientRect();
-    // Mouth center base at (63.1%, 29.0%) of Orph stage
     const mouthX = stageRect.left + stageRect.width * 0.631;
     const mouthY = stageRect.top + stageRect.height * 0.290;
 
     const fileList = Array.from(files);
-    // Stream retro broken file icons into mouth (up to 10 for clean visual pacing)
     const displayCount = Math.min(Math.max(fileList.length, 1), 10);
     let finishedCount = 0;
 
-    // Scale file icon proportionally to Orph stage size (11.5% of Orph width, 1:1.2 aspect ratio)
+    // scale icon relative to orph stage
     const iconWidth = Math.round(stageRect.width * 0.115);
     const iconHeight = Math.round(iconWidth * 1.2);
 
@@ -319,7 +333,6 @@
 
       document.body.appendChild(fileIcon);
 
-      // Gentle initial spawn offset for multiple files
       const spreadAngle = (i / displayCount) * Math.PI * 2;
       const spreadRadius = displayCount > 1 ? (10 + (i % 3) * 8) : 0;
       const startX = dropX + Math.cos(spreadAngle) * spreadRadius;
@@ -328,8 +341,7 @@
       const dx = mouthX - startX;
       const dy = mouthY - startY;
 
-      // Among Us imposter kicked trajectory:
-      // Steady linear drift velocity through zero gravity into Orph's mouth
+      // constant velocity drift with steady 360 tumble
       const frames = [];
       const steps = 30;
       // Gentle tumble: continuous 360deg spin at uniform angular velocity across entire drift
@@ -532,7 +544,9 @@
     }, 320);
   }
 
-  // Initialize on first load
+  // Initialize on first load and prefetch assets immediately
+  prefetchSvgAssets();
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
@@ -540,5 +554,8 @@
   }
 
   // Re-initialize on Turbo navigations
-  document.addEventListener("turbo:load", init);
+  document.addEventListener("turbo:load", () => {
+    init();
+    prefetchSvgAssets();
+  });
 })();
