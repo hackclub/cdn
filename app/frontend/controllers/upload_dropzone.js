@@ -169,7 +169,7 @@
   });
 
   // Clipboard Paste file support
-  document.addEventListener("paste", (e) => {
+  document.addEventListener("paste", async (e) => {
     if (!fileInput) return;
     const items = e.clipboardData ? e.clipboardData.items : null;
     if (!items || items.length === 0) return;
@@ -255,6 +255,9 @@
       }
     });
 
+    // wait until orph finishes entering before starting trajectory
+    await ensureOrphReady();
+
     // run drift animation in parallel
     const animationPromise = new Promise((resolve) => {
       playDesktopDropEffect(files, dropX, dropY, resolve);
@@ -335,6 +338,24 @@
     }
   }
 
+  // wait until orph finishes entering and comes to a complete rest
+  async function ensureOrphReady() {
+    if (!orphStage) return;
+    const start = performance.now();
+    while (performance.now() - start < 600) {
+      const rect = orphStage.getBoundingClientRect();
+      if (rect.left > 10 && rect.width > 0) {
+        await new Promise((r) => requestAnimationFrame(r));
+        const rect2 = orphStage.getBoundingClientRect();
+        if (Math.abs(rect2.left - rect.left) < 1) {
+          break;
+        }
+      } else {
+        await new Promise((r) => setTimeout(r, 20));
+      }
+    }
+  }
+
   // among us style zero-g eject drift into orph mouth
   function playDesktopDropEffect(files, dropX, dropY, onComplete) {
     if (!orphStage) {
@@ -343,8 +364,8 @@
     }
 
     const stageRect = orphStage.getBoundingClientRect();
-    const mouthX = stageRect.left + stageRect.width * 0.631;
-    const mouthY = stageRect.top + stageRect.height * 0.290;
+    const mouthX = stageRect.left + stageRect.width * 0.6305;
+    const mouthY = stageRect.top + stageRect.height * 0.2896;
 
     const fileList = Array.from(files);
     const displayCount = Math.min(Math.max(fileList.length, 1), 10);
