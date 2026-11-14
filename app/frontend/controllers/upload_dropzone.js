@@ -306,9 +306,15 @@
     const displayCount = Math.min(Math.max(fileList.length, 1), 10);
     let finishedCount = 0;
 
+    // Scale file icon proportionally to Orph stage size (11.5% of Orph width, 1:1.2 aspect ratio)
+    const iconWidth = Math.round(stageRect.width * 0.115);
+    const iconHeight = Math.round(iconWidth * 1.2);
+
     for (let i = 0; i < displayCount; i++) {
       const fileIcon = document.createElement("div");
       fileIcon.className = "orph-sucked-file";
+      fileIcon.style.width = `${iconWidth}px`;
+      fileIcon.style.height = `${iconHeight}px`;
       fileIcon.innerHTML = `<img src="/file-icon.svg" alt="file" draggable="false">`;
 
       document.body.appendChild(fileIcon);

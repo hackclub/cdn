@@ -225,8 +225,8 @@
   left: 0;
   z-index: 10000;
   pointer-events: none;
-  width: 44px;
-  height: 52.8px;
+  width: var(--file-icon-w, 48px);
+  height: var(--file-icon-h, 57.6px);
   display: flex;
   align-items: center;
   justify-content: center;
