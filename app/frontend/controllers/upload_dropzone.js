@@ -271,8 +271,9 @@
       if (titleEl) titleEl.textContent = "Gulp! Uploading...";
       if (subtitleEl) subtitleEl.textContent = "Nomming your files...";
 
-      // wait for upload to complete
-      const response = await uploadPromise;
+      // wait for upload and give user time to read what orph says
+      const readingDelay = new Promise((resolve) => setTimeout(resolve, 800));
+      const [response] = await Promise.all([uploadPromise, readingDelay]);
 
       if (!response.ok && response.status !== 302) {
         throw new Error(`Upload returned status ${response.status}`);
@@ -280,18 +281,47 @@
 
       const html = await response.text();
 
-      // slide away
+      // smooth exit animation: slide orph out, fade overlay
       if (orphStage) {
-        orphStage.classList.add("sliding-out");
+        orphStage.classList.remove("gulping", "mouth-open");
+      }
+      if (dropzone) {
+        dropzone.classList.remove("visible");
+        dropzone.classList.add("exiting");
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 360));
+      // wait for exit transition to complete
+      await new Promise((resolve) => setTimeout(resolve, 450));
 
-      // update page with newly uploaded files and flash notice
+      // restore scroll
+      document.body.style.overflow = "";
+
+      // remove dropzone overlay from DOM and reset drop state
+      if (dropzone && dropzone.parentNode) {
+        dropzone.parentNode.removeChild(dropzone);
+      }
+      dropzone = null;
+      orphStage = null;
+      leftPupil = null;
+      rightPupil = null;
+      titleEl = null;
+      subtitleEl = null;
+      isDropping = false;
+      counter = 0;
+
+      // update page content with uploaded files & flash notice
       if (html && html.includes("<body")) {
-        document.open();
-        document.write(html);
-        document.close();
+        const parser = new DOMParser();
+        const newDoc = parser.parseFromString(html, "text/html");
+
+        document.title = newDoc.title;
+        if (newDoc.body) {
+          document.body.innerHTML = newDoc.body.innerHTML;
+        }
+
+        // re-initialize controllers on updated DOM
+        init();
+        document.dispatchEvent(new Event("turbo:load"));
       } else {
         window.location.reload();
       }
