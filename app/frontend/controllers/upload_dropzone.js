@@ -81,7 +81,22 @@
     });
   }
 
-  // Prevent default drag behaviors and update eye tracking
+  let cachedStageRect = null;
+  let rafId = null;
+  let lastClientX = 0;
+  let lastClientY = 0;
+
+  function updateCachedStageRect() {
+    if (orphStage) {
+      cachedStageRect = orphStage.getBoundingClientRect();
+    }
+  }
+
+  window.addEventListener("resize", () => {
+    cachedStageRect = null;
+  });
+
+  // Prevent default drag behaviors and update eye tracking with rAF throttle
   document.addEventListener("dragover", (e) => {
     e.preventDefault();
     if (e.dataTransfer) {
@@ -92,7 +107,15 @@
     if (window.innerWidth <= 768) return;
 
     if (dropzone && orphStage) {
-      updateEyeTracking(e.clientX, e.clientY);
+      lastClientX = e.clientX;
+      lastClientY = e.clientY;
+
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          rafId = null;
+          updateEyeTracking(lastClientX, lastClientY);
+        });
+      }
     }
   });
 
@@ -100,8 +123,11 @@
   function updateEyeTracking(mouseX, mouseY) {
     if (!orphStage || !leftPupil || !rightPupil) return;
 
-    const stageRect = orphStage.getBoundingClientRect();
-    if (stageRect.width === 0 || stageRect.height === 0) return;
+    if (!cachedStageRect || cachedStageRect.width === 0) {
+      updateCachedStageRect();
+    }
+    const stageRect = cachedStageRect;
+    if (!stageRect || stageRect.width === 0 || stageRect.height === 0) return;
 
     // Calibrated eye base centers inside Orph stage
     const leftEyeBaseX = stageRect.left + stageRect.width * 0.534;
@@ -232,6 +258,7 @@
   async function executeUploadWithAnimation(files, dropX, dropY) {
     if (!form) return;
     isDropping = true;
+    let uploadToast = null;
 
     // 1. Prepare FormData for immediate background upload
     const formData = new FormData();
@@ -245,7 +272,8 @@
       formData.append("files[]", files[i]);
     }
 
-    // start upload immediately in the background
+    // start upload immediately in the background and track completion
+    let isUploadDone = false;
     const uploadPromise = fetch(form.action || "/uploads", {
       method: "POST",
       body: formData,
@@ -254,6 +282,8 @@
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
       }
     });
+
+    uploadPromise.then(() => { isUploadDone = true; }).catch(() => { isUploadDone = true; });
 
     // wait until orph finishes entering before starting trajectory
     await ensureOrphReady();
@@ -274,17 +304,10 @@
       if (titleEl) titleEl.textContent = "Gulp! Uploading...";
       if (subtitleEl) subtitleEl.textContent = "Nomming your files...";
 
-      // wait for upload and give user time to read what orph says
-      const readingDelay = new Promise((resolve) => setTimeout(resolve, 800));
-      const [response] = await Promise.all([uploadPromise, readingDelay]);
+      // wait 800ms so user sees the gulp and reads what orph says
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      if (!response.ok && response.status !== 302) {
-        throw new Error(`Upload returned status ${response.status}`);
-      }
-
-      const html = await response.text();
-
-      // smooth exit animation: slide orph out, fade overlay
+      // smooth exit animation: orph finishes animation and exits regardless of upload speed
       if (orphStage) {
         orphStage.classList.remove("gulping", "mouth-open");
       }
@@ -311,6 +334,29 @@
       subtitleEl = null;
       isDropping = false;
       counter = 0;
+      cachedStageRect = null;
+
+      // if upload is still left in progress, show background upload toast
+      if (!isUploadDone) {
+        uploadToast = document.createElement("div");
+        uploadToast.className = "upload-progress-toast";
+        uploadToast.innerHTML = `
+          <span class="upload-toast-spinner"></span>
+          <span>Uploading ${files.length} file${files.length > 1 ? "s" : ""}...</span>
+        `;
+        document.body.appendChild(uploadToast);
+      }
+
+      // wait for upload to complete
+      const response = await uploadPromise;
+      if (uploadToast) uploadToast.remove();
+      uploadToast = null;
+
+      if (!response.ok && response.status !== 302) {
+        throw new Error(`Upload returned status ${response.status}`);
+      }
+
+      const html = await response.text();
 
       // update page content with uploaded files & flash notice
       if (html && html.includes("<body")) {
@@ -329,6 +375,16 @@
         window.location.reload();
       }
     } catch (err) {
+      if (uploadToast) {
+        uploadToast.innerHTML = `<span>Upload failed: ${err.message || "Please try again"}</span>`;
+        uploadToast.style.borderColor = "#ec3750";
+        setTimeout(() => {
+          if (uploadToast) uploadToast.remove();
+        }, 4000);
+      }
+      if (orphStage) {
+        orphStage.classList.remove("mouth-open", "gulping");
+      }
       if (titleEl) titleEl.textContent = "Upload failed";
       if (subtitleEl) subtitleEl.textContent = err.message || "Please try again";
       setTimeout(() => {
