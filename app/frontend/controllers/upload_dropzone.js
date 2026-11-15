@@ -302,8 +302,8 @@
         dropzone.classList.add("exiting");
       }
 
-      // wait for exit transition to complete
-      await new Promise((resolve) => setTimeout(resolve, 450));
+      // wait for exit transition to complete (modal scale & fade out)
+      await new Promise((resolve) => setTimeout(resolve, 220));
 
       // restore scroll
       document.body.style.overflow = "";
@@ -496,14 +496,14 @@
       dropzone.classList.add("visible");
 
       if (orphStage) {
-        orphStage.classList.remove("sliding-out", "gulping");
+        orphStage.classList.remove("gulping");
       }
 
       if (titleEl) {
-        titleEl.textContent = isDesktop ? getRandomTitle() : "Drop your files here";
+        titleEl.textContent = getRandomTitle();
       }
       if (subtitleEl) {
-        subtitleEl.textContent = isDesktop ? DESKTOP_SUBTITLE : "Up to 40 files at once";
+        subtitleEl.textContent = DESKTOP_SUBTITLE;
       }
 
       // Re-arm mouth opening timer on repeated entry
@@ -529,6 +529,48 @@
     // Left side: Orph Stage
     orphStage = document.createElement("div");
     orphStage.className = "orph-stage";
+
+    // Static dithered sunbeam background radiating from Orph and fading right
+    const sunburst = document.createElement("div");
+    sunburst.className = "orph-sunburst";
+    sunburst.innerHTML = `
+      <svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <defs>
+          <pattern id="sunburst-dither-dots" width="6" height="6" patternUnits="userSpaceOnUse">
+            <rect x="0" y="0" width="3" height="3" fill="#fff" />
+            <rect x="3" y="3" width="3" height="3" fill="#fff" />
+          </pattern>
+          <linearGradient id="sunburst-hfade" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#fff" stop-opacity="1" />
+            <stop offset="48%" stop-color="#fff" stop-opacity="1" />
+            <stop offset="75%" stop-color="#fff" stop-opacity="0.3" />
+            <stop offset="98%" stop-color="#000" stop-opacity="0" />
+          </linearGradient>
+          <mask id="sunburst-dither-mask">
+            <rect x="0" y="0" width="320" height="320" fill="url(#sunburst-hfade)" />
+            <rect x="160" y="0" width="160" height="320" fill="url(#sunburst-dither-dots)" opacity="0.35" />
+          </mask>
+        </defs>
+        <g mask="url(#sunburst-dither-mask)" class="orph-sunburst-rays">
+          <polygon points="160,160 410.0,160.0 405.2,208.8" />
+          <polygon points="160,160 391.0,255.7 367.9,298.9" />
+          <polygon points="160,160 336.8,336.8 298.9,367.9" />
+          <polygon points="160,160 255.7,391.0 208.8,405.2" />
+          <polygon points="160,160 160.0,410.0 111.2,405.2" />
+          <polygon points="160,160 64.3,391.0 21.1,367.9" />
+          <polygon points="160,160 -16.8,336.8 -47.9,298.9" />
+          <polygon points="160,160 -71.0,255.7 -85.2,208.8" />
+          <polygon points="160,160 -90.0,160.0 -85.2,111.2" />
+          <polygon points="160,160 -71.0,64.3 -47.9,21.1" />
+          <polygon points="160,160 -16.8,-16.8 21.1,-47.9" />
+          <polygon points="160,160 64.3,-71.0 111.2,-85.2" />
+          <polygon points="160,160 160.0,-90.0 208.8,-85.2" />
+          <polygon points="160,160 255.7,-71.0 298.9,-47.9" />
+          <polygon points="160,160 336.8,-16.8 367.9,21.1" />
+          <polygon points="160,160 391.0,64.3 405.2,111.2" />
+        </g>
+      </svg>
+    `;
 
     const character = document.createElement("div");
     character.className = "orph-character";
@@ -558,6 +600,7 @@
     speechBubble.className = "orph-speech-bubble";
     speechBubble.textContent = "Gulp! Uploading...";
 
+    orphStage.appendChild(sunburst);
     orphStage.appendChild(character);
     orphStage.appendChild(speechBubble);
     container.appendChild(orphStage);
@@ -566,22 +609,26 @@
     const content = document.createElement("div");
     content.className = "dropzone-content";
 
-    // Modern upload SVG icon for mobile fallback
-    const uploadIcon = document.createElement("div");
-    uploadIcon.className = "dropzone-upload-icon";
-    uploadIcon.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`;
+    const uploadBadge = document.createElement("div");
+    uploadBadge.className = "dropzone-upload-badge";
+    uploadBadge.innerHTML = `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h2.25a.75.75 0 0 1 .53 1.28l-3 3a.75.75 0 0 1-1.06 0l-3-3A.75.75 0 0 1 4.75 7H7V2.75A.75.75 0 0 1 7.75 2Z"></path><path d="M2.5 10.75a.75.75 0 0 1 .75.75v1a.5.5 0 0 0 .5.5h8.5a.5.5 0 0 0 .5-.5v-1a.75.75 0 0 1 1.5 0v1A2 2 0 0 1 12.25 14.5h-8.5A2 2 0 0 1 1.75 12.5v-1a.75.75 0 0 1 .75-.75Z"></path></svg><span>Drag & Drop</span>`;
 
-    titleEl = document.createElement("h1");
+    titleEl = document.createElement("h2");
     titleEl.className = "dropzone-title";
-    titleEl.textContent = isDesktop ? getRandomTitle() : "Drop your files here";
+    titleEl.textContent = getRandomTitle();
 
     subtitleEl = document.createElement("p");
     subtitleEl.className = "dropzone-subtitle";
-    subtitleEl.textContent = isDesktop ? DESKTOP_SUBTITLE : "Up to 40 files at once";
+    subtitleEl.textContent = DESKTOP_SUBTITLE;
 
-    content.appendChild(uploadIcon);
+    const meta = document.createElement("div");
+    meta.className = "dropzone-meta";
+    meta.innerHTML = `<span class="dropzone-tag">Up to 40 files</span><span class="dropzone-tag">Max 100MB per file</span>`;
+
+    content.appendChild(uploadBadge);
     content.appendChild(titleEl);
     content.appendChild(subtitleEl);
+    content.appendChild(meta);
     container.appendChild(content);
 
     dropzone.appendChild(container);

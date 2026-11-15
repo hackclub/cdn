@@ -1,94 +1,96 @@
-// File Dropzone Overlay Styles
+// File Dropzone Overlay Styles - GitHub Modal Tile Theme
 .file-dropzone {
   position: fixed;
   inset: 0;
   z-index: 9999;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 300ms ease-out;
+  transition: opacity 160ms ease-out;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 
-  // Desktop default (> 768px): Dark background with blur
-  background-color: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  // GitHub Primer backdrop (clean tint, zero blur)
+  background-color: var(--primer-canvas-backdrop, rgba(31, 35, 40, 0.48));
+  --sunburst-ray-color: #e5e9ee;
 
   &.visible {
     opacity: 1;
     pointer-events: auto;
 
-    .orph-stage {
-      transform: translateX(0);
-    }
-
-    .dropzone-content {
+    .dropzone-container {
       opacity: 1;
-      transform: translateX(0);
+      transform: scale(1) translateY(0);
     }
   }
 
   &.exiting {
     opacity: 0;
     pointer-events: none;
-    transition: opacity 400ms ease;
+    transition: opacity 200ms ease;
 
-    .orph-stage {
-      transform: translateX(-120vw) !important;
-      transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1) !important;
-      animation: none !important;
-    }
-
-    .orph-speech-bubble {
-      opacity: 0 !important;
-      transform: scale(0.6) translate(-10px, 10px) !important;
-      transition: opacity 200ms ease, transform 200ms ease !important;
-    }
-
-    .dropzone-content {
+    .dropzone-container {
       opacity: 0;
-      transform: translateX(40px);
-      transition: opacity 300ms ease, transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+      transform: scale(0.97) translateY(4px);
+      transition: opacity 180ms ease, transform 180ms ease;
     }
   }
 }
 
-// Layout Container
+// Centered Modal Tile Container
 .dropzone-container {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 1200px;
-  height: 100%;
-  padding: 2rem 4rem;
+  width: min(720px, 92vw);
+  background-color: var(--bgColor-default, #ffffff);
+  border: 1px solid var(--borderColor-default, #d0d7de);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
-  gap: 3rem;
+  overflow: hidden;
+  position: relative;
   user-select: none;
+  opacity: 0;
+  transform: scale(0.96) translateY(-6px);
+  transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1), transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-// Left side: Orph Stage (max 40-45% screen width)
+// Left side: Orph Stage with Dithered Sunbeam
 .orph-stage {
+  flex: 0 0 44%;
   position: relative;
-  width: min(44vw, 520px);
-  max-width: 45%;
   aspect-ratio: 1 / 1;
-  flex-shrink: 0;
-  transform: translateX(-120vw);
-  transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
-
-  &.sliding-out {
-    transform: translateX(-120vw) !important;
-    transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1) !important;
-    animation: none !important;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.75rem;
+  box-sizing: border-box;
+  z-index: 2;
 
   &.gulping {
     animation: orph-gulp-bounce 450ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+}
+
+// Static dithered sunbeam background radiating from Orph and fading toward right
+.orph-sunburst {
+  position: absolute;
+  inset: -12%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+
+  svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .orph-sunburst-rays polygon {
+    fill: var(--sunburst-ray-color, #e5e9ee);
+    transition: fill 200ms ease;
   }
 }
 
@@ -96,6 +98,7 @@
   position: relative;
   width: 100%;
   height: 100%;
+  z-index: 3;
 }
 
 .orph-graphic {
@@ -107,7 +110,7 @@
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.12));
 
   &.orph-closed {
     display: block;
@@ -152,36 +155,54 @@
   }
 }
 
-// Orph speech bubble
+// Orph speech bubble - GitHub Primer Popover Style
 .orph-speech-bubble {
   position: absolute;
-  top: 18%;
-  left: 78%;
-  background: #ffffff;
-  color: #0d1117;
-  padding: 0.65rem 1.25rem;
-  border-radius: 18px;
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  top: 16%;
+  left: 76%;
+  background-color: var(--bgColor-default, #ffffff);
+  color: var(--fgColor-default, #1f2328);
+  border: 1px solid var(--borderColor-default, #d0d7de);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: normal;
+  box-shadow: 0 4px 12px rgba(31, 35, 40, 0.12);
   opacity: 0;
-  transform: scale(0.5) translate(-10px, 10px);
+  transform: scale(0.9) translate(-6px, 0);
   pointer-events: none;
   white-space: nowrap;
   z-index: 20;
-  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 160ms ease, transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  // Popover caret pointing left towards Orph
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -6px;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 6px solid var(--borderColor-default, #d0d7de);
+  }
 
   &::after {
     content: "";
     position: absolute;
-    bottom: 10px;
-    left: -8px;
+    top: 50%;
+    left: -5px;
+    transform: translateY(-50%);
     width: 0;
     height: 0;
-    border-top: 6px solid transparent;
-    border-bottom: 6px solid transparent;
-    border-right: 9px solid #ffffff;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 5px solid var(--bgColor-default, #ffffff);
   }
 }
 
@@ -190,42 +211,75 @@
   transform: scale(1) translate(0, 0);
 }
 
-// Right side: Content
+// Right side: Content & Drop Area
 .dropzone-content {
   flex: 1;
-  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
   text-align: left;
-  opacity: 0;
-  transform: translateX(40px);
-  transition: opacity 400ms ease, transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 2.25rem 2.25rem 2.25rem 1rem;
+  box-sizing: border-box;
+  z-index: 3;
 
-  .dropzone-upload-icon {
-    display: none;
+  .dropzone-upload-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background-color: var(--bgColor-accent-muted, rgba(9, 105, 218, 0.08));
+    color: var(--fgColor-accent, #0969da);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.02em;
+
+    svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+    }
   }
 
   .dropzone-title {
-    font-size: clamp(2.2rem, 4vw, 3.8rem);
-    font-weight: 800;
-    color: #ffffff;
-    line-height: 1.15;
-    margin: 0 0 1rem 0;
-    padding: 0;
-    border: none;
-    letter-spacing: -0.02em;
-    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: var(--fgColor-default, #1f2328);
+    line-height: 1.25;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.01em;
   }
 
   .dropzone-subtitle {
-    font-size: clamp(1rem, 1.6vw, 1.35rem);
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.85);
-    line-height: 1.5;
-    margin: 0;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--fgColor-muted, #656d76);
+    line-height: 1.45;
+    margin: 0 0 1.15rem 0;
+  }
+
+  .dropzone-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .dropzone-tag {
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background-color: var(--bgColor-muted, #f6f8fa);
+      color: var(--fgColor-muted, #656d76);
+      border: 1px solid var(--borderColor-default, #d0d7de);
+    }
   }
 }
 
-// Animated black hole sucked-in retro broken file icons
+// Animated sucked-in retro broken file icons
 .orph-sucked-file {
   position: fixed;
   top: 0;
@@ -237,7 +291,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
   will-change: transform, opacity;
 
   img {
@@ -254,152 +308,250 @@
 // Scale bounce keyframes for gulping
 @keyframes orph-gulp-bounce {
   0% { transform: scale(1, 1); }
-  25% { transform: scale(1.18, 0.82); }
-  50% { transform: scale(0.92, 1.15); }
-  75% { transform: scale(1.05, 0.97); }
+  25% { transform: scale(1.15, 0.85); }
+  50% { transform: scale(0.94, 1.12); }
+  75% { transform: scale(1.04, 0.98); }
   100% { transform: scale(1, 1); }
 }
 
-// Mobile and responsive fallback (<= 768px)
+// Low-width & portrait devices (<= 768px):
+// Remove Orph and keep the same tile with an offset dashed inner border and fun text centered
 @media (max-width: 768px) {
-  .file-dropzone {
-    background-color: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    padding: 1.5rem;
+  .dropzone-container {
+    flex-direction: column;
+    width: calc(100% - 2rem);
+    max-width: 460px;
+    height: calc(100% - 3rem);
+    max-height: calc(100dvh - 3rem);
+    padding: 12px;
+    border-radius: 10px;
     box-sizing: border-box;
-
-    .dropzone-container {
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 0;
-      gap: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    // Completely hide Orph character, pupil eyes, speech bubble, and suction icons
-    .orph-stage,
-    .orph-character,
-    .orph-pupil,
-    .orph-speech-bubble,
-    .orph-sucked-file {
-      display: none !important;
-    }
-
-    // Clean, standard, modern dropzone card centered
-    .dropzone-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      width: calc(100% - 2rem);
-      max-width: 440px;
-      margin: auto;
-      padding: 3rem 2rem;
-      border-radius: 24px;
-      box-sizing: border-box;
-      opacity: 1;
-      transform: none;
-      background-color: #ffffff;
-      border: 2.5px dashed #ec3750;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12), 0 0 0 6px rgba(236, 55, 80, 0.05);
-
-      // Modern SVG upload icon badge
-      .dropzone-upload-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1.25rem;
-        color: #ec3750;
-        background: rgba(236, 55, 80, 0.1);
-        width: 68px;
-        height: 68px;
-        border-radius: 50%;
-
-        svg {
-          width: 32px;
-          height: 32px;
-          stroke: currentColor;
-        }
-      }
-
-      .dropzone-title {
-        color: #ec3750;
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 0 0 0.5rem 0;
-        line-height: 1.25;
-        letter-spacing: -0.01em;
-        text-shadow: none;
-      }
-
-      .dropzone-subtitle {
-        color: #656d76;
-        font-size: 0.95rem;
-        font-weight: 500;
-        line-height: 1.4;
-        margin: 0;
-        text-shadow: none;
-        opacity: 0.9;
-      }
-    }
   }
 
-  @media (prefers-color-scheme: dark) {
-    .file-dropzone {
-      background-color: rgba(13, 17, 23, 0.94);
+  // Remove Orph completely on portrait/mobile
+  .orph-stage,
+  .orph-character,
+  .orph-pupil,
+  .orph-speech-bubble,
+  .orph-sunburst,
+  .orph-sucked-file {
+    display: none !important;
+  }
 
-      .dropzone-content {
-        background-color: #161b22;
-        border: 2.5px dashed #ec3750;
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 0 6px rgba(236, 55, 80, 0.12);
+  // Inner dashed container offset from the card edge with the other tone than background
+  .dropzone-content {
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    padding: 2.5rem 1.5rem;
+    border-radius: 6px;
+    border: 2px dashed var(--borderColor-muted, #afb8c1);
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
 
-        .dropzone-upload-icon {
-          color: #ec3750;
-          background: rgba(236, 55, 80, 0.18);
-        }
+    .dropzone-upload-badge {
+      margin-bottom: 1rem;
+      padding: 6px 12px;
+      font-size: 0.825rem;
 
-        .dropzone-title {
-          color: #ffffff;
-        }
-
-        .dropzone-subtitle {
-          color: #8b949e;
-        }
+      svg {
+        width: 16px;
+        height: 16px;
       }
+    }
+
+    .dropzone-title {
+      font-size: 1.45rem;
+      font-weight: 600;
+      color: var(--fgColor-default, #1f2328);
+      margin: 0 0 0.5rem 0;
+      line-height: 1.25;
+    }
+
+    .dropzone-subtitle {
+      font-size: 0.9rem;
+      color: var(--fgColor-muted, #656d76);
+      margin: 0 0 1.25rem 0;
+      line-height: 1.4;
+    }
+
+    .dropzone-meta {
+      justify-content: center;
     }
   }
 }
 
-// Subtle floating toast for background upload in progress
+// Dark Mode Overrides (only applies when dark mode is explicitly active or system prefers dark)
+[data-color-mode="dark"],
+html[data-color-mode="dark"],
+body.theme-dark {
+  .file-dropzone {
+    --sunburst-ray-color: #21262d;
+    background-color: rgba(1, 4, 9, 0.72);
+
+    .dropzone-container {
+      background-color: var(--bgColor-default, #0d1117);
+      border-color: var(--borderColor-default, #30363d);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+      .orph-sunburst .orph-sunburst-rays polygon {
+        fill: #21262d;
+      }
+
+      .dropzone-content {
+        .dropzone-upload-badge {
+          background-color: rgba(47, 129, 247, 0.12);
+          color: #2f81f7;
+        }
+
+        .dropzone-title {
+          color: var(--fgColor-default, #e6edf3);
+        }
+
+        .dropzone-subtitle {
+          color: var(--fgColor-muted, #848d97);
+        }
+
+        .dropzone-meta .dropzone-tag {
+          background-color: #161b22;
+          color: #8b949e;
+          border-color: #30363d;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .dropzone-content {
+      border-color: #30363d !important;
+    }
+  }
+
+  .orph-speech-bubble {
+    background-color: #161b22;
+    color: #e6edf3;
+    border-color: #30363d;
+
+    &::before {
+      border-right-color: #30363d;
+    }
+    &::after {
+      border-right-color: #161b22;
+    }
+  }
+
+  .upload-progress-toast {
+    background-color: #161b22;
+    color: #e6edf3;
+    border-color: #30363d;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+    .upload-toast-spinner {
+      border-color: #30363d;
+      border-top-color: #2f81f7;
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-color-mode="auto"] {
+    .file-dropzone {
+      --sunburst-ray-color: #21262d;
+      background-color: rgba(1, 4, 9, 0.72);
+
+      .dropzone-container {
+        background-color: var(--bgColor-default, #0d1117);
+        border-color: var(--borderColor-default, #30363d);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+        .orph-sunburst .orph-sunburst-rays polygon {
+          fill: #21262d;
+        }
+
+        .dropzone-content {
+          .dropzone-upload-badge {
+            background-color: rgba(47, 129, 247, 0.12);
+            color: #2f81f7;
+          }
+
+          .dropzone-title {
+            color: var(--fgColor-default, #e6edf3);
+          }
+
+          .dropzone-subtitle {
+            color: var(--fgColor-muted, #848d97);
+          }
+
+          .dropzone-meta .dropzone-tag {
+            background-color: #161b22;
+            color: #8b949e;
+            border-color: #30363d;
+          }
+        }
+      }
+
+      .orph-speech-bubble {
+        background-color: #161b22;
+        color: #e6edf3;
+        border-color: #30363d;
+
+        &::before {
+          border-right-color: #30363d;
+        }
+        &::after {
+          border-right-color: #161b22;
+        }
+      }
+
+      .upload-progress-toast {
+        background-color: #161b22;
+        color: #e6edf3;
+        border-color: #30363d;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+        .upload-toast-spinner {
+          border-color: #30363d;
+          border-top-color: #2f81f7;
+        }
+      }
+    }
+
+    .dropzone-content {
+      border-color: #30363d !important;
+    }
+  }
+}
+
+// GitHub Primer Toast for Background Upload
 .upload-progress-toast {
   position: fixed;
   bottom: 24px;
   right: 24px;
   z-index: 10001;
-  background: rgba(26, 31, 36, 0.94);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 20px;
-  font-size: 0.9rem;
+  background-color: var(--bgColor-default, #ffffff);
+  color: var(--fgColor-default, #1f2328);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  font-size: 0.875rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  animation: upload-toast-in 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-shadow: 0 8px 24px var(--shadow-floating-large, rgba(31, 35, 40, 0.14));
+  border: 1px solid var(--borderColor-default, #d0d7de);
+  animation: upload-toast-in 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes upload-toast-in {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -410,8 +562,8 @@
 .upload-toast-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-top-color: #ec3750;
+  border: 2px solid var(--borderColor-default, #d0d7de);
+  border-top-color: var(--fgColor-accent, #0969da);
   border-radius: 50%;
   animation: upload-toast-spin 700ms linear infinite;
 }
