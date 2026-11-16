@@ -5,6 +5,7 @@
   let form = null;
   let fileInput = null;
   let dragCounter = 0;
+  let toastEl = null;
   let isDropping = false;
 
   const DESKTOP_TITLES = [
@@ -173,8 +174,181 @@
     });
   }
 
+
+  function showUploadToast(count) {
+    if (!toastEl) {
+      toastEl = document.createElement("div");
+      toastEl.className = "upload-status-toast";
+      toastEl.setAttribute("role", "status");
+      toastEl.setAttribute("aria-live", "polite");
+      document.body.appendChild(toastEl);
+    }
+    toastEl.innerHTML = `
+      <span class="upload-toast-spinner"></span>
+      <span>Uploading ${count} ${count === 1 ? "file" : "files"}...</span>
+    `;
+    toastEl.classList.remove("is-success", "is-error");
+    toastEl.classList.add("is-visible");
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 1) + " " + sizes[i];
+  }
+
+  function escapeHtml(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function renderPendingUploadTiles(files) {
+    if (!files || files.length === 0) return;
+    const timeline = document.querySelector(".uploads-timeline");
+    if (!timeline) return;
+
+    let todayGroup = timeline.querySelector('.timeline-date-group[data-date-group="today"]');
+    if (!todayGroup) {
+      todayGroup = document.createElement("div");
+      todayGroup.className = "timeline-date-group";
+      todayGroup.setAttribute("data-date-group", "today");
+      todayGroup.innerHTML = `
+        <div class="timeline-date-header timeline-item" style="--item-index: 1;">
+          <span class="timeline-node-icon">
+            <svg class="octicon octicon-git-commit" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+              <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm.002.75A3.998 3.998 0 0 0 14.25 9h.25a.75.75 0 0 0 0-1.5h-.25a3.998 3.998 0 0 0-3.748-2.75V3.25a.75.75 0 0 0-1.5 0v1.502A3.998 3.998 0 0 0 5.5 8.752V10.25a.75.75 0 0 0 1.5 0v-1.498A3.998 3.998 0 0 0 10.502 8.75Z"></path>
+            </svg>
+          </span>
+          <h3 class="timeline-date-title">Today</h3>
+          <span class="Label Label--secondary" data-date-count>Just now</span>
+        </div>
+        <div class="BorderBox"></div>
+      `;
+      if (timeline.firstChild) {
+        timeline.insertBefore(todayGroup, timeline.firstChild);
+      } else {
+        timeline.appendChild(todayGroup);
+      }
+    }
+
+    const box = todayGroup.querySelector(".BorderBox");
+    if (!box) return;
+
+    Array.from(files).forEach((file) => {
+      const row = document.createElement("div");
+      row.className = "Box-row upload-row-item is-pending-upload";
+      row.style.display = "flex";
+      row.style.alignItems = "flex-start";
+      row.style.gap = "12px";
+      row.style.animation = "fade-slide-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both";
+
+      const name = escapeHtml(file.name || "Uploading file...");
+      const sizeStr = formatBytes(file.size);
+
+      row.setAttribute("data-pending-filename", file.name || "");
+      row.innerHTML = `
+        <input type="checkbox" disabled style="margin-top: 6px; opacity: 0.4; cursor: not-allowed;">
+        <div style="flex: 1; min-width: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; min-width: 0; max-width: 100%;">
+                <span style="color: var(--fgColor-muted, #656d76); flex-shrink: 0; display: inline-flex; align-items: center;">
+                  <svg class="octicon octicon-file" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                    <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 9 4.25V1.5Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-.011-.013-2.914-2.914-.013-.011Z"></path>
+                  </svg>
+                </span>
+                <span class="upload-title-text" style="font-weight: 500; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65%;">${name}</span>
+                <span class="Label Label--accent" style="flex-shrink: 0; font-size: 11px;">Uploading...</span>
+              </div>
+              <div class="upload-meta-text" style="font-size: 12px; display: flex; align-items: center; gap: 8px;">
+                <span>${sizeStr}</span>
+                <span>•</span>
+                <span class="skeleton-pill" style="display: inline-block; width: 64px; height: 10px; border-radius: 3px;"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (box.firstChild) {
+        box.insertBefore(row, box.firstChild);
+      } else {
+        box.appendChild(row);
+      }
+    });
+  }
+
+  function finalizePendingUploadTiles(uploads) {
+    if (!uploads || uploads.length === 0) return;
+
+    uploads.forEach((u) => {
+      let pendingRow = null;
+      if (u.filename) {
+        pendingRow = document.querySelector(`.is-pending-upload[data-pending-filename="${CSS.escape(u.filename)}"]`);
+      }
+      if (!pendingRow) {
+        pendingRow = document.querySelector(".is-pending-upload");
+      }
+
+      if (pendingRow) {
+        pendingRow.classList.remove("is-pending-upload");
+        pendingRow.removeAttribute("data-pending-filename");
+        pendingRow.style.animation = "fade-slide-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both";
+
+        if (u.row_html) {
+          pendingRow.outerHTML = `<div class="Box-row upload-row-item timeline-item" style="display: flex; align-items: flex-start; gap: 12px; animation: fade-slide-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;">
+            <input type="checkbox" name="ids[]" value="${escapeHtml(u.id)}" form="batch-delete-form" data-batch-select-item="true" data-upload-id="${escapeHtml(u.id)}" style="margin-top: 6px; cursor: pointer;">
+            <div style="flex: 1; min-width: 0;">${u.row_html}</div>
+          </div>`;
+        }
+      }
+    });
+  }
+
+  function removePendingUploadTiles() {
+    const pending = document.querySelectorAll(".is-pending-upload");
+    pending.forEach((el) => el.remove());
+  }
+
+  function showSuccessToast(message) {
+    if (!toastEl) return;
+    toastEl.innerHTML = `
+      <svg class="octicon octicon-check" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="color: var(--fgColor-success, #1a7f37);">
+        <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+      </svg>
+      <span>${escapeHtml(message)}</span>
+    `;
+    toastEl.classList.add("is-success");
+    setTimeout(() => {
+      toastEl.classList.remove("is-visible", "is-success");
+    }, 3500);
+  }
+
+  function showErrorToast(message) {
+    if (!toastEl) return;
+    toastEl.innerHTML = `
+      <svg class="octicon octicon-alert" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="color: var(--fgColor-danger, #cf222e);">
+        <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path>
+      </svg>
+      <span>${escapeHtml(message)}</span>
+    `;
+    toastEl.classList.add("is-error");
+    setTimeout(() => {
+      toastEl.classList.remove("is-visible", "is-error");
+    }, 4500);
+  }
+
   function directUpload(files) {
     if (!files || files.length === 0 || !form) return;
+
+    showUploadToast(files.length);
+    renderPendingUploadTiles(files);
 
     const formData = new FormData();
     Array.from(files).forEach((file) => {
@@ -189,7 +363,36 @@
       formData.append("authenticity_token", csrfToken);
     }
 
-    form.submit();
+    const actionUrl = form.getAttribute("action") || "/uploads";
+
+    fetch(actionUrl, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Accept": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    })
+      .then((res) => {
+        if (!res.ok) {
+          return res.json().then((d) => {
+            throw new Error(d.error || `Upload failed with HTTP ${res.status}`);
+          });
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data && data.success) {
+          finalizePendingUploadTiles(data.uploads);
+          showSuccessToast(data.notice || "Upload successful!");
+        } else {
+          throw new Error(data.error || "Upload failed");
+        }
+      })
+      .catch((err) => {
+        removePendingUploadTiles();
+        showErrorToast(err.message || "Failed to upload files. Please try again.");
+      });
   }
 
   function bindPasteEvents() {

@@ -16,6 +16,7 @@ class Components::Uploads::Index < Components::Base
     div(class: "uploads-container", data: { uploads_container: true }, style: "max-width: 1200px; margin: 0 auto; padding: 24px;") do
       header_section
       upload_hero_card
+      uploads_history_header
       search_section
       uploads_list
       pagination_section if uploads.respond_to?(:total_pages) && uploads.total_pages > 1
@@ -178,6 +179,16 @@ class Components::Uploads::Index < Components::Base
   end
 
 
+
+  def uploads_history_header
+    count = uploads.respond_to?(:total_count) ? uploads.total_count : uploads.size
+
+    div(style: "display: flex; align-items: center; gap: 8px; margin: 32px 0 16px;") do
+      h2(style: "font-size: 1.5rem; font-weight: 600; margin: 0; color: var(--fgColor-default);", data: { uploads_history: true }) { "Uploads History" }
+      render(Primer::Beta::Label.new(scheme: :secondary)) { pluralize(count, "file") }
+    end
+  end
+
   def search_section
     div(style: "margin-bottom: 24px;") do
       form_with url: uploads_path, method: :get do
@@ -299,8 +310,70 @@ class Components::Uploads::Index < Components::Base
 
 
   def uploads_list
-    if uploads.any?
-      div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 4px 0;") do
+    div(class: "uploads-timeline-wrapper", data: { timeline_wrapper: true }) do
+      skeleton_placeholder_timeline
+
+      if uploads.any?
+        real_populated_timeline
+      else
+        empty_state
+      end
+    end
+  end
+
+  def skeleton_placeholder_timeline
+    div(class: "uploads-skeleton-placeholder", aria: { hidden: "true" }) do
+      div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 4px 0;") do
+        div(class: "skeleton-pill", style: "width: 16px; height: 16px; border-radius: 3px;")
+        div(class: "skeleton-pill", style: "width: 70px; height: 14px; border-radius: 4px;")
+      end
+
+      div(class: "uploads-timeline", style: "margin-top: 0;") do
+        2.times do |g|
+          div(class: "timeline-date-group") do
+            div(class: "timeline-date-header") do
+              span(class: "timeline-node-icon") do
+                render Primer::Beta::Octicon.new(icon: :"git-commit", size: :small)
+              end
+              div(class: "skeleton-pill", style: "width: #{g == 0 ? 120 : 105}px; height: 16px; border-radius: 4px; margin-right: 8px;")
+              div(class: "skeleton-pill", style: "width: 46px; height: 18px; border-radius: 10px;")
+            end
+
+            render Primer::Beta::BorderBox.new do |box|
+              3.times do |r|
+                box.with_row do
+                  div(style: "display: flex; align-items: flex-start; gap: 12px; padding: 4px 0;") do
+                    div(class: "skeleton-pill", style: "width: 14px; height: 14px; border-radius: 3px; margin-top: 4px; flex-shrink: 0;")
+                    div(style: "color: var(--fgColor-muted, #656d76); margin-top: 2px; flex-shrink: 0;") do
+                      render Primer::Beta::Octicon.new(icon: :file, size: :small)
+                    end
+                    div(style: "flex: 1; min-width: 0;") do
+                      div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 8px;") do
+                        div(class: "skeleton-pill", style: "width: #{[180, 240, 210, 195][(g * 3 + r) % 4]}px; max-width: 60%; height: 14px; border-radius: 4px;")
+                        div(class: "skeleton-pill", style: "width: 42px; height: 16px; border-radius: 10px;")
+                      end
+                      div(class: "skeleton-pill", style: "width: #{[120, 145, 110, 135][(g * 3 + r) % 4]}px; max-width: 40%; height: 11px; border-radius: 3px;")
+                    end
+                    div(style: "display: flex; gap: 8px; align-items: center;") do
+                      div(class: "skeleton-pill", style: "width: 28px; height: 28px; border-radius: 6px;")
+                      div(class: "skeleton-pill", style: "width: 28px; height: 28px; border-radius: 6px;")
+                      div(class: "skeleton-pill", style: "width: 28px; height: 28px; border-radius: 6px;")
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  def real_populated_timeline
+    div(class: "uploads-real-timeline") do
+      item_idx = 0
+
+      div(class: "select-all-row timeline-item", style: "--item-index: #{item_idx += 1}; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 4px 0;") do
         input(
           type: "checkbox",
           id: "select-all-uploads",
@@ -312,27 +385,71 @@ class Components::Uploads::Index < Components::Base
         end
       end
 
-      render Primer::Beta::BorderBox.new do |box|
-        uploads.each do |upload|
-          box.with_row do
-            div(style: "display: flex; align-items: flex-start; gap: 12px;") do
-              input(
-                type: "checkbox",
-                name: "ids[]",
-                value: upload.id,
-                form: "batch-delete-form",
-                data: { batch_select_item: true, upload_id: upload.id },
-                style: "margin-top: 6px; cursor: pointer;"
-              )
-              div(style: "flex: 1; min-width: 0;") do
-                render Components::Uploads::Row.new(upload: upload, compact: false)
+      div(class: "uploads-timeline") do
+        uploads.group_by { |upload| upload.created_at.to_date }.each do |date, date_uploads|
+          date_key = date.strftime("%Y-%m-%d")
+          item_idx += 1
+          current_date_idx = item_idx
+
+          div(class: "timeline-date-group", id: "date-group-#{date_key}", data: { date_group: date_key }) do
+            div(class: "timeline-date-header timeline-item", style: "--item-index: #{current_date_idx};") do
+              span(class: "timeline-node-icon") do
+                render Primer::Beta::Octicon.new(icon: :"git-commit", size: :small)
+              end
+              if date == Date.current
+                h3(class: "timeline-date-title") do
+                  plain "Today "
+                  span(style: "color: var(--fgColor-muted, #656d76); font-weight: 400; font-size: 13px;") do
+                    plain "— #{date.strftime('%b %-d, %Y')}"
+                  end
+                end
+              elsif date == Date.yesterday
+                h3(class: "timeline-date-title") do
+                  plain "Yesterday "
+                  span(style: "color: var(--fgColor-muted, #656d76); font-weight: 400; font-size: 13px;") do
+                    plain "— #{date.strftime('%b %-d, %Y')}"
+                  end
+                end
+              else
+                h3(class: "timeline-date-title") do
+                  date.strftime("%b %-d, %Y")
+                end
+              end
+              render(Primer::Beta::Label.new(scheme: :secondary)) { pluralize(date_uploads.size, "file") }
+            end
+
+            render Primer::Beta::BorderBox.new do |box|
+              date_uploads.each do |upload|
+                item_idx += 1
+                render_real_upload_row(box, upload, item_idx)
               end
             end
           end
         end
       end
-    else
-      empty_state
+    end
+  end
+
+  def render_real_upload_row(box, upload, row_idx)
+    box.with_row do
+      div(class: "upload-row-item timeline-item", style: "display: flex; align-items: flex-start; gap: 12px; --item-index: #{row_idx};", data: { item_index: row_idx }) do
+        input(
+          type: "checkbox",
+          name: "ids[]",
+          value: upload.id,
+          form: "batch-delete-form",
+          data: {
+            batch_select_item: true,
+            upload_id: upload.id,
+            created_at: upload.created_at.to_date.to_s,
+            formatted_date: upload.created_at.strftime("%b %-d, %Y")
+          },
+          style: "margin-top: 6px; cursor: pointer;"
+        )
+        div(style: "flex: 1; min-width: 0;") do
+          render Components::Uploads::Row.new(upload: upload, compact: false)
+        end
+      end
     end
   end
 

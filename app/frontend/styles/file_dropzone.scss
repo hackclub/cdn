@@ -297,3 +297,178 @@ body.theme-dark .orph-sunburst-rays polygon,
     fill: rgba(240, 246, 252, 0.08);
   }
 }
+
+// Subtle Background Toast for Async Form Uploads
+.upload-status-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: var(--bgColor-default, #ffffff);
+  border: 1px solid var(--borderColor-default, #d0d7de);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(31, 35, 40, 0.15);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fgColor-default, #1f2328);
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(12px) scale(0.95);
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+}
+
+.upload-toast-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--borderColor-default, #d0d7de);
+  border-top-color: var(--fgColor-accent, #0969da);
+  border-radius: 50%;
+  animation: upload-spin 0.6s linear infinite;
+}
+
+@keyframes upload-spin {
+  to { transform: rotate(360deg); }
+}
+
+// GitHub Commit-Style Date Grouped Upload History Timeline
+.uploads-timeline-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.uploads-timeline {
+  position: relative;
+  margin-top: 16px;
+}
+
+.timeline-date-group {
+  position: relative;
+  padding-left: 32px;
+  margin-bottom: 24px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    bottom: -24px;
+    left: 11px;
+    width: 2px;
+    background-color: var(--borderColor-muted, #d8dee4);
+    z-index: 0;
+  }
+
+  &:last-child::before {
+    display: none;
+  }
+}
+
+.timeline-date-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  z-index: 1;
+}
+
+.timeline-node-icon {
+  position: absolute;
+  left: -32px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bgColor-default, #ffffff);
+  color: var(--fgColor-muted, #656d76);
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.timeline-date-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fgColor-default, #1f2328);
+  margin: 0;
+}
+
+// Theme tokens for skeleton loading
+:root {
+  --skeleton-pill-bg: #ebedf0;
+  --skeleton-shimmer-color: #f6f8fa;
+}
+
+[data-color-mode="dark"],
+html[data-color-mode="dark"],
+body.theme-dark,
+[data-dark-theme="dark"] {
+  --skeleton-pill-bg: #161b22;
+  --skeleton-shimmer-color: #262c36;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root,
+  html:not([data-color-mode="light"]),
+  body:not([data-color-mode="light"]) {
+    --skeleton-pill-bg: #161b22;
+    --skeleton-shimmer-color: #262c36;
+  }
+}
+
+.skeleton-pill {
+  position: relative;
+  display: inline-block;
+  background-color: var(--skeleton-pill-bg);
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--skeleton-shimmer-color) 50%,
+      transparent 100%
+    );
+    animation: skeleton-pill-sweep 1.4s ease-in-out infinite;
+  }
+}
+
+.uploads-real-timeline {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.uploads-skeleton-placeholder {
+  display: none;
+}
+
+@keyframes skeleton-pill-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fade-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
