@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="600" viewBox="0 0 10 12" shape-rendering="crispEdges">
+  <title>Broken file icon</title>
+  <path d="M0 0H7V1H8V2H9V3H10V12H0Z" fill="#ffffff"/>
+  <path d="M0 0H7V1H8V2H9V3H10V12H0Z M1 1V11H9V4H6V1Z M7 2H8V3H7Z" fill="#000000" fill-rule="evenodd"/>
+</svg>
