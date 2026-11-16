@@ -257,3 +257,43 @@
     text-align: center !important;
   }
 }
+
+// Static dithered sunbeam background radiating from Orph and fading out to right
+.orph-sunburst {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+  opacity: 0.95;
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.9) 20%, rgba(0, 0, 0, 0.5) 34%, rgba(0, 0, 0, 0.15) 42%, transparent 47%, transparent 100%);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.9) 20%, rgba(0, 0, 0, 0.5) 34%, rgba(0, 0, 0, 0.15) 42%, transparent 47%, transparent 100%);
+
+  svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+
+.orph-sunburst-rays polygon {
+  fill: rgba(31, 35, 40, 0.055);
+}
+
+[data-color-mode="dark"] .orph-sunburst-rays polygon,
+html[data-color-mode="dark"] .orph-sunburst-rays polygon,
+body.theme-dark .orph-sunburst-rays polygon,
+[data-dark-theme="dark"] .orph-sunburst-rays polygon {
+  fill: rgba(240, 246, 252, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-color-mode="light"]) .orph-sunburst-rays polygon {
+    fill: rgba(240, 246, 252, 0.08);
+  }
+}

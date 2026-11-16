@@ -88,6 +88,10 @@ class Components::Uploads::Index < Components::Base
       data: { orph_view: true },
       aria: { hidden: "true" }
     ) do
+      div(class: "orph-sunburst") do
+        raw safe(render_sunburst_svg)
+      end
+
       div(class: "orph-stage", data: { orph_stage: true }) do
         div(class: "orph-character", data: { orph_character: true }) do
           img(
@@ -122,6 +126,57 @@ class Components::Uploads::Index < Components::Base
       end
     end
   end
+  def render_sunburst_svg
+    <<~SVG
+      <svg viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <defs>
+          <!-- Smooth horizontal luminance base fade toward right, finishing before half (47%) -->
+          <linearGradient id="sunburst-hfade" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#fff" stop-opacity="1" />
+            <stop offset="18%" stop-color="#fff" stop-opacity="1" />
+            <stop offset="26%" stop-color="#fff" stop-opacity="0.85" />
+            <stop offset="33%" stop-color="#fff" stop-opacity="0.55" />
+            <stop offset="40%" stop-color="#fff" stop-opacity="0.22" />
+            <stop offset="44%" stop-color="#fff" stop-opacity="0.05" />
+            <stop offset="47%" stop-color="#000" stop-opacity="0" />
+            <stop offset="100%" stop-color="#000" stop-opacity="0" />
+          </linearGradient>
+
+          <!-- 4x4 Ordered Bayer / Stipple Dither Dot Pattern -->
+          <pattern id="sunburst-dither-dots" width="4" height="4" patternUnits="userSpaceOnUse">
+            <rect x="0" y="0" width="1" height="1" fill="#fff" />
+            <rect x="2" y="2" width="1" height="1" fill="#fff" />
+          </pattern>
+
+          <mask id="sunburst-dither-mask">
+            <!-- Continuous gradient base -->
+            <rect x="0" y="0" width="800" height="240" fill="url(#sunburst-hfade)" />
+            <!-- Dither stipple dots in active zone: x=150 to x=376 (ends before 48%, well before half 400) -->
+            <rect x="150" y="0" width="226" height="240" fill="url(#sunburst-dither-dots)" opacity="0.28" />
+          </mask>
+        </defs>
+        <g mask="url(#sunburst-dither-mask)" class="orph-sunburst-rays">
+          <polygon points="176.0,120.0 972.9,49.4 972.9,190.6" />
+          <polygon points="176.0,120.0 939.2,359.7 885.2,490.2" />
+          <polygon points="176.0,120.0 789.4,633.6 689.6,733.4" />
+          <polygon points="176.0,120.0 546.2,829.2 415.7,883.2" />
+          <polygon points="176.0,120.0 246.6,916.9 105.4,916.9" />
+          <polygon points="176.0,120.0 -63.7,883.2 -194.2,829.2" />
+          <polygon points="176.0,120.0 -337.6,733.4 -437.4,633.6" />
+          <polygon points="176.0,120.0 -533.2,490.2 -587.2,359.7" />
+          <polygon points="176.0,120.0 -620.9,190.6 -620.9,49.4" />
+          <polygon points="176.0,120.0 -587.2,-119.7 -533.2,-250.2" />
+          <polygon points="176.0,120.0 -437.4,-393.6 -337.6,-493.4" />
+          <polygon points="176.0,120.0 -194.2,-589.2 -63.7,-643.2" />
+          <polygon points="176.0,120.0 105.4,-676.9 246.6,-676.9" />
+          <polygon points="176.0,120.0 415.7,-643.2 546.2,-589.2" />
+          <polygon points="176.0,120.0 689.6,-493.4 789.4,-393.6" />
+          <polygon points="176.0,120.0 885.2,-250.2 939.2,-119.7" />
+        </g>
+      </svg>
+    SVG
+  end
+
 
   def search_section
     div(style: "margin-bottom: 24px;") do
@@ -153,6 +208,10 @@ class Components::Uploads::Index < Components::Base
       data: { orph_view: true },
       aria: { hidden: "true" }
     ) do
+      div(class: "orph-sunburst") do
+        raw safe(render_sunburst_svg)
+      end
+
       div(class: "orph-stage", data: { orph_stage: true }) do
         div(class: "orph-character", data: { orph_character: true }) do
           img(
@@ -187,6 +246,57 @@ class Components::Uploads::Index < Components::Base
       end
     end
   end
+  def render_sunburst_svg
+    <<~SVG
+      <svg viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <defs>
+          <!-- Smooth horizontal luminance base fade toward right, finishing before half (47%) -->
+          <linearGradient id="sunburst-hfade" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#fff" stop-opacity="1" />
+            <stop offset="18%" stop-color="#fff" stop-opacity="1" />
+            <stop offset="26%" stop-color="#fff" stop-opacity="0.85" />
+            <stop offset="33%" stop-color="#fff" stop-opacity="0.55" />
+            <stop offset="40%" stop-color="#fff" stop-opacity="0.22" />
+            <stop offset="44%" stop-color="#fff" stop-opacity="0.05" />
+            <stop offset="47%" stop-color="#000" stop-opacity="0" />
+            <stop offset="100%" stop-color="#000" stop-opacity="0" />
+          </linearGradient>
+
+          <!-- 4x4 Ordered Bayer / Stipple Dither Dot Pattern -->
+          <pattern id="sunburst-dither-dots" width="4" height="4" patternUnits="userSpaceOnUse">
+            <rect x="0" y="0" width="1" height="1" fill="#fff" />
+            <rect x="2" y="2" width="1" height="1" fill="#fff" />
+          </pattern>
+
+          <mask id="sunburst-dither-mask">
+            <!-- Continuous gradient base -->
+            <rect x="0" y="0" width="800" height="240" fill="url(#sunburst-hfade)" />
+            <!-- Dither stipple dots in active zone: x=150 to x=376 (ends before 48%, well before half 400) -->
+            <rect x="150" y="0" width="226" height="240" fill="url(#sunburst-dither-dots)" opacity="0.28" />
+          </mask>
+        </defs>
+        <g mask="url(#sunburst-dither-mask)" class="orph-sunburst-rays">
+          <polygon points="176.0,120.0 972.9,49.4 972.9,190.6" />
+          <polygon points="176.0,120.0 939.2,359.7 885.2,490.2" />
+          <polygon points="176.0,120.0 789.4,633.6 689.6,733.4" />
+          <polygon points="176.0,120.0 546.2,829.2 415.7,883.2" />
+          <polygon points="176.0,120.0 246.6,916.9 105.4,916.9" />
+          <polygon points="176.0,120.0 -63.7,883.2 -194.2,829.2" />
+          <polygon points="176.0,120.0 -337.6,733.4 -437.4,633.6" />
+          <polygon points="176.0,120.0 -533.2,490.2 -587.2,359.7" />
+          <polygon points="176.0,120.0 -620.9,190.6 -620.9,49.4" />
+          <polygon points="176.0,120.0 -587.2,-119.7 -533.2,-250.2" />
+          <polygon points="176.0,120.0 -437.4,-393.6 -337.6,-493.4" />
+          <polygon points="176.0,120.0 -194.2,-589.2 -63.7,-643.2" />
+          <polygon points="176.0,120.0 105.4,-676.9 246.6,-676.9" />
+          <polygon points="176.0,120.0 415.7,-643.2 546.2,-589.2" />
+          <polygon points="176.0,120.0 689.6,-493.4 789.4,-393.6" />
+          <polygon points="176.0,120.0 885.2,-250.2 939.2,-119.7" />
+        </g>
+      </svg>
+    SVG
+  end
+
 
   def uploads_list
     if uploads.any?
@@ -251,6 +361,10 @@ class Components::Uploads::Index < Components::Base
       data: { orph_view: true },
       aria: { hidden: "true" }
     ) do
+      div(class: "orph-sunburst") do
+        raw safe(render_sunburst_svg)
+      end
+
       div(class: "orph-stage", data: { orph_stage: true }) do
         div(class: "orph-character", data: { orph_character: true }) do
           img(
@@ -285,6 +399,57 @@ class Components::Uploads::Index < Components::Base
       end
     end
   end
+  def render_sunburst_svg
+    <<~SVG
+      <svg viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <defs>
+          <!-- Smooth horizontal luminance base fade toward right, finishing before half (47%) -->
+          <linearGradient id="sunburst-hfade" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#fff" stop-opacity="1" />
+            <stop offset="18%" stop-color="#fff" stop-opacity="1" />
+            <stop offset="26%" stop-color="#fff" stop-opacity="0.85" />
+            <stop offset="33%" stop-color="#fff" stop-opacity="0.55" />
+            <stop offset="40%" stop-color="#fff" stop-opacity="0.22" />
+            <stop offset="44%" stop-color="#fff" stop-opacity="0.05" />
+            <stop offset="47%" stop-color="#000" stop-opacity="0" />
+            <stop offset="100%" stop-color="#000" stop-opacity="0" />
+          </linearGradient>
+
+          <!-- 4x4 Ordered Bayer / Stipple Dither Dot Pattern -->
+          <pattern id="sunburst-dither-dots" width="4" height="4" patternUnits="userSpaceOnUse">
+            <rect x="0" y="0" width="1" height="1" fill="#fff" />
+            <rect x="2" y="2" width="1" height="1" fill="#fff" />
+          </pattern>
+
+          <mask id="sunburst-dither-mask">
+            <!-- Continuous gradient base -->
+            <rect x="0" y="0" width="800" height="240" fill="url(#sunburst-hfade)" />
+            <!-- Dither stipple dots in active zone: x=150 to x=376 (ends before 48%, well before half 400) -->
+            <rect x="150" y="0" width="226" height="240" fill="url(#sunburst-dither-dots)" opacity="0.28" />
+          </mask>
+        </defs>
+        <g mask="url(#sunburst-dither-mask)" class="orph-sunburst-rays">
+          <polygon points="176.0,120.0 972.9,49.4 972.9,190.6" />
+          <polygon points="176.0,120.0 939.2,359.7 885.2,490.2" />
+          <polygon points="176.0,120.0 789.4,633.6 689.6,733.4" />
+          <polygon points="176.0,120.0 546.2,829.2 415.7,883.2" />
+          <polygon points="176.0,120.0 246.6,916.9 105.4,916.9" />
+          <polygon points="176.0,120.0 -63.7,883.2 -194.2,829.2" />
+          <polygon points="176.0,120.0 -337.6,733.4 -437.4,633.6" />
+          <polygon points="176.0,120.0 -533.2,490.2 -587.2,359.7" />
+          <polygon points="176.0,120.0 -620.9,190.6 -620.9,49.4" />
+          <polygon points="176.0,120.0 -587.2,-119.7 -533.2,-250.2" />
+          <polygon points="176.0,120.0 -437.4,-393.6 -337.6,-493.4" />
+          <polygon points="176.0,120.0 -194.2,-589.2 -63.7,-643.2" />
+          <polygon points="176.0,120.0 105.4,-676.9 246.6,-676.9" />
+          <polygon points="176.0,120.0 415.7,-643.2 546.2,-589.2" />
+          <polygon points="176.0,120.0 689.6,-493.4 789.4,-393.6" />
+          <polygon points="176.0,120.0 885.2,-250.2 939.2,-119.7" />
+        </g>
+      </svg>
+    SVG
+  end
+
 
   def pagination_section
     div(style: "margin-top: 24px; text-align: center;") do
@@ -323,6 +488,10 @@ class Components::Uploads::Index < Components::Base
       data: { orph_view: true },
       aria: { hidden: "true" }
     ) do
+      div(class: "orph-sunburst") do
+        raw safe(render_sunburst_svg)
+      end
+
       div(class: "orph-stage", data: { orph_stage: true }) do
         div(class: "orph-character", data: { orph_character: true }) do
           img(
@@ -357,4 +526,55 @@ class Components::Uploads::Index < Components::Base
       end
     end
   end
+  def render_sunburst_svg
+    <<~SVG
+      <svg viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <defs>
+          <!-- Smooth horizontal luminance base fade toward right, finishing before half (47%) -->
+          <linearGradient id="sunburst-hfade" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#fff" stop-opacity="1" />
+            <stop offset="18%" stop-color="#fff" stop-opacity="1" />
+            <stop offset="26%" stop-color="#fff" stop-opacity="0.85" />
+            <stop offset="33%" stop-color="#fff" stop-opacity="0.55" />
+            <stop offset="40%" stop-color="#fff" stop-opacity="0.22" />
+            <stop offset="44%" stop-color="#fff" stop-opacity="0.05" />
+            <stop offset="47%" stop-color="#000" stop-opacity="0" />
+            <stop offset="100%" stop-color="#000" stop-opacity="0" />
+          </linearGradient>
+
+          <!-- 4x4 Ordered Bayer / Stipple Dither Dot Pattern -->
+          <pattern id="sunburst-dither-dots" width="4" height="4" patternUnits="userSpaceOnUse">
+            <rect x="0" y="0" width="1" height="1" fill="#fff" />
+            <rect x="2" y="2" width="1" height="1" fill="#fff" />
+          </pattern>
+
+          <mask id="sunburst-dither-mask">
+            <!-- Continuous gradient base -->
+            <rect x="0" y="0" width="800" height="240" fill="url(#sunburst-hfade)" />
+            <!-- Dither stipple dots in active zone: x=150 to x=376 (ends before 48%, well before half 400) -->
+            <rect x="150" y="0" width="226" height="240" fill="url(#sunburst-dither-dots)" opacity="0.28" />
+          </mask>
+        </defs>
+        <g mask="url(#sunburst-dither-mask)" class="orph-sunburst-rays">
+          <polygon points="176.0,120.0 972.9,49.4 972.9,190.6" />
+          <polygon points="176.0,120.0 939.2,359.7 885.2,490.2" />
+          <polygon points="176.0,120.0 789.4,633.6 689.6,733.4" />
+          <polygon points="176.0,120.0 546.2,829.2 415.7,883.2" />
+          <polygon points="176.0,120.0 246.6,916.9 105.4,916.9" />
+          <polygon points="176.0,120.0 -63.7,883.2 -194.2,829.2" />
+          <polygon points="176.0,120.0 -337.6,733.4 -437.4,633.6" />
+          <polygon points="176.0,120.0 -533.2,490.2 -587.2,359.7" />
+          <polygon points="176.0,120.0 -620.9,190.6 -620.9,49.4" />
+          <polygon points="176.0,120.0 -587.2,-119.7 -533.2,-250.2" />
+          <polygon points="176.0,120.0 -437.4,-393.6 -337.6,-493.4" />
+          <polygon points="176.0,120.0 -194.2,-589.2 -63.7,-643.2" />
+          <polygon points="176.0,120.0 105.4,-676.9 246.6,-676.9" />
+          <polygon points="176.0,120.0 415.7,-643.2 546.2,-589.2" />
+          <polygon points="176.0,120.0 689.6,-493.4 789.4,-393.6" />
+          <polygon points="176.0,120.0 885.2,-250.2 939.2,-119.7" />
+        </g>
+      </svg>
+    SVG
+  end
+
 end
