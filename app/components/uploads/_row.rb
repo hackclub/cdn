@@ -26,23 +26,21 @@ class Components::Uploads::Row < Components::Base
 
   def compact_content
     div(style: "flex: 1; min-width: 0;") do
-      div(style: "display: inline-block; cursor: pointer; max-width: 100%;", data: { batch_select_toggle: upload.id }) do
-        div(style: "font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;") do
-          render Primer::Beta::Octicon.new(icon: file_icon_for(upload.content_type), size: :small, mr: 1)
-          plain upload.filename.to_s
+      div(style: "display: block; cursor: pointer; max-width: 100%; min-width: 0;", data: { batch_select_toggle: upload.id }) do
+        div(style: "display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; min-width: 0; max-width: 100%;") do
+          render Primer::Beta::Octicon.new(icon: file_icon_for(upload.content_type), size: :small, style: "flex-shrink: 0;")
+          span(class: "upload-title-text") { plain upload.filename.to_s }
         end
-        div(style: "font-size: 12px; color: var(--fgColor-muted, #656d76); margin-top: 4px;") do
+        div(class: "upload-meta-text", style: "font-size: 12px; margin-top: 4px;") do
           plain "#{upload.human_file_size} • #{time_ago_in_words(upload.created_at)} ago"
         end
       end
     end
 
-    div(style: "display: flex; gap: 8px; align-items: center;") do
+    div(class: "upload-row-actions", style: "display: flex; gap: 8px; align-items: center;") do
       render(Primer::Beta::ClipboardCopyButton.new(value: upload.cdn_url, size: :small, "aria-label": "Copy link")) { "Copy link" }
 
-      a(href: upload.cdn_url, target: "_blank", rel: "noopener", class: "btn btn-sm") do
-        plain "View"
-      end
+      render(Primer::Beta::IconButton.new(icon: :eye, tag: :a, href: upload.cdn_url, target: "_blank", rel: "noopener", size: :small, "aria-label": "View file"))
 
       render_delete_dialog
     end
@@ -50,50 +48,66 @@ class Components::Uploads::Row < Components::Base
 
   def full_content
     div(style: "flex: 1; min-width: 0;") do
-      div(style: "display: inline-block; cursor: pointer; max-width: 100%;", data: { batch_select_toggle: upload.id }) do
-        div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 8px; min-width: 0;") do
-          render Primer::Beta::Octicon.new(icon: file_icon_for(upload.content_type), size: :small)
-          div(style: "font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;") do
-            plain upload.filename.to_s
-          end
-          render(Primer::Beta::Label.new(scheme: :secondary)) { plain upload.provenance.titleize }
+      div(style: "display: block; cursor: pointer; max-width: 100%; min-width: 0;", data: { batch_select_toggle: upload.id }) do
+        div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 6px; min-width: 0; max-width: 100%;") do
+          render Primer::Beta::Octicon.new(icon: file_icon_for(upload.content_type), size: :small, style: "flex-shrink: 0;")
+          span(class: "upload-title-text") { plain upload.filename.to_s }
+          render(Primer::Beta::Label.new(scheme: :secondary, style: "flex-shrink: 0;")) { plain upload.provenance.titleize }
         end
-        div(style: "font-size: 12px; color: var(--fgColor-muted, #656d76);") do
+        div(class: "upload-meta-text", style: "font-size: 12px;") do
           plain "#{upload.human_file_size} • #{upload.content_type} • #{time_ago_in_words(upload.created_at)} ago"
         end
       end
     end
 
-    div(style: "display: flex; gap: 8px; align-items: center;") do
+    div(class: "upload-row-actions", style: "display: flex; gap: 8px; align-items: center;") do
       render(Primer::Beta::ClipboardCopyButton.new(value: upload.cdn_url, size: :small, "aria-label": "Copy link")) { "Copy link" }
 
-      a(href: upload.cdn_url, target: "_blank", rel: "noopener", class: "btn btn-sm") do
-        render Primer::Beta::Octicon.new(icon: :link, mr: 1)
-        plain "View"
-      end
+      render(Primer::Beta::IconButton.new(icon: :eye, tag: :a, href: upload.cdn_url, target: "_blank", rel: "noopener", size: :small, "aria-label": "View file"))
 
       render_delete_dialog
     end
   end
 
   def render_delete_dialog
-    render Primer::Alpha::Dialog.new(title: "Delete file?", size: :medium) do |dialog|
-      dialog.with_show_button(scheme: :danger, size: :small) do
+    render Primer::Alpha::Dialog.new(
+      title: "Delete file?",
+      size: :auto,
+      classes: "delete-confirm-dialog"
+    ) do |dialog|
+      dialog.with_show_button(scheme: :danger, size: :small, "aria-label": "Delete file") do
         render Primer::Beta::Octicon.new(icon: :trash)
       end
-      dialog.with_header(variant: :large) do
-        h1(style: "margin: 0;") { "Delete #{upload.filename}?" }
+      dialog.with_header do
+        h3(style: "margin: 0; font-size: 16px; font-weight: 600; color: var(--fgColor-default); word-break: break-word; overflow-wrap: anywhere;") do
+          "Delete #{upload.filename}?"
+        end
       end
       dialog.with_body do
-        p(style: "margin: 0;") do
-          plain "This action cannot be undone. The file will be permanently removed from the CDN."
+        div(style: "font-size: 14px; line-height: 1.5; color: var(--fgColor-default);") do
+          p(style: "margin: 0 0 8px 0; font-size: 14px; line-height: 1.5; word-break: break-word; overflow-wrap: anywhere;") do
+            plain "Are you sure you want to delete "
+            strong { plain upload.filename.to_s }
+            plain "?"
+          end
+
+          p(style: "margin: 0; font-size: 13px; line-height: 1.5; color: var(--fgColor-muted);") do
+            plain "This action cannot be undone. This file will be permanently removed from the CDN."
+          end
         end
       end
       dialog.with_footer do
-        div(style: "display: flex; justify-content: flex-end; gap: 8px;") do
+        div(style: "display: flex; justify-content: flex-end; align-items: center; gap: 8px; width: 100%;") do
+          button(
+            type: "button",
+            class: "btn",
+            data: { close_dialog_id: dialog.id },
+            style: "cursor: pointer;"
+          ) { "Cancel" }
           form_with url: (admin ? admin_upload_path(upload) : upload_path(upload)), method: :delete, style: "display: inline;" do
-            button(type: "submit", class: "btn btn-danger") do
-              plain "Delete"
+            button(type: "submit", class: "btn btn-danger", style: "display: inline-flex; align-items: center; gap: 6px; cursor: pointer;") do
+              render Primer::Beta::Octicon.new(icon: :trash, size: :small)
+              plain "Delete file"
             end
           end
         end

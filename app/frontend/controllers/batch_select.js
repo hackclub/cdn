@@ -160,6 +160,21 @@
     if (!listenersAttached) {
       listenersAttached = true;
 
+      // Click outside any open <dialog> to dismiss/cancel
+      document.addEventListener("click", (e) => {
+        if (e.target && e.target.tagName === "DIALOG" && e.target.open) {
+          const rect = e.target.getBoundingClientRect();
+          const isOutside =
+            e.clientX < rect.left ||
+            e.clientX > rect.right ||
+            e.clientY < rect.top ||
+            e.clientY > rect.bottom;
+          if (isOutside) {
+            e.target.close();
+          }
+        }
+      });
+
       // Individual checkbox changes
       document.addEventListener("change", (e) => {
         if (e.target.matches("[data-batch-select-item]")) {
