@@ -1,118 +1,77 @@
+// Upload dropzone and clipboard paste controller
 (function () {
-  let dropzone;
-  let counter = 0;
-  let fileInput, form;
   let initialized = false;
+  let form = null;
+  let fileInput = null;
 
-  function init() {
-    const formElement = document.querySelector("[data-dropzone-form]");
-    if (!formElement) {
-      fileInput = null;
-      form = null;
-      initialized = false;
-      return;
+  function directUpload(files) {
+    if (!files || files.length === 0 || !form) return;
+
+    const formData = new FormData();
+    Array.from(files).forEach((file) => {
+      formData.append("files[]", file);
+    });
+
+    const csrfToken =
+      document.querySelector('meta[name="csrf-token"]')?.content ||
+      (form ? form.querySelector('input[name="authenticity_token"]')?.value : "") ||
+      "";
+    if (csrfToken) {
+      formData.append("authenticity_token", csrfToken);
     }
 
-    if (initialized && form === formElement) return;
+    form.submit();
+  }
 
-    form = formElement;
-    fileInput = form.querySelector("[data-dropzone-input]");
+  function bindPasteEvents() {
+    window.addEventListener("paste", (e) => {
+      if (!e.clipboardData || !e.clipboardData.files) return;
+      const target = e.target;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
 
-    if (!fileInput) return;
-
-    initialized = true;
-
-    // Handle file input change (supports multiple files)
-    fileInput.addEventListener("change", (e) => {
-      const files = e.target.files;
-      if (files && files.length > 0) {
-        form.requestSubmit();
+      const files = e.clipboardData.files;
+      if (files.length > 0) {
+        e.preventDefault();
+        directUpload(files);
       }
     });
   }
 
-  // Prevent default drag behaviors
-  document.addEventListener("dragover", (e) => {
-    e.preventDefault();
-  });
-
-  // Show overlay when dragging enters window
-  document.addEventListener("dragenter", (e) => {
+  function bindNativeFileInput() {
     if (!fileInput) return;
-    e.preventDefault();
-    if (counter === 0) {
-      showDropzone();
-    }
-    counter++;
-  });
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files && fileInput.files.length > 0) {
+        directUpload(fileInput.files);
+      }
+    });
+  }
 
-  // Hide overlay when dragging leaves window
-  document.addEventListener("dragleave", (e) => {
-    if (!fileInput) return;
-    e.preventDefault();
-    counter--;
-    if (counter === 0) {
-      hideDropzone();
-    }
-  });
+  function init() {
+    const formElement = document.querySelector("[data-dropzone-form]");
+    if (!formElement) return;
 
-  // Handle file drop (supports multiple files)
-  document.addEventListener("drop", (e) => {
-    if (!fileInput) return;
-    e.preventDefault();
-    counter = 0;
-    hideDropzone();
+    form = formElement;
+    fileInput = document.querySelector("[data-dropzone-input]");
 
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      fileInput.files = files;
-      form.requestSubmit();
-    }
-  });
-
-  // Show full-screen dropzone overlay
-  function showDropzone() {
-    if (!dropzone) {
-      dropzone = document.createElement("div");
-      dropzone.classList.add("file-dropzone");
-
-      const title = document.createElement("h1");
-      title.innerText = "Drop your files here";
-      dropzone.appendChild(title);
-
-      const subtitle = document.createElement("p");
-      subtitle.innerText = "Up to 40 files at once";
-      subtitle.style.marginTop = "8px";
-      subtitle.style.opacity = "0.7";
-      dropzone.appendChild(subtitle);
-
-      document.body.appendChild(dropzone);
-      document.body.style.overflow = "hidden";
-
-      // Force reflow for transition
-      void dropzone.offsetWidth;
-
-      dropzone.classList.add("visible");
+    if (!initialized) {
+      initialized = true;
+      bindPasteEvents();
+      bindNativeFileInput();
     }
   }
 
-  // Hide full-screen dropzone overlay
-  function hideDropzone() {
-    if (dropzone) {
-      dropzone.remove();
-      dropzone = null;
-      document.body.style.overflow = "auto";
-      counter = 0;
-    }
-  }
-
-  // Initialize on first load
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
 
-  // Re-initialize on Turbo navigations
   document.addEventListener("turbo:load", init);
 })();

@@ -13,8 +13,9 @@ class Components::Uploads::Index < Components::Base
 
   def view_template
     dropzone_form
-    div(style: "max-width: 1200px; margin: 0 auto; padding: 24px;") do
+    div(class: "uploads-container", data: { uploads_container: true }, style: "max-width: 1200px; margin: 0 auto; padding: 24px;") do
       header_section
+      upload_hero_card
       search_section
       uploads_list
       pagination_section if uploads.respond_to?(:total_pages) && uploads.total_pages > 1
@@ -27,18 +28,53 @@ class Components::Uploads::Index < Components::Base
   attr_reader :uploads, :query
 
   def header_section
-    header(style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;") do
-      div do
-        h1(style: "font-size: 2rem; font-weight: 600; margin: 0;") { "Your Uploads" }
-        p(style: "color: var(--fgColor-muted, #656d76); margin: 8px 0 0; font-size: 14px;") do
-          count = uploads.respond_to?(:total_count) ? uploads.total_count : uploads.size
-          plain pluralize(count, "file")
-        end
+    header(style: "margin-bottom: 24px;") do
+      h1(style: "font-size: 2rem; font-weight: 600; margin: 0; color: var(--fgColor-default);") { "Uploads" }
+      p(style: "color: var(--fgColor-muted, #656d76); margin: 6px 0 0; font-size: 14px;") do
+        "Drop files to upload, paste from clipboard, or browse your files."
       end
+    end
+  end
 
-      label(for: "dropzone-file-input", class: "btn btn-primary", style: "cursor: pointer;") do
-        render Primer::Beta::Octicon.new(icon: :upload, mr: 1)
-        plain "Upload Files"
+  def upload_hero_card
+    div(
+      class: "Box upload-card",
+      data: { upload_card: true },
+      style: "position: relative; background: var(--bgColor-default); border: 1px solid var(--borderColor-default); border-radius: 6px; overflow: hidden; margin-bottom: 32px;"
+    ) do
+      div(
+        class: "upload-hero-stage",
+        data: { hero_stage: true }
+      ) do
+        # Resting view
+        div(
+          class: "upload-resting-view",
+          data: { resting_view: true }
+        ) do
+          div(style: "margin-bottom: 10px; color: var(--fgColor-muted);") do
+            render Primer::Beta::Octicon.new(icon: :upload, size: :medium)
+          end
+
+          h3(style: "font-size: 16px; font-weight: 600; margin: 0 0 10px 0; color: var(--fgColor-default);") do
+            "Drag and drop or paste directly"
+          end
+
+          div(style: "display: flex; gap: 8px; align-items: center; justify-content: center; margin-bottom: 16px;") do
+            span(class: "Label Label--secondary", style: "font-size: 11px; padding: 2px 7px;") { "Up to 40 files" }
+            span(class: "Label Label--secondary", style: "font-size: 11px; padding: 2px 7px;") { "Max 100MB each" }
+          end
+
+          div(style: "width: 140px; height: 1px; background: var(--borderColor-default); margin-bottom: 18px;")
+
+          label(
+            for: "dropzone-file-input",
+            class: "btn btn-primary",
+            style: "cursor: pointer; padding: 7px 20px; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;"
+          ) do
+            render Primer::Beta::Octicon.new(icon: :upload, size: :small)
+            plain "Upload files"
+          end
+        end
       end
     end
   end
