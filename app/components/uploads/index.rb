@@ -75,6 +75,50 @@ class Components::Uploads::Index < Components::Base
             plain "Upload files"
           end
         end
+
+        # Dropzone view with mascot
+        render_orph_drop_card
+      end
+    end
+  end
+
+  def render_orph_drop_card
+    div(
+      class: "upload-orph-view dropzone-container",
+      data: { orph_view: true },
+      aria: { hidden: "true" }
+    ) do
+      div(class: "orph-stage", data: { orph_stage: true }) do
+        div(class: "orph-character", data: { orph_character: true }) do
+          img(
+            src: "/orph-closed-mouth.svg",
+            class: "orph-graphic orph-closed",
+            alt: "Orph closed mouth"
+          )
+          img(
+            src: "/orph-open-mouth.svg",
+            class: "orph-graphic orph-open",
+            alt: "Orph open mouth"
+          )
+          div(class: "orph-pupil orph-pupil-left", data: { orph_pupil_left: true })
+          div(class: "orph-pupil orph-pupil-right", data: { orph_pupil_right: true })
+          div(class: "orph-speech-bubble", data: { orph_bubble: true }) { "Feed me files!" }
+        end
+      end
+
+      # Right side: Content
+      div(class: "dropzone-content", data: { orph_content: true }) do
+        div(class: "dropzone-upload-badge") do
+          raw safe(%(<svg viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px;"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h2.25a.75.75 0 0 1 .53 1.28l-3 3a.75.75 0 0 1-1.06 0l-3-3A.75.75 0 0 1 4.75 7H7V2.75A.75.75 0 0 1 7.75 2Z"></path><path d="M2.5 10.75a.75.75 0 0 1 .75.75v1a.5.5 0 0 0 .5.5h8.5a.5.5 0 0 0 .5-.5v-1a.75.75 0 0 1 1.5 0v1A2 2 0 0 1 12.25 14.5h-8.5A2 2 0 0 1 1.75 12.5v-1a.75.75 0 0 1 .75-.75Z"></path></svg>))
+          span { "Drag & Drop" }
+        end
+
+        h2(class: "dropzone-title", data: { dropzone_title: true }) { "Feed me, mortal" }
+
+        div(class: "dropzone-meta") do
+          span(class: "dropzone-tag") { "Up to 40 files" }
+          span(class: "dropzone-tag") { "Max 100MB each" }
+        end
       end
     end
   end
@@ -95,6 +139,50 @@ class Components::Uploads::Index < Components::Base
             render Primer::Beta::Octicon.new(icon: :search, mr: 1)
             plain "Search"
           end
+        end
+
+        # Dropzone view with mascot
+        render_orph_drop_card
+      end
+    end
+  end
+
+  def render_orph_drop_card
+    div(
+      class: "upload-orph-view dropzone-container",
+      data: { orph_view: true },
+      aria: { hidden: "true" }
+    ) do
+      div(class: "orph-stage", data: { orph_stage: true }) do
+        div(class: "orph-character", data: { orph_character: true }) do
+          img(
+            src: "/orph-closed-mouth.svg",
+            class: "orph-graphic orph-closed",
+            alt: "Orph closed mouth"
+          )
+          img(
+            src: "/orph-open-mouth.svg",
+            class: "orph-graphic orph-open",
+            alt: "Orph open mouth"
+          )
+          div(class: "orph-pupil orph-pupil-left", data: { orph_pupil_left: true })
+          div(class: "orph-pupil orph-pupil-right", data: { orph_pupil_right: true })
+          div(class: "orph-speech-bubble", data: { orph_bubble: true }) { "Feed me files!" }
+        end
+      end
+
+      # Right side: Content
+      div(class: "dropzone-content", data: { orph_content: true }) do
+        div(class: "dropzone-upload-badge") do
+          raw safe(%(<svg viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px;"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h2.25a.75.75 0 0 1 .53 1.28l-3 3a.75.75 0 0 1-1.06 0l-3-3A.75.75 0 0 1 4.75 7H7V2.75A.75.75 0 0 1 7.75 2Z"></path><path d="M2.5 10.75a.75.75 0 0 1 .75.75v1a.5.5 0 0 0 .5.5h8.5a.5.5 0 0 0 .5-.5v-1a.75.75 0 0 1 1.5 0v1A2 2 0 0 1 12.25 14.5h-8.5A2 2 0 0 1 1.75 12.5v-1a.75.75 0 0 1 .75-.75Z"></path></svg>))
+          span { "Drag & Drop" }
+        end
+
+        h2(class: "dropzone-title", data: { dropzone_title: true }) { "Feed me, mortal" }
+
+        div(class: "dropzone-meta") do
+          span(class: "dropzone-tag") { "Up to 40 files" }
+          span(class: "dropzone-tag") { "Max 100MB each" }
         end
       end
     end
@@ -150,6 +238,50 @@ class Components::Uploads::Index < Components::Base
         else
           "Drag and drop files anywhere on this page, or use the Upload button (up to 40 files at once)"
         end
+
+        # Dropzone view with mascot
+        render_orph_drop_card
+      end
+    end
+  end
+
+  def render_orph_drop_card
+    div(
+      class: "upload-orph-view dropzone-container",
+      data: { orph_view: true },
+      aria: { hidden: "true" }
+    ) do
+      div(class: "orph-stage", data: { orph_stage: true }) do
+        div(class: "orph-character", data: { orph_character: true }) do
+          img(
+            src: "/orph-closed-mouth.svg",
+            class: "orph-graphic orph-closed",
+            alt: "Orph closed mouth"
+          )
+          img(
+            src: "/orph-open-mouth.svg",
+            class: "orph-graphic orph-open",
+            alt: "Orph open mouth"
+          )
+          div(class: "orph-pupil orph-pupil-left", data: { orph_pupil_left: true })
+          div(class: "orph-pupil orph-pupil-right", data: { orph_pupil_right: true })
+          div(class: "orph-speech-bubble", data: { orph_bubble: true }) { "Feed me files!" }
+        end
+      end
+
+      # Right side: Content
+      div(class: "dropzone-content", data: { orph_content: true }) do
+        div(class: "dropzone-upload-badge") do
+          raw safe(%(<svg viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px;"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h2.25a.75.75 0 0 1 .53 1.28l-3 3a.75.75 0 0 1-1.06 0l-3-3A.75.75 0 0 1 4.75 7H7V2.75A.75.75 0 0 1 7.75 2Z"></path><path d="M2.5 10.75a.75.75 0 0 1 .75.75v1a.5.5 0 0 0 .5.5h8.5a.5.5 0 0 0 .5-.5v-1a.75.75 0 0 1 1.5 0v1A2 2 0 0 1 12.25 14.5h-8.5A2 2 0 0 1 1.75 12.5v-1a.75.75 0 0 1 .75-.75Z"></path></svg>))
+          span { "Drag & Drop" }
+        end
+
+        h2(class: "dropzone-title", data: { dropzone_title: true }) { "Feed me, mortal" }
+
+        div(class: "dropzone-meta") do
+          span(class: "dropzone-tag") { "Up to 40 files" }
+          span(class: "dropzone-tag") { "Max 100MB each" }
+        end
       end
     end
   end
@@ -177,6 +309,50 @@ class Components::Uploads::Index < Components::Base
             render Primer::Beta::Octicon.new(icon: :trash, mr: 1)
             plain "Delete"
           end
+        end
+
+        # Dropzone view with mascot
+        render_orph_drop_card
+      end
+    end
+  end
+
+  def render_orph_drop_card
+    div(
+      class: "upload-orph-view dropzone-container",
+      data: { orph_view: true },
+      aria: { hidden: "true" }
+    ) do
+      div(class: "orph-stage", data: { orph_stage: true }) do
+        div(class: "orph-character", data: { orph_character: true }) do
+          img(
+            src: "/orph-closed-mouth.svg",
+            class: "orph-graphic orph-closed",
+            alt: "Orph closed mouth"
+          )
+          img(
+            src: "/orph-open-mouth.svg",
+            class: "orph-graphic orph-open",
+            alt: "Orph open mouth"
+          )
+          div(class: "orph-pupil orph-pupil-left", data: { orph_pupil_left: true })
+          div(class: "orph-pupil orph-pupil-right", data: { orph_pupil_right: true })
+          div(class: "orph-speech-bubble", data: { orph_bubble: true }) { "Feed me files!" }
+        end
+      end
+
+      # Right side: Content
+      div(class: "dropzone-content", data: { orph_content: true }) do
+        div(class: "dropzone-upload-badge") do
+          raw safe(%(<svg viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px;"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h2.25a.75.75 0 0 1 .53 1.28l-3 3a.75.75 0 0 1-1.06 0l-3-3A.75.75 0 0 1 4.75 7H7V2.75A.75.75 0 0 1 7.75 2Z"></path><path d="M2.5 10.75a.75.75 0 0 1 .75.75v1a.5.5 0 0 0 .5.5h8.5a.5.5 0 0 0 .5-.5v-1a.75.75 0 0 1 1.5 0v1A2 2 0 0 1 12.25 14.5h-8.5A2 2 0 0 1 1.75 12.5v-1a.75.75 0 0 1 .75-.75Z"></path></svg>))
+          span { "Drag & Drop" }
+        end
+
+        h2(class: "dropzone-title", data: { dropzone_title: true }) { "Feed me, mortal" }
+
+        div(class: "dropzone-meta") do
+          span(class: "dropzone-tag") { "Up to 40 files" }
+          span(class: "dropzone-tag") { "Max 100MB each" }
         end
       end
     end

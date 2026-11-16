@@ -32,3 +32,228 @@
   visibility: visible;
   transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease;
 }
+
+// Orph drop card view
+.upload-orph-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s ease;
+  z-index: 10;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.upload-card.drag-active .upload-orph-view,
+.upload-card.drag-target .upload-orph-view,
+.upload-card.is-dropping .upload-orph-view {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.upload-card.drag-active .upload-resting-view,
+.upload-card.drag-target .upload-resting-view,
+.upload-card.is-dropping .upload-resting-view {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.upload-card.drag-target .upload-orph-view {
+  border: 2px dashed var(--borderColor-accent-emphasis, #0969da);
+  box-shadow: 0 0 0 3px var(--bgColor-accent-muted, rgba(9, 105, 218, 0.15)), inset 0 0 16px var(--bgColor-accent-muted, rgba(9, 105, 218, 0.08));
+}
+
+// Left side: Orph Stage
+.orph-stage {
+  position: relative;
+  flex: 0 0 42%;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  z-index: 2;
+}
+
+.orph-character {
+  position: relative;
+  width: 82%;
+  max-width: 220px;
+  aspect-ratio: 16 / 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.orph-graphic {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transition: opacity 0.12s ease-out;
+}
+
+.orph-stage .orph-closed {
+  opacity: 1;
+}
+
+.orph-stage .orph-open {
+  opacity: 0;
+}
+
+.orph-stage.mouth-open .orph-closed {
+  opacity: 0;
+}
+
+.orph-stage.mouth-open .orph-open {
+  opacity: 1;
+}
+
+.orph-pupil {
+  position: absolute;
+  width: 4.8%;
+  height: 8.2%;
+  background-color: #24292f;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 5;
+  transition: transform 0.04s ease-out;
+}
+
+.orph-pupil-left {
+  top: 27.2%;
+  left: 42.1%;
+}
+
+.orph-pupil-right {
+  top: 27.2%;
+  left: 51.5%;
+}
+
+.orph-speech-bubble {
+  position: absolute;
+  top: 18%;
+  left: 76%;
+  background: var(--bgColor-default, #ffffff);
+  border: 1px solid var(--borderColor-default, #d0d7de);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fgColor-default, #1f2328);
+  white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(31, 35, 40, 0.12);
+  pointer-events: none;
+  z-index: 6;
+  transform: scale(0.9) translate(-4px, 0);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -5px;
+    width: 6px;
+    height: 6px;
+    background: var(--bgColor-default, #ffffff);
+    border-left: 1px solid var(--borderColor-default, #d0d7de);
+    border-bottom: 1px solid var(--borderColor-default, #d0d7de);
+    transform: translateY(-50%) rotate(45deg);
+  }
+}
+
+// Right side: Content & Drop Area
+.dropzone-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 32px 24px 16px;
+  z-index: 2;
+}
+
+.dropzone-upload-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background-color: var(--bgColor-accent-muted, #ddf4ff);
+  color: var(--fgColor-accent, #0969da);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.dropzone-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--fgColor-default, #1f2328);
+  margin: 0 0 8px 0;
+  line-height: 1.25;
+}
+
+.dropzone-meta {
+  display: flex;
+  gap: 8px;
+}
+
+.dropzone-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fgColor-muted, #656d76);
+  background: var(--bgColor-muted, #f6f8fa);
+  border: 1px solid var(--borderColor-default, #d0d7de);
+  border-radius: 12px;
+}
+
+.orph-sucked-file {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 10000;
+  will-change: transform, opacity;
+
+  img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+  }
+}
+
+.orph-stage.gulping .orph-character {
+  animation: orph-gulp-bounce 550ms cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+@keyframes orph-gulp-bounce {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.15) translateY(-6px); }
+  50% { transform: scale(0.92) translateY(2px); }
+  75% { transform: scale(1.05) translateY(-2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .orph-stage {
+    display: none !important;
+  }
+  .dropzone-content {
+    padding: 24px !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+}
