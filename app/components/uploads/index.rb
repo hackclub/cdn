@@ -80,6 +80,11 @@ class Components::Uploads::Index < Components::Base
         # Dropzone view with mascot
         render_orph_drop_card
       end
+
+      # Activity graph ribbon
+      div(style: "width: 100%; margin-top: 4px; margin-bottom: 18px; padding: 0 8px; box-sizing: border-box;") do
+        render_activity_ribbon(rows: 2, size: "10px", gap: "3px")
+      end
     end
   end
 
@@ -189,6 +194,31 @@ class Components::Uploads::Index < Components::Base
     end
   end
 
+
+  def render_activity_ribbon(rows: 2, size: "10px", gap: "3px")
+    user_id = current_user.respond_to?(:id) ? current_user.id : "guest"
+    cache_key = ["user_activity_ribbon_html", user_id, Date.current.to_s, rows]
+
+    ribbon_html = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
+      counts = if current_user.respond_to?(:uploads)
+        current_user.uploads.where("created_at >= ?", 240.days.ago).group("DATE(created_at)").count.transform_keys do |k|
+          k.is_a?(String) ? Date.parse(k) : k
+        end
+      else
+        {}
+      end
+
+      Components::Uploads::ActivityRibbon.new(
+        counts: counts,
+        rows: rows,
+        cols: 120,
+        size: size
+      ).call
+    end
+
+    raw safe(ribbon_html)
+  end
+
   def search_section
     div(style: "margin-bottom: 24px;") do
       form_with url: uploads_path, method: :get do
@@ -209,6 +239,11 @@ class Components::Uploads::Index < Components::Base
 
         # Dropzone view with mascot
         render_orph_drop_card
+      end
+
+      # Activity graph ribbon
+      div(style: "width: 100%; margin-top: 4px; margin-bottom: 18px; padding: 0 8px; box-sizing: border-box;") do
+        render_activity_ribbon(rows: 2, size: "10px", gap: "3px")
       end
     end
   end
@@ -469,6 +504,11 @@ class Components::Uploads::Index < Components::Base
         # Dropzone view with mascot
         render_orph_drop_card
       end
+
+      # Activity graph ribbon
+      div(style: "width: 100%; margin-top: 4px; margin-bottom: 18px; padding: 0 8px; box-sizing: border-box;") do
+        render_activity_ribbon(rows: 2, size: "10px", gap: "3px")
+      end
     end
   end
 
@@ -595,6 +635,11 @@ class Components::Uploads::Index < Components::Base
 
         # Dropzone view with mascot
         render_orph_drop_card
+      end
+
+      # Activity graph ribbon
+      div(style: "width: 100%; margin-top: 4px; margin-bottom: 18px; padding: 0 8px; box-sizing: border-box;") do
+        render_activity_ribbon(rows: 2, size: "10px", gap: "3px")
       end
     end
   end
