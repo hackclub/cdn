@@ -1198,3 +1198,25 @@ body.theme-dark {
     transform: none !important;
   }
 }
+
+// Scaled Delete Confirmation Dialog (Single file & Mass delete)
+.batch-modal-card {
+  width: min(480px, calc(100vw - 32px)) !important;
+  max-width: 480px !important;
+  height: fit-content !important;
+  height: -moz-fit-content !important;
+  max-height: min(calc(100vh - 48px), 520px) !important;
+  box-sizing: border-box !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28) !important;
+  border: 1px solid var(--borderColor-default, #d0d7de) !important;
+}
+
+[data-color-mode="dark"] .batch-modal-card,
+html[data-color-mode="dark"] .batch-modal-card,
+body.theme-dark .batch-modal-card,
+[data-dark-theme="dark"] .batch-modal-card {
+  background-color: var(--bgColor-default, #0d1117) !important;
+  border-color: var(--borderColor-default, #30363d) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6) !important;
+}
