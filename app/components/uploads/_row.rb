@@ -104,7 +104,7 @@ class Components::Uploads::Row < Components::Base
             data: { close_dialog_id: dialog.id },
             style: "cursor: pointer;"
           ) { "Cancel" }
-          form_with url: (admin ? admin_upload_path(upload) : upload_path(upload)), method: :delete, style: "display: inline;" do
+          form_with url: (admin ? admin_upload_path(upload) : upload_path(upload)), method: :delete, style: "display: inline;", data: { delete_upload_form: true, upload_id: upload.id, upload_filename: upload.filename.to_s } do
             button(type: "submit", class: "btn btn-danger", style: "display: inline-flex; align-items: center; gap: 6px; cursor: pointer;") do
               render Primer::Beta::Octicon.new(icon: :trash, size: :small)
               plain "Delete file"

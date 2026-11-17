@@ -219,16 +219,53 @@
       }
     });
 
+    convertPageFlashToToast();
+
     if (!eventsBound) {
       bindDragAndDropEvents();
       bindPasteEvents();
       bindActivityTooltipEvents();
       bindActivityClickScrollEvents();
+      bindSingleDeleteForms();
       eventsBound = true;
     }
 
     bindOrphCompanion();
     prefetchSvgAssets();
+  }
+
+  function truncateMiddle(str, maxLength = 28) {
+    if (!str || typeof str !== "string") return "";
+    if (str.length <= maxLength) return str;
+    const charsToShow = maxLength - 1; // 1 for ellipsis character '…'
+    const frontChars = Math.ceil(charsToShow / 2);
+    const backChars = Math.floor(charsToShow / 2);
+    return str.slice(0, frontChars) + "…" + str.slice(str.length - backChars);
+  }
+
+  function formatToastMessage(message) {
+    if (!message || typeof message !== "string") return "";
+    return message.replace(/"([^"]+)"/g, (match, filename) => {
+      return `"${truncateMiddle(filename, 28)}"`;
+    });
+  }
+
+  function convertPageFlashToToast() {
+    const flashWrapper = document.querySelector("body > div[style*='max-width: 768px']");
+    if (!flashWrapper) return;
+
+    const successFlash = flashWrapper.querySelector(".flash-success, [class*='flash-success']");
+    const dangerFlash = flashWrapper.querySelector(".flash-danger, [class*='flash-danger'], [class*='flash-error']");
+
+    if (successFlash) {
+      const msg = successFlash.textContent.trim();
+      flashWrapper.remove();
+      if (msg) showSuccessToast(msg);
+    } else if (dangerFlash) {
+      const msg = dangerFlash.textContent.trim();
+      flashWrapper.remove();
+      if (msg) showErrorToast(msg);
+    }
   }
 
   function showUploadToast(count) {
@@ -238,7 +275,7 @@
     toastEl.className = "upload-status-toast";
     toastEl.innerHTML = `
       <div class="upload-spinner"></div>
-      <span>Uploading ${count} ${count === 1 ? "file" : "files"}...</span>
+      <span class="upload-toast-text">Uploading ${count} ${count === 1 ? "file" : "files"}...</span>
     `;
     document.body.appendChild(toastEl);
   }
@@ -593,6 +630,7 @@
       if (pendingRow) {
         pendingRow.classList.remove("is-pending-upload");
         pendingRow.removeAttribute("data-pending-filename");
+        pendingRow.setAttribute("data-upload-row-id", u.id);
         pendingRow.style.animation = "fade-slide-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both";
 
         const now = new Date();
@@ -642,13 +680,15 @@
   function showSuccessToast(message) {
     if (toastEl) toastEl.remove();
 
+    const formattedMessage = formatToastMessage(message);
+
     toastEl = document.createElement("div");
     toastEl.className = "upload-status-toast upload-status-toast--success";
     toastEl.innerHTML = `
       <svg class="octicon octicon-check" viewBox="0 0 16 16" width="16" height="16" fill="var(--fgColor-success, #2da44e)">
         <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
       </svg>
-      <span>${escapeHtml(message)}</span>
+      <span class="upload-toast-text">${escapeHtml(formattedMessage)}</span>
     `;
     document.body.appendChild(toastEl);
 
@@ -670,13 +710,15 @@
   function showErrorToast(message) {
     if (toastEl) toastEl.remove();
 
+    const formattedMessage = formatToastMessage(message);
+
     toastEl = document.createElement("div");
     toastEl.className = "upload-status-toast upload-status-toast--danger";
     toastEl.innerHTML = `
       <svg class="octicon octicon-alert" viewBox="0 0 16 16" width="16" height="16" fill="var(--fgColor-danger, #cf222e)">
         <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path>
       </svg>
-      <span>${escapeHtml(message)}</span>
+      <span class="upload-toast-text">${escapeHtml(formattedMessage)}</span>
     `;
     document.body.appendChild(toastEl);
 
@@ -720,16 +762,145 @@
 
   function updateTotalUploadCountBadge(addedCount) {
     const historyHeader = document.querySelector("[data-uploads-history]");
-    if (historyHeader && historyHeader.nextElementSibling) {
-      const badge = historyHeader.nextElementSibling;
+    const badge = document.querySelector("[data-uploads-total-count]") || (historyHeader ? historyHeader.nextElementSibling : null);
+    if (badge) {
       const countMatch = badge.textContent.match(/(\d+)/);
       if (countMatch) {
         const currentTotal = parseInt(countMatch[1], 10);
-        const newTotal = currentTotal + addedCount;
+        const newTotal = Math.max(0, currentTotal + addedCount);
         badge.textContent = `${newTotal} ${newTotal === 1 ? "file" : "files"}`;
       }
     }
   }
+
+  function animateAndRemoveRow(rowEl, onComplete) {
+    if (!rowEl) {
+      if (onComplete) onComplete();
+      return;
+    }
+    const currentHeight = rowEl.scrollHeight;
+    rowEl.style.maxHeight = currentHeight + "px";
+    void rowEl.offsetHeight; // force reflow
+    rowEl.classList.add("is-deleting");
+
+    setTimeout(() => {
+      rowEl.remove();
+      if (onComplete) onComplete();
+    }, 260);
+  }
+
+  function handleRowDeletionUpdates(deletedUploadIds) {
+    if (!deletedUploadIds || deletedUploadIds.length === 0) return;
+
+    const stringIds = deletedUploadIds.map((id) => String(id));
+    const affectedDateGroups = new Set();
+
+    stringIds.forEach((id) => {
+      const rowItem =
+        document.querySelector(`.upload-row-item[data-upload-row-id="${id}"]`) ||
+        document.querySelector(`[data-batch-select-item][data-upload-id="${id}"]`)?.closest(".upload-row-item") ||
+        document.querySelector(`[data-batch-select-item][data-upload-id="${id}"]`)?.closest(".Box-row");
+
+      if (rowItem) {
+        const dateGroup = rowItem.closest(".timeline-date-group");
+        if (dateGroup) affectedDateGroups.add(dateGroup);
+        const containerRow = rowItem.closest(".Box-row") || rowItem;
+        animateAndRemoveRow(containerRow);
+      }
+
+      const cb = document.querySelector(`[data-batch-select-item][data-upload-id="${id}"]`);
+      if (cb) cb.checked = false;
+    });
+
+    if (typeof window.updateBatchBar === "function") {
+      window.updateBatchBar();
+    }
+
+    updateTotalUploadCountBadge(-stringIds.length);
+
+    setTimeout(() => {
+      affectedDateGroups.forEach((group) => {
+        const remainingRows = group.querySelectorAll(".upload-row-item:not(.is-deleting)");
+        const countBadge = group.querySelector("[data-date-group-count]") || group.querySelector(".timeline-date-header .Label, .timeline-date-header .Label--secondary");
+        if (remainingRows.length === 0) {
+          group.style.transition = "opacity 200ms ease, transform 200ms ease";
+          group.style.opacity = "0";
+          setTimeout(() => group.remove(), 200);
+        } else if (countBadge) {
+          countBadge.textContent = `${remainingRows.length} ${remainingRows.length === 1 ? "file" : "files"}`;
+        }
+      });
+    }, 280);
+
+    refreshRibbonInBackground();
+  }
+
+  function bindSingleDeleteForms() {
+    document.addEventListener("submit", (e) => {
+      const form = e.target.closest("[data-delete-upload-form]");
+      if (!form) return;
+
+      e.preventDefault();
+
+      const uploadId = form.getAttribute("data-upload-id");
+      const filename = form.getAttribute("data-upload-filename") || "file";
+      const actionUrl = form.getAttribute("action");
+
+      // Close the parent confirmation dialog immediately
+      const dialog = form.closest("dialog");
+      if (dialog && typeof dialog.close === "function") {
+        dialog.close();
+      } else {
+        const cancelBtn = form.closest("div")?.querySelector("[data-close-dialog-id]");
+        if (cancelBtn) cancelBtn.click();
+      }
+
+      const csrfToken =
+        document.querySelector('meta[name="csrf-token"]')?.content ||
+        form.querySelector('input[name="authenticity_token"]')?.value ||
+        "";
+
+      const formData = new FormData(form);
+      formData.append("_method", "delete");
+
+      fetch(actionUrl, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Accept": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {})
+        }
+      })
+        .then(async (response) => {
+          let data = null;
+          try {
+            data = await response.json();
+          } catch (_) {}
+
+          if (!response.ok || !data || !data.success) {
+            const errorMsg = (data && data.error) ? data.error : `Delete failed (status ${response.status})`;
+            throw new Error(errorMsg);
+          }
+          return data;
+        })
+        .then((data) => {
+          handleRowDeletionUpdates([uploadId || data.id]);
+          showSuccessToast(data.notice || `Deleted "${filename}" successfully.`);
+        })
+        .catch((err) => {
+          console.error("Delete error:", err);
+          showErrorToast(err.message || "Failed to delete file.");
+        });
+    });
+  }
+
+  window.CDNToast = window.CDNToast || {};
+  window.CDNToast.showSuccess = showSuccessToast;
+  window.CDNToast.showError = showErrorToast;
+  window.CDNToast.refreshRibbon = refreshRibbonInBackground;
+  window.CDNToast.truncateMiddle = truncateMiddle;
+  window.CDNToast.handleRowDeletionUpdates = handleRowDeletionUpdates;
 
   function directUpload(files) {
     if (!files || files.length === 0) return;

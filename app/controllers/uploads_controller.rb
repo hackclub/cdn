@@ -124,18 +124,36 @@ class UploadsController < ApplicationController
   def destroy
     authorize @upload
 
+    filename = @upload.filename.to_s
+    upload_id = @upload.id
     @upload.destroy!
     invalidate_activity_ribbon_cache
-    redirect_back fallback_location: uploads_path, notice: "Upload deleted successfully."
+
+    respond_to do |format|
+      format.html { redirect_back fallback_location: uploads_path, notice: "Deleted \"#{filename}\" successfully." }
+      format.json { render json: { success: true, notice: "Deleted \"#{filename}\" successfully.", id: upload_id, filename: filename } }
+    end
   rescue Pundit::NotAuthorizedError
-    redirect_back fallback_location: uploads_path, alert: "You are not authorized to delete this upload."
+    respond_to do |format|
+      format.html { redirect_back fallback_location: uploads_path, alert: "You are not authorized to delete this upload." }
+      format.json { render json: { success: false, error: "You are not authorized to delete this upload." }, status: :forbidden }
+    end
+  rescue StandardError => e
+    event = Sentry.capture_exception(e)
+    respond_to do |format|
+      format.html { redirect_back fallback_location: uploads_path, alert: "Delete failed. (Error ID: #{event&.event_id})" }
+      format.json { render json: { success: false, error: "Delete failed: #{e.message}" }, status: :internal_server_error }
+    end
   end
 
   def destroy_batch
     ids = Array(params[:ids]).reject(&:blank?)
 
     if ids.empty?
-      redirect_to uploads_path, alert: "No files selected."
+      respond_to do |format|
+        format.html { redirect_to uploads_path, alert: "No files selected." }
+        format.json { render json: { success: false, error: "No files selected." }, status: :unprocessable_entity }
+      end
       return
     end
 
@@ -145,18 +163,31 @@ class UploadsController < ApplicationController
     missing = ids - uploads.map(&:id)
 
     if uploads.empty?
-      redirect_to uploads_path, alert: "None of the selected files could be found."
+      respond_to do |format|
+        format.html { redirect_to uploads_path, alert: "None of the selected files could be found." }
+        format.json { render json: { success: false, error: "None of the selected files could be found." }, status: :not_found }
+      end
       return
     end
 
     count = uploads.size
+    deleted_ids = uploads.map(&:id)
     uploads.destroy_all
     invalidate_activity_ribbon_cache
 
     notice = "Deleted #{count} #{'file'.pluralize(count)}."
     notice += " #{missing.size} #{'file'.pluralize(missing.size)} could not be found and #{missing.size == 1 ? 'was' : 'were'} skipped." if missing.any?
 
-    redirect_to uploads_path, notice: notice
+    respond_to do |format|
+      format.html { redirect_to uploads_path, notice: notice }
+      format.json { render json: { success: true, notice: notice, count: count, ids: deleted_ids } }
+    end
+  rescue StandardError => e
+    event = Sentry.capture_exception(e)
+    respond_to do |format|
+      format.html { redirect_to uploads_path, alert: "Delete failed: #{e.message}" }
+      format.json { render json: { success: false, error: "Delete failed: #{e.message}" }, status: :internal_server_error }
+    end
   end
 
   private

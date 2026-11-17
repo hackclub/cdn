@@ -148,12 +148,87 @@
       }
     }
 
+    window.updateBatchBar = updateBar;
+
     function closeBatchModal() {
       const m = document.querySelector("[data-batch-modal]");
       if (!m) return;
       m.style.display = "none";
       const inputEl = m.querySelector("[data-batch-modal-input]");
       if (inputEl) inputEl.value = "";
+    }
+
+    function executeBatchDelete() {
+      const checked = getChecked();
+      if (checked.length === 0) {
+        closeBatchModal();
+        return;
+      }
+
+      const deletedIds = checked.map((cb) => cb.value || cb.dataset.uploadId);
+
+      closeBatchModal();
+      const currentBar = document.querySelector("[data-batch-bar]");
+      if (currentBar) currentBar.style.display = "none";
+      const currentSelectAll = document.querySelector("[data-batch-select-all]");
+      if (currentSelectAll) {
+        currentSelectAll.checked = false;
+        currentSelectAll.indeterminate = false;
+      }
+      usedSelectAll = false;
+
+      const form = document.querySelector("[data-batch-delete-form]");
+      const csrfToken =
+        document.querySelector('meta[name="csrf-token"]')?.content ||
+        (form ? form.querySelector('input[name="authenticity_token"]')?.value : "") ||
+        "";
+
+      const formData = new FormData();
+      if (csrfToken) formData.append("authenticity_token", csrfToken);
+      formData.append("_method", "delete");
+      deletedIds.forEach((id) => {
+        formData.append("ids[]", id);
+      });
+
+      const actionUrl = (form && form.action) ? form.action : "/uploads/destroy_batch";
+
+      fetch(actionUrl, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Accept": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {})
+        }
+      })
+        .then(async (response) => {
+          let data = null;
+          try {
+            data = await response.json();
+          } catch (_) {}
+
+          if (!response.ok || !data || !data.success) {
+            const errorMsg = (data && data.error) ? data.error : `Batch delete failed (status ${response.status})`;
+            throw new Error(errorMsg);
+          }
+          return data;
+        })
+        .then((data) => {
+          const idsToRemove = (data.ids && data.ids.length > 0) ? data.ids : deletedIds;
+          if (window.CDNToast && typeof window.CDNToast.handleRowDeletionUpdates === "function") {
+            window.CDNToast.handleRowDeletionUpdates(idsToRemove);
+          }
+          const notice = data.notice || `Deleted ${idsToRemove.length} ${idsToRemove.length === 1 ? "file" : "files"}.`;
+          if (window.CDNToast && typeof window.CDNToast.showSuccess === "function") {
+            window.CDNToast.showSuccess(notice);
+          }
+        })
+        .catch((err) => {
+          console.error("Batch delete error:", err);
+          if (window.CDNToast && typeof window.CDNToast.showError === "function") {
+            window.CDNToast.showError(err.message || "Failed to delete files.");
+          }
+        });
     }
 
     // Only attach global document listeners once
@@ -213,9 +288,7 @@
         } else if (e.target.closest("[data-batch-modal-confirm-btn]")) {
           const btn = e.target.closest("[data-batch-modal-confirm-btn]");
           if (btn && !btn.disabled) {
-            closeBatchModal();
-            const form = document.querySelector("[data-batch-delete-form]");
-            if (form) form.submit();
+            executeBatchDelete();
           }
         }
       });
@@ -246,9 +319,7 @@
           const confirmBtn = m.querySelector("[data-batch-modal-confirm-btn]");
           if (confirmBtn && !confirmBtn.disabled) {
             e.preventDefault();
-            closeBatchModal();
-            const form = document.querySelector("[data-batch-delete-form]");
-            if (form) form.submit();
+            executeBatchDelete();
           }
         }
       });

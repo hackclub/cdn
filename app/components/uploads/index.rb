@@ -191,7 +191,7 @@ class Components::Uploads::Index < Components::Base
 
     div(style: "display: flex; align-items: center; gap: 8px; margin: 32px 0 16px;") do
       h2(style: "font-size: 1.5rem; font-weight: 600; margin: 0; color: var(--fgColor-default);", data: { uploads_history: true }) { "Uploads History" }
-      render(Primer::Beta::Label.new(scheme: :secondary)) { pluralize(count, "file") }
+      render(Primer::Beta::Label.new(scheme: :secondary, data: { uploads_total_count: true })) { pluralize(count, "file") }
     end
   end
 
@@ -346,7 +346,7 @@ class Components::Uploads::Index < Components::Base
                   date.strftime("%b %-d, %Y")
                 end
               end
-              render(Primer::Beta::Label.new(scheme: :secondary)) { pluralize(date_uploads.size, "file") }
+              render(Primer::Beta::Label.new(scheme: :secondary, data: { date_group_count: true })) { pluralize(date_uploads.size, "file") }
             end
 
             render Primer::Beta::BorderBox.new do |box|
@@ -363,7 +363,7 @@ class Components::Uploads::Index < Components::Base
 
   def render_real_upload_row(box, upload, row_idx)
     box.with_row do
-      div(class: "upload-row-item timeline-item", style: "display: flex; align-items: flex-start; gap: 12px; --item-index: #{row_idx};", data: { item_index: row_idx }) do
+      div(class: "upload-row-item timeline-item", style: "display: flex; align-items: flex-start; gap: 12px; --item-index: #{row_idx};", data: { item_index: row_idx, upload_row_id: upload.id }) do
         input(
           type: "checkbox",
           name: "ids[]",
