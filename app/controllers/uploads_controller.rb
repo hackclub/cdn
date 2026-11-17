@@ -85,7 +85,7 @@ class UploadsController < ApplicationController
               cdn_url: u.cdn_url,
               human_file_size: u.human_file_size,
               content_type: u.content_type,
-              provenance: u.provenance.to_s.titleize,
+              provenance: (u.provenance.to_s == "api" ? "API" : u.provenance.to_s.titleize),
               row_html: render_to_string(Components::Uploads::Row.new(upload: u, compact: false), layout: false)
             }
           end

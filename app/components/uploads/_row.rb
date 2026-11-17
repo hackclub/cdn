@@ -52,7 +52,7 @@ class Components::Uploads::Row < Components::Base
         div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 6px; min-width: 0; max-width: 100%;") do
           render Primer::Beta::Octicon.new(icon: file_icon_for(upload.content_type), size: :small, style: "flex-shrink: 0;")
           span(class: "upload-title-text") { plain upload.filename.to_s }
-          render(Primer::Beta::Label.new(scheme: :secondary, style: "flex-shrink: 0;")) { plain upload.provenance.titleize }
+          render_provenance_pill
         end
         div(class: "upload-meta-text", style: "font-size: 12px;") do
           plain "#{upload.human_file_size} • #{upload.content_type} • #{time_ago_in_words(upload.created_at)} ago"
@@ -111,6 +111,25 @@ class Components::Uploads::Row < Components::Base
             end
           end
         end
+      end
+    end
+  end
+
+  def render_provenance_pill
+    render(Primer::Beta::Label.new(scheme: :secondary, classes: "upload-provenance-pill")) do
+      case upload.provenance.to_s
+      when "web"
+        render Primer::Beta::Octicon.new(icon: :globe)
+        plain "Web"
+      when "api"
+        render Primer::Beta::Octicon.new(icon: :terminal)
+        plain "API"
+      when "slack"
+        raw safe(%(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M94.12 315.1c0 25.9-21.16 47.06-47.06 47.06S0 341 0 315.1s21.16-47.06 47.06-47.06h47.06zm23.72 0c0-25.9 21.16-47.06 47.06-47.06s47.06 21.16 47.06 47.06v117.84c0 25.9-21.16 47.06-47.06 47.06s-47.06-21.16-47.06-47.06zm47.06-188.98c-25.9 0-47.06-21.16-47.06-47.06S139 32 164.9 32s47.06 21.16 47.06 47.06v47.06zm0 23.72c25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06H47.06C21.16 243.96 0 222.8 0 196.9s21.16-47.06 47.06-47.06zm188.98 47.06c0-25.9 21.16-47.06 47.06-47.06S448 171 448 196.9s-21.16 47.06-47.06 47.06h-47.06zm-23.72 0c0 25.9-21.16 47.06-47.06 47.06s-47.06-21.16-47.06-47.06V79.06c0-25.9 21.16-47.06 47.06-47.06s47.06 21.16 47.06 47.06zM283.1 385.88c25.9 0 47.06 21.16 47.06 47.06S309 480 283.1 480s-47.06-21.16-47.06-47.06v-47.06zm0-23.72c-25.9 0-47.06-21.16-47.06-47.06s21.16-47.06 47.06-47.06h117.84c25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06z"/></svg>))
+        plain "Slack"
+      else
+        render Primer::Beta::Octicon.new(icon: :history)
+        plain upload.provenance.to_s.titleize
       end
     end
   end

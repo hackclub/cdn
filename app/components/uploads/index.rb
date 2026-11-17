@@ -281,7 +281,7 @@ class Components::Uploads::Index < Components::Base
                     div(style: "flex: 1; min-width: 0;") do
                       div(style: "display: flex; align-items: center; gap: 8px; margin-bottom: 8px;") do
                         div(class: "skeleton-pill", style: "width: #{[180, 240, 210, 195][(g * 3 + r) % 4]}px; max-width: 60%; height: 14px; border-radius: 4px;")
-                        div(class: "skeleton-pill", style: "width: 42px; height: 16px; border-radius: 10px;")
+                        div(class: "skeleton-pill", style: "width: 54px; height: 18px; border-radius: 10px;")
                       end
                       div(class: "skeleton-pill", style: "width: #{[120, 145, 110, 135][(g * 3 + r) % 4]}px; max-width: 40%; height: 11px; border-radius: 3px;")
                     end

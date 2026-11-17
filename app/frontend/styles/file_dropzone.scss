@@ -1228,6 +1228,30 @@ body.theme-dark {
   color: var(--fgColor-muted, #656d76);
 }
 
+// Upload Source Provenance Pill (Web, API, Slack)
+.upload-provenance-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  height: 20px !important;
+  padding: 0 7px !important;
+  border-radius: 10px !important;
+  vertical-align: middle !important;
+
+  svg {
+    width: 12px !important;
+    height: 12px !important;
+    flex-shrink: 0 !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    fill: currentColor !important;
+  }
+}
+
 // Upload row action buttons: ensure eye icon matches the copy button color exactly
 .upload-row-actions {
   .Button--iconOnly:not(.Button--danger) {
