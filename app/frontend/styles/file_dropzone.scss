@@ -793,14 +793,9 @@ body.theme-dark {
     animation: upload-spin 800ms linear infinite;
   }
 
-  &.upload-status-toast--success {
-    border-color: var(--borderColor-success-emphasis, #2da44e);
-    box-shadow: 0 8px 24px rgba(45, 164, 78, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
-  }
-
   &.upload-status-toast--danger {
     border-color: var(--borderColor-danger-emphasis, #cf222e);
-    box-shadow: 0 8px 24px rgba(207, 34, 46, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
   }
 }
 
