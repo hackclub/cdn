@@ -572,7 +572,7 @@
       row.style.display = "flex";
       row.style.alignItems = "flex-start";
       row.style.gap = "12px";
-      row.style.animation = "fade-slide-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both";
+      row.style.animation = "fade-slide-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both";
 
       const name = escapeHtml(file.name || "Uploading file...");
       const sizeStr = formatBytes(file.size);
@@ -580,7 +580,7 @@
       row.setAttribute("data-pending-filename", file.name || "");
       row.innerHTML = `
         <input type="checkbox" disabled style="margin-top: 6px; opacity: 0.4; cursor: not-allowed;">
-        <div style="flex: 1; min-width: 0;">
+        <div class="upload-row-content" style="flex: 1; min-width: 0;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
             <div style="flex: 1; min-width: 0;">
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; min-width: 0; max-width: 100%;">
@@ -631,7 +631,7 @@
         pendingRow.classList.remove("is-pending-upload");
         pendingRow.removeAttribute("data-pending-filename");
         pendingRow.setAttribute("data-upload-row-id", u.id);
-        pendingRow.style.animation = "fade-slide-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both";
+        pendingRow.style.animation = "none";
 
         const now = new Date();
         const year = now.getFullYear();
@@ -641,22 +641,59 @@
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const formattedDate = `${monthNames[now.getMonth()]} ${now.getDate()}, ${year}`;
 
-        pendingRow.innerHTML = `
-          <input
-            type="checkbox"
-            name="ids[]"
-            value="${escapeHtml(u.id)}"
-            form="batch-delete-form"
-            data-batch-select-item="true"
-            data-upload-id="${escapeHtml(u.id)}"
-            data-created-at="${todayKey}"
-            data-formatted-date="${formattedDate}"
-            style="margin-top: 6px; cursor: pointer;"
-          >
-          <div style="flex: 1; min-width: 0;">
-            ${u.row_html}
-          </div>
-        `;
+        // Enable batch select checkbox
+        const checkbox = pendingRow.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+          checkbox.disabled = false;
+          checkbox.name = "ids[]";
+          checkbox.value = u.id;
+          checkbox.setAttribute("form", "batch-delete-form");
+          checkbox.setAttribute("data-batch-select-item", "true");
+          checkbox.setAttribute("data-upload-id", u.id);
+          checkbox.setAttribute("data-created-at", todayKey);
+          checkbox.setAttribute("data-formatted-date", formattedDate);
+          checkbox.style.opacity = "1";
+          checkbox.style.cursor = "pointer";
+        }
+
+        // Fluid cross-fade from skeleton placeholder to populated row
+        const contentWrapper = pendingRow.querySelector(".upload-row-content") || pendingRow.children[1];
+        if (contentWrapper) {
+          contentWrapper.style.transition = "opacity 100ms ease-out, transform 100ms ease-out";
+          contentWrapper.style.opacity = "0.15";
+          contentWrapper.style.transform = "scale(0.99)";
+
+          setTimeout(() => {
+            contentWrapper.innerHTML = u.row_html;
+            contentWrapper.style.transition = "opacity 220ms cubic-bezier(0.16, 1, 0.3, 1), transform 220ms cubic-bezier(0.16, 1, 0.3, 1)";
+            contentWrapper.style.opacity = "1";
+            contentWrapper.style.transform = "scale(1)";
+
+            pendingRow.classList.add("is-just-uploaded");
+            setTimeout(() => {
+              pendingRow.classList.remove("is-just-uploaded");
+            }, 1200);
+          }, 100);
+        } else {
+          pendingRow.innerHTML = `
+            <input
+              type="checkbox"
+              name="ids[]"
+              value="${escapeHtml(u.id)}"
+              form="batch-delete-form"
+              data-batch-select-item="true"
+              data-upload-id="${escapeHtml(u.id)}"
+              data-created-at="${todayKey}"
+              data-formatted-date="${formattedDate}"
+              style="margin-top: 6px; cursor: pointer;"
+            >
+            <div class="upload-row-content" style="flex: 1; min-width: 0;">
+              ${u.row_html}
+            </div>
+          `;
+          pendingRow.classList.add("is-just-uploaded");
+          setTimeout(() => pendingRow.classList.remove("is-just-uploaded"), 1200);
+        }
       }
     });
   }
@@ -786,7 +823,7 @@
     setTimeout(() => {
       rowEl.remove();
       if (onComplete) onComplete();
-    }, 260);
+    }, 400);
   }
 
   function handleRowDeletionUpdates(deletedUploadIds) {
@@ -795,7 +832,7 @@
     const stringIds = deletedUploadIds.map((id) => String(id));
     const affectedDateGroups = new Set();
 
-    stringIds.forEach((id) => {
+    stringIds.forEach((id, index) => {
       const rowItem =
         document.querySelector(`.upload-row-item[data-upload-row-id="${id}"]`) ||
         document.querySelector(`[data-batch-select-item][data-upload-id="${id}"]`)?.closest(".upload-row-item") ||
@@ -805,7 +842,16 @@
         const dateGroup = rowItem.closest(".timeline-date-group");
         if (dateGroup) affectedDateGroups.add(dateGroup);
         const containerRow = rowItem.closest(".Box-row") || rowItem;
-        animateAndRemoveRow(containerRow);
+
+        // Cascade ripple for multi-file deletes: 25ms stagger per item
+        const stagger = Math.min(index * 25, 120);
+        if (stagger > 0) {
+          setTimeout(() => {
+            animateAndRemoveRow(containerRow);
+          }, stagger);
+        } else {
+          animateAndRemoveRow(containerRow);
+        }
       }
 
       const cb = document.querySelector(`[data-batch-select-item][data-upload-id="${id}"]`);
@@ -823,14 +869,17 @@
         const remainingRows = group.querySelectorAll(".upload-row-item:not(.is-deleting)");
         const countBadge = group.querySelector("[data-date-group-count]") || group.querySelector(".timeline-date-header .Label, .timeline-date-header .Label--secondary");
         if (remainingRows.length === 0) {
-          group.style.transition = "opacity 200ms ease, transform 200ms ease";
-          group.style.opacity = "0";
-          setTimeout(() => group.remove(), 200);
+          // Accordion collapse for empty date group
+          const groupHeight = group.scrollHeight;
+          group.style.maxHeight = groupHeight + "px";
+          void group.offsetHeight;
+          group.classList.add("is-deleting-group");
+          setTimeout(() => group.remove(), 420);
         } else if (countBadge) {
           countBadge.textContent = `${remainingRows.length} ${remainingRows.length === 1 ? "file" : "files"}`;
         }
       });
-    }, 280);
+    }, 420);
 
     refreshRibbonInBackground();
   }
