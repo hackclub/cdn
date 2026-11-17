@@ -64,7 +64,7 @@ class Components::Uploads::Index < Components::Base
 
           div(style: "display: flex; gap: 8px; align-items: center; justify-content: center; margin-bottom: 16px;") do
             span(class: "Label Label--secondary", style: "font-size: 11px; padding: 2px 7px;") { "Up to 40 files" }
-            span(class: "Label Label--secondary", style: "font-size: 11px; padding: 2px 7px;") { "Max 100MB each" }
+            span(class: "Label Label--secondary", style: "font-size: 11px; padding: 2px 7px;") { "Max #{max_file_size_formatted} each" }
           end
 
           div(style: "width: 140px; height: 1px; background: var(--borderColor-default); margin-bottom: 18px;")
@@ -129,7 +129,7 @@ class Components::Uploads::Index < Components::Base
 
         div(class: "dropzone-meta") do
           span(class: "dropzone-tag") { "Up to 40 files" }
-          span(class: "dropzone-tag") { "Max 100MB each" }
+          span(class: "dropzone-tag") { "Max #{max_file_size_formatted} each" }
         end
       end
     end
@@ -514,5 +514,16 @@ class Components::Uploads::Index < Components::Base
         end
       end
     end
+  end
+
+  def max_file_size_formatted
+    if current_user.present?
+      policy = QuotaService.new(current_user).current_policy
+      ActiveSupport::NumberHelper.number_to_human_size(policy.max_file_size).delete(" ")
+    else
+      "100MB"
+    end
+  rescue StandardError
+    "100MB"
   end
 end
