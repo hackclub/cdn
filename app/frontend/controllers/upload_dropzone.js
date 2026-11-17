@@ -1105,18 +1105,18 @@
     const iconHeight = Math.round(iconWidth * 1.2);
 
     for (let i = 0; i < displayCount; i++) {
-      const fileIcon = document.createElement("div");
-      fileIcon.className = "orph-sucked-file";
-      fileIcon.style.width = `${iconWidth}px`;
-      fileIcon.style.height = `${iconHeight}px`;
-      fileIcon.innerHTML = `<img src="/file-icon.svg" alt="file" draggable="false">`;
-
-      document.body.appendChild(fileIcon);
-
       const spreadAngle = (i / displayCount) * Math.PI * 2;
       const spreadRadius = displayCount > 1 ? 10 + (i % 3) * 8 : 0;
       const startX = dropX + Math.cos(spreadAngle) * spreadRadius;
       const startY = dropY + Math.sin(spreadAngle) * spreadRadius;
+
+      const fileIcon = document.createElement("div");
+      fileIcon.className = "orph-sucked-file";
+      fileIcon.style.width = `${iconWidth}px`;
+      fileIcon.style.height = `${iconHeight}px`;
+      fileIcon.style.transform = `translate3d(${startX.toFixed(1)}px, ${startY.toFixed(1)}px, 0) translate(-50%, -50%)`;
+      fileIcon.style.opacity = "0";
+      fileIcon.innerHTML = `<img src="/file-icon.svg" alt="file" draggable="false">`;
 
       const dx = mouthX - startX;
       const dy = mouthY - startY;
@@ -1143,20 +1143,24 @@
       const duration = 850;
       const delay = i * 60;
 
-      const animation = fileIcon.animate(frames, {
-        duration: duration,
-        delay: delay,
-        easing: "linear",
-        fill: "forwards"
-      });
+      setTimeout(() => {
+        document.body.appendChild(fileIcon);
+        fileIcon.style.opacity = "1";
 
-      animation.onfinish = () => {
-        fileIcon.remove();
-        finishedCount++;
-        if (finishedCount === displayCount) {
-          onComplete();
-        }
-      };
+        const animation = fileIcon.animate(frames, {
+          duration: duration,
+          easing: "linear",
+          fill: "forwards"
+        });
+
+        animation.onfinish = () => {
+          fileIcon.remove();
+          finishedCount++;
+          if (finishedCount === displayCount) {
+            onComplete();
+          }
+        };
+      }, delay);
     }
   }
 

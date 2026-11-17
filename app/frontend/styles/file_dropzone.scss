@@ -617,6 +617,7 @@ html[data-color-mode="dark"] {
   left: 0;
   z-index: 10005;
   pointer-events: none;
+  opacity: 0;
   filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.3));
 
   img {
