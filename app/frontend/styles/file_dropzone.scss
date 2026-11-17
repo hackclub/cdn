@@ -1005,36 +1005,35 @@ body.theme-dark {
 }
 
 // Theme tokens for skeleton loading
-:root {
+:root,
+[data-color-mode="light"],
+html[data-color-mode="light"] {
   --skeleton-pill-bg: #ebedf0;
   --skeleton-shimmer-color: #f6f8fa;
 }
 
 [data-color-mode="dark"],
 html[data-color-mode="dark"],
-body.theme-dark,
-[data-dark-theme="dark"] {
-  --skeleton-pill-bg: #161b22;
-  --skeleton-shimmer-color: #262c36;
+body.theme-dark {
+  --skeleton-pill-bg: #21262d;
+  --skeleton-shimmer-color: #30363d;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root,
   [data-color-mode="auto"],
-  html[data-color-mode="auto"],
-  body {
-    --skeleton-pill-bg: #161b22;
-    --skeleton-shimmer-color: #262c36;
+  html[data-color-mode="auto"] {
+    --skeleton-pill-bg: #21262d;
+    --skeleton-shimmer-color: #30363d;
   }
 }
 
-// Reusable Skeleton Pill Class (soft, dark in dark mode, zero harsh white)
+// Reusable Skeleton Pill Class (subtle light grey in light mode, dark grey in dark mode)
 .skeleton-pill {
   background: linear-gradient(
     90deg,
-    var(--skeleton-pill-bg) 0%,
-    var(--skeleton-shimmer-color) 50%,
-    var(--skeleton-pill-bg) 100%
+    var(--skeleton-pill-bg, #ebedf0) 0%,
+    var(--skeleton-shimmer-color, #f6f8fa) 50%,
+    var(--skeleton-pill-bg, #ebedf0) 100%
   );
   background-size: 200% 100%;
   animation: skeleton-pill-sweep 1.5s ease-in-out infinite;
@@ -1171,7 +1170,6 @@ body.theme-dark {
 }
 
 @media (prefers-color-scheme: dark) {
-  :root,
   [data-color-mode="auto"],
   html[data-color-mode="auto"] {
     .upload-activity-ribbon.is-skeleton-loading .activity-shimmer-mask {
