@@ -1071,7 +1071,7 @@
       // Once file icons reach mouth: gulp!
       orphStage.classList.remove("mouth-open");
       orphStage.classList.add("gulping");
-      if (bubble) bubble.textContent = "Nom!";
+      if (bubble) bubble.textContent = "Gulp! Uploading...";
 
       setTimeout(() => {
         orphStage.classList.remove("gulping");
