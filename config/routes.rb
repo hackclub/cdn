@@ -16,6 +16,7 @@ Rails.application.routes.draw do
   resources :uploads, only: [ :index, :create, :update, :destroy ] do
     collection do
       delete :destroy_batch
+      get :activity_ribbon
     end
   end
 
