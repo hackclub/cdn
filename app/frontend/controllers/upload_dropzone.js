@@ -8,6 +8,7 @@
   let toastEl = null;
   let tooltip = null;
   let isDropping = false;
+  let orphDragoverHandler = null;
 
   const PREFETCH_SVGS = [
     "/orph-closed-mouth.svg",
@@ -1166,6 +1167,12 @@
 
   // Orph eye tracking during drag over drop zone
   function bindOrphCompanion() {
+    // Remove previous dragover handler to prevent listener accumulation across Turbo navigations
+    if (orphDragoverHandler) {
+      window.removeEventListener("dragover", orphDragoverHandler);
+      orphDragoverHandler = null;
+    }
+
     const card = document.querySelector("[data-upload-card]");
     if (!card) return;
 
@@ -1226,7 +1233,7 @@
       rightPupil.style.transform = `translate(-50%, -50%) translate3d(${offRx.toFixed(2)}px, ${offRy.toFixed(2)}px, 0)`;
     }
 
-    window.addEventListener("dragover", (e) => {
+    orphDragoverHandler = (e) => {
       if (window.innerWidth <= 768) return;
       if (!card.classList.contains("drag-active") && !card.classList.contains("drag-target") && !card.classList.contains("is-dropping")) return;
       if (!eyeRafId) {
@@ -1235,7 +1242,8 @@
           updateEyeTracking(e.clientX, e.clientY);
         });
       }
-    });
+    };
+    window.addEventListener("dragover", orphDragoverHandler);
   }
 
   // Activity ribbon tooltip
