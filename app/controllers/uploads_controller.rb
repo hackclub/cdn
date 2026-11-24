@@ -15,7 +15,7 @@ class UploadsController < ApplicationController
 
   def activity_ribbon
     user_id = current_user.respond_to?(:id) ? current_user.id : "guest"
-    rows = (params[:rows] || 2).to_i
+    rows = (params[:rows] || 2).to_i.clamp(1, 7)
 
     cache_key = ["user_activity_ribbon_html", user_id, Date.current.to_s, rows]
     ribbon_html = Rails.cache.fetch(cache_key, expires_in: 1.hour) do
