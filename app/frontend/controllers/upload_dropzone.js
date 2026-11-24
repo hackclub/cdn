@@ -1059,6 +1059,9 @@
       return;
     }
 
+    // Fire the upload immediately — don't wait for the animation
+    directUpload(files);
+
     // Snap mouth open and update bubble
     orphStage.classList.add("mouth-open");
     orphStage.classList.remove("gulping");
@@ -1068,11 +1071,10 @@
       // Once file icons reach mouth: gulp!
       orphStage.classList.remove("mouth-open");
       orphStage.classList.add("gulping");
-      if (bubble) bubble.textContent = "Gulp! Uploading...";
+      if (bubble) bubble.textContent = "Nom!";
 
       setTimeout(() => {
         orphStage.classList.remove("gulping");
-        directUpload(files);
         cards.forEach((c) => c.classList.remove("is-dropping"));
         isDropping = false;
       }, 650);
